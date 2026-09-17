@@ -1,0 +1,31 @@
+name: Guest flow preflight
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/guest-preflight.yml']
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Read public auth settings (no signup or messages)
+        run: |
+          node --input-type=module <<'NODE'
+          const r=await fetch('https://lrfcqpmjgghodymhnvue.supabase.co/auth/v1/settings',{headers:{apikey:'sb_publishable_bGtJ7VY9J6g5dORG0q50sw_wOM1oX19'},signal:AbortSignal.timeout(15000)});
+          if(!r.ok)throw Error('Settings read '+r.status);
+          const j=await r.json();console.log(JSON.stringify({anonymousEnabled:j.external?.anonymous_users,signupDisabled:j.disable_signup,emailEnabled:j.external?.email,phoneEnabled:j.external?.phone}));
+          NODE
+      - run: npm ci --no-audit --no-fund
+      - run: tar -czf /tmp/menugo-test-deps.tgz node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: menugo-test-deps
+          path: /tmp/menugo-test-deps.tgz
+          retention-days: 1
