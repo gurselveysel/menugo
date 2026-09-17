@@ -10,7 +10,8 @@ try{
 for(let i=0;i<90;i++){try{if((await fetch(base+'/giris')).ok)break;}catch{}await new Promise(r=>setTimeout(r,500));}
 browser=await playwright.launch({args:chromium.args,executablePath:await chromium.executablePath(),headless:true});const context=await browser.newContext();const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
 await context.route('**/api/**',async route=>{const req=route.request(),url=new URL(req.url());const path=url.pathname;let response={};
- if(path==='/api/catalogue')response=catalogue;
+ if(path==='/api/merchant/service-dashboard')response={summary:{waitingAcceptance:0,overdue:0,preparing:0,ready:0},cancellations:[],guestVisits:0,guestOrders:0};
+ else if(path==='/api/catalogue')response=catalogue;
  else if(path==='/api/merchant/profile')response=profile;
  else if(path==='/api/merchant/quote'){const b=req.postDataJSON();const p=catalogue.items.find(x=>x.id===b.lines[0].productId);assert.equal(b.lines[0].option,'Çilek');response={lines:[{...b.lines[0],name:p.name,lineTotalMinor:'15000'}],totalMinor:'15000',phone:profile.whatsappPhone,url:'https://wa.me/905394830031?text=TEST_NOT_SENT'};}
  else if(path==='/api/merchant/claim')response={role:'owner'};

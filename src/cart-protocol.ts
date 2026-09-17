@@ -9,13 +9,13 @@ export type Command = Readonly<{
 }>;
 export type CartLine = Readonly<{
   cartLineId: string; productId: string; productName: string; quantity: number;
-  unitPriceMinor: bigint; lineTotalMinor: bigint; option?: string;
+  unitPriceMinor: bigint; lineTotalMinor: bigint; option?: string; isMine: boolean; seat: number;
 }>;
 export type CartSnapshot = Readonly<{
   businessId: string; branchId: string; checkId: string; viewerUserId: string;
   channelId: string; revision: bigint; currency: 'TRY'; totalMinor: bigint;
   status: 'open' | 'checkout' | 'closed' | 'cancelled'; canMutate: boolean;
-  lines: readonly CartLine[];
+  lines: readonly CartLine[]; ownTotalMinor: bigint; ownBillMinor: bigint; billMinor: bigint; tableName: string; seat: number;
 }>;
 export type Receipt = Readonly<{ operationId: string; revision: bigint }>;
 export class ProtocolError extends Error {
@@ -72,14 +72,14 @@ export function readSnapshot(raw: unknown, scope: Scope): CartSnapshot {
     }
     ids.add(id);
     return Object.freeze({ cartLineId: id, productId: uuid(row.productId),
-      productName: row.productName, quantity: row.quantity,...(typeof row.option==='string'?{option:row.option}:{}),
+      productName: row.productName, quantity: row.quantity, isMine:row.isMine!==false,seat:typeof row.seat==='number'?row.seat:0,...(typeof row.option==='string'?{option:row.option}:{}),
       unitPriceMinor: integer(row.unitPriceMinor), lineTotalMinor: integer(row.lineTotalMinor) });
   });
   // Do not recompute lineTotalMinor or totalMinor, even to populate the UI.
   return Object.freeze({ businessId: scope.businessId, branchId: scope.branchId,
     checkId: scope.checkId, viewerUserId: scope.userId, channelId: uuid(v.channelId),
     revision: integer(v.revision), currency: 'TRY', totalMinor: integer(v.totalMinor),
-    status: v.status as CartSnapshot['status'], canMutate: v.canMutate, lines: Object.freeze(lines) });
+    status: v.status as CartSnapshot['status'], canMutate: v.canMutate, lines: Object.freeze(lines),ownTotalMinor:integer(v.ownTotalMinor??v.totalMinor),ownBillMinor:integer(v.ownBillMinor??'0'),billMinor:integer(v.billMinor??'0'),tableName:typeof v.tableName==='string'?v.tableName:'Masanız',seat:typeof v.seat==='number'?v.seat:0 });
 }
 export function readReceipt(raw: unknown, scope: Scope, command: Command): Receipt {
   const v = object(raw), revision = integer(v.revision);

@@ -1,0 +1,2 @@
+export const ALLERGENS:Record<string,string>={gluten:'Gluten',crustaceans:'Kabuklu deniz ürünleri',eggs:'Yumurta',fish:'Balık',peanuts:'Yer fıstığı',soy:'Soya',milk:'Süt',nuts:'Sert kabuklu yemişler',celery:'Kereviz',mustard:'Hardal',sesame:'Susam',sulphites:'Sülfitler',lupin:'Acı bakla',molluscs:'Yumuşakçalar'};
+export type ProductInfo={productId:string;name:string;ingredients:string|null;allergens:string[];serving:string|null;energyKcal:number|null;englishName:string|null;englishDescription:string|null;version:string;published:boolean};

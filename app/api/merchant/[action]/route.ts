@@ -5,7 +5,12 @@ type Context={params:Promise<{action:string}>};
 function text(v:unknown,max:number,optional=false){if(optional&&v===undefined)return '';if(typeof v!=='string'||v.length>max)throw new Failure('INVALID_INPUT');return v;}
 export async function GET(req:Request,ctx:Context){try{origin(req);const{action}=await ctx.params;
  if(action==='profile')return json(await rpc(await client(),'merchant_profile',scope));
+ if(action==='product-information')return json(await rpc(await client(),'product_information_read',{...scope,p_admin:false}));
  const{s}=await actor();
+ if(action==='service-dashboard')return json(await rpc(s,'service_dashboard',scope));
+ if(action==='linked-visits')return json(await rpc(s,'linked_guest_visits',scope));
+ if(action==='product-editor')return json(await rpc(s,'product_information_read',{...scope,p_admin:true}));
+ if(action==='service-control')return json(await rpc(s,'service_control',{...scope,p_value:null}));
  if(action==='snapshot')return json(await rpc(s,'merchant_manage',{...scope,p_action:'snapshot',p_payload:{}}));
  if(action==='visits')return json(await rpc(s,'my_visits',scope));
  if(action==='orders')return json(await rpc(s,'customer_orders',{...scope,p_check_id:uuid(new URL(req.url).searchParams.get('check'))}));
@@ -24,6 +29,10 @@ export async function POST(req:Request,ctx:Context){try{origin(req);const{action
  const{s}=await actor();
  if(action==='claim')return json(await rpc(s,'staff_bootstrap',scope));
  const b=await body(req);
+ if(action==='end-guest')return json(await rpc(s,'guest_revoke',{...scope,p_check_id:uuid(b.checkId),p_guest_id:uuid(b.guestId)}));
+ if(action==='save-information')return json(await rpc(s,'product_information_save',{...scope,p_product_id:uuid(b.productId),p_value:b.value}));
+ if(action==='service-control')return json(await rpc(s,'service_control',{...scope,p_value:b}));
+ if(action==='decide-cancellation'){if(typeof b.approve!=='boolean'||typeof b.note!=='string'||!b.note.trim()||b.note.length>300)throw new Failure('INVALID_INPUT');return json(await rpc(s,'decide_cancellation',{...scope,p_id:uuid(b.id),p_approve:b.approve,p_note:b.note}));}
  if(action==='request-service'){if(!['waiter','bill'].includes(String(b.kind)))throw new Failure('INVALID_SERVICE_REQUEST');return json(await rpc(s,'request_service',{...scope,p_check_id:uuid(b.checkId),p_kind:b.kind}));}
  if(!['save-profile','invite-staff','revoke-invite','revoke-staff','resolve-request'].includes(action))throw new Failure('NOT_FOUND',404);
  if(action==='invite-staff'){text(b.email,254);text(b.name,80);if(!['manager','waiter','kitchen','cashier'].includes(String(b.role)))throw new Failure('INVALID_ROLE');}

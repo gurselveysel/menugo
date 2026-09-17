@@ -26,5 +26,16 @@ try{
  await assert.rejects(()=>b.query('select * from ops.checks where id=$1 for update',[row.id]),e=>e.code==='55P03');
  await a.query('ROLLBACK');
  assert.equal((await b.query('select id from ops.checks where id=$1 for update',[row.id])).rows.length,1);
+ // Simultaneous guests attempting the same observed revision: one commit, one conflict.
+ const guestRows=(await a.query("select g.*,c.revision::text from ops.guest_sessions g join ops.checks c on c.id=g.check_id where g.revoked_at is null and c.status='open' and g.seat_no in(1,2) order by g.created_at desc limit 2")).rows;
+ assert.equal(guestRows.length,2);
+ const product=(await a.query("select id from public.menu_items where source_id='TIR-TEST-2'")).rows[0].id;
+ const revision=guestRows[0].revision;
+ for(const conn of [a,b]){await conn.query('reset role');await conn.query("select set_config('request.jwt.claims','{}',false)");await conn.query('set role anon');await conn.query("set lock_timeout='3s'");}
+ const commands=guestRows.map((g,i)=>[g.business_id,g.branch_id,g.check_id,`88888888-8888-4888-8888-${String(i+1).padStart(12,'0')}`,product,revision,String(g.seat_no).repeat(64)]);
+ const competing=await Promise.allSettled([a,b].map((conn,i)=>conn.query('select ops.guest_cart_mutate($1,$2,$3,$4,$5,1,$6::bigint,$7,null)',commands[i])));
+ assert.equal(competing.filter(x=>x.status==='fulfilled').length,1);
+ assert.ok(competing.some(x=>x.status==='rejected'&&x.reason.message==='REVISION_CONFLICT'));
+ console.log('NATIVE GUEST CONCURRENCY PASS: single commit for a shared revision, second guest must refresh.');
  console.log('NATIVE POSTGRES PASS: real row-lock exclusion and release, isolated Auth/Realtime fixtures');
 }finally{await a.query('ROLLBACK').catch(()=>{});await a.end().catch(()=>{});await b.end().catch(()=>{});}
