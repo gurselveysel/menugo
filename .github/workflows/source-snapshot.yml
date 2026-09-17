@@ -1,0 +1,19 @@
+name: Release source snapshot
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive exact committed source (no environment or credentials)
+        run: git archive --format=zip -o /tmp/menugo-committed-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: menugo-committed-source
+          path: /tmp/menugo-committed-source.zip
+          retention-days: 2
