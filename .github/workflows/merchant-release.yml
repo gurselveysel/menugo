@@ -17,7 +17,7 @@ jobs:
           POSTGRES_PASSWORD: disposable-ci-only
           POSTGRES_DB: menugo_ci
         ports: ['5432:5432']
-        options: --health-cmd 'pg_isready -U postgres' --health-interval 5s --health-timeout 5s --health-retries 12
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +26,7 @@ jobs:
           cache: npm
       - name: Verify and import reviewed release source
         env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-b990-8246-8398-b07e9aef07fc/raw?se=2026-09-17T18%3A12%3A18Z&sp=r&sv=2026-02-06&sr=b&scid=921419ce-11d2-5676-9b22-3574ef9303ec&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T04%3A33%3A34Z&ske=2026-09-18T04%3A33%3A34Z&sks=b&skv=2026-02-06&sig=UcggWeMS2Svvdtrvzl11QmcU05T2e4XYFRJdpCri7j8%3D'
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-ee34-8246-9183-3a7e28695723/raw?se=2026-09-17T18%3A14%3A56Z&sp=r&sv=2026-02-06&sr=b&scid=5c29f8b8-973e-543b-8158-e63db9666861&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T08%3A44%3A01Z&ske=2026-09-18T08%3A44%3A01Z&sks=b&skv=2026-02-06&sig=hwUjMMtHPjmVV2ODXtf%2BJeyxhjTcbgw9cypbdp%2BoRrw%3D'
         run: |
           node --input-type=module <<'NODE'
           import {mkdirSync,writeFileSync,rmSync} from 'node:fs';
