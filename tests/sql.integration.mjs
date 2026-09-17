@@ -80,5 +80,51 @@ try{
  check('owner can pause new orders',!(await q('select ops.catalogue($1,$2) as j',[b,br]))[0].j.orderingEnabled);
  await auth(users[1]);await rejects('closed check member loses access',()=>q('select ops.get_cart_snapshot($1,$2,$3)',[b,br,cid]),'CHECK_NOT_FOUND');
  await db.exec('reset role');await rejects('receipt is append only',()=>q('update ops.counter_receipts set amount_minor=1 where id=$1',[paid.receiptId]),'APPEND_ONLY_RECORD');
+
+ // r7 merchant: additional operations use disposable fixtures only.
+ await db.exec('reset role');
+ const p3='77777777-7777-4777-8777-777777777777';
+ await q("insert into public.menu_items(id,business_id,branch_id,source_id,name,approved_price,price_approved,options)values($1,$2,$3,'TIR-CHOICE','Aromalı içecek',150,true,$4::jsonb)",[p3,b,br,JSON.stringify(['Çilek','Vanilya'])]);
+ const extra=[5,6,7].map(n=>`33333333-3333-4333-8333-33333333333${n}`);
+ for(const [i,id] of extra.entries())await q('insert into auth.users values($1,$2,now())',[id,`staff${i}@example.test`]);
+ await auth(users[0]);
+ await q("select ops.manage_pilot($1,$2,'dine-in',$3::jsonb)",[b,br,JSON.stringify({enabled:true})]);
+ const saved=(await q("select ops.merchant_manage($1,$2,'save-profile',$3::jsonb) as j",[b,br,JSON.stringify({version:'0',tagline:'Lezzet',about:'Test işletmesi',address:'',mapQuery:'',hours:[],whatsappPhone:'905394830031',whatsappEnabled:true})]))[0].j;
+ check('merchant profile update retains version and WA',saved.profile.version==='1'&&saved.profile.whatsappEnabled);
+ await rejects('profile optimistic locking',()=>q("select ops.merchant_manage($1,$2,'save-profile',$3::jsonb)",[b,br,JSON.stringify({version:'0',hours:[],whatsappEnabled:false})]),'PROFILE_CHANGED');
+ for(const [i,role] of ['waiter','kitchen','cashier'].entries())await q("select ops.merchant_manage($1,$2,'invite-staff',$3::jsonb)",[b,br,JSON.stringify({name:'Test '+role,email:`staff${i}@example.test`,role})]);
+ for(const [i,role] of ['waiter','kitchen','cashier'].entries()){await auth(extra[i]);const assigned=(await q('select ops.staff_bootstrap($1,$2) as j',[b,br]))[0].j;check('verified invite claims '+role,assigned.role===role);}
+ await auth(extra[0]);await rejects('waiter cannot invite manager',()=>q("select ops.merchant_manage($1,$2,'invite-staff',$3::jsonb)",[b,br,JSON.stringify({name:'Forbidden',email:'x@example.test',role:'manager'})]),'MANAGER_REQUIRED');
+ const j7=(await q('select ops.start_table($1,$2,$3) as j',[b,br,tableId]))[0].j;
+ const cid7=j7.checkId;
+ await auth(users[1]);await q('select ops.join_table($1,$2,$3,$4)',[b,br,cid7,j7.token]);
+ const snapshot7=async()=> (await q('select ops.get_cart_snapshot($1,$2,$3) as j',[b,br,cid7]))[0].j;
+ await rejects('variant cannot omit option',async()=>q('select ops.cart_mutate_choice($1,$2,$3,$4,$5,1,$6::bigint,null)',[b,br,cid7,op(100),p3,(await snapshot7()).revision]),'OPTION_REQUIRED');
+ const choiceRev=(await snapshot7()).revision;
+ const choiceCart=(await q('select ops.cart_mutate_choice($1,$2,$3,$4,$5,2,$6::bigint,$7) as j',[b,br,cid7,op(101),p3,choiceRev,'Çilek']))[0].j;
+ check('choice displayed in server snapshot',choiceCart.lines[0].option==='Çilek'&&choiceCart.totalMinor==='30000');
+ check('option command replay exact',JSON.stringify((await q('select ops.cart_mutate_choice($1,$2,$3,$4,$5,2,$6::bigint,$7) as j',[b,br,cid7,op(101),p3,choiceRev,'Çilek']))[0].j)===JSON.stringify(choiceCart));
+ await q('select ops.cart_mutate_choice($1,$2,$3,$4,$5,1,$6::bigint,$7)',[b,br,cid7,op(102),p3,(await snapshot7()).revision,'Vanilya']);
+ check('same product variants remain distinct',(await snapshot7()).lines.length===2);
+ await rejects('legacy decrement cannot erase arbitrary option',async()=>q('select ops.cart_mutate($1,$2,$3,$4,$5,-1,$6::bigint)',[b,br,cid7,op(103),p3,(await snapshot7()).revision]),'CART_LINE_NOT_FOUND');
+ const call=(await q("select ops.request_service($1,$2,$3,'waiter') as j",[b,br,cid7]))[0].j;
+ check('service request deduplicates',(await q("select ops.request_service($1,$2,$3,'waiter') as j",[b,br,cid7]))[0].j.id===call.id);
+ const o7=(await q('select ops.order_submit($1,$2,$3,$4,$5::bigint) as j',[b,br,cid7,op(104),(await snapshot7()).revision]))[0].j;
+ check('variant order creates 3 charges for 2 variants',o7.chargeCount===3&&o7.lines.length===2&&o7.totalMinor==='45000');
+ check('customer can see own submitted order',(await q('select ops.customer_orders($1,$2,$3) as j',[b,br,cid7]))[0].j.length===1);
+ await auth(users[2]);await rejects('other guest cannot see unjoined order',()=>q('select ops.customer_orders($1,$2,$3)',[b,br,cid7]),'CHECK_NOT_FOUND');
+ await auth(extra[1]);for(const st of ['accepted','preparing','ready'])await q("select ops.console_action($1,$2,'order-status',$3::jsonb)",[b,br,JSON.stringify({orderId:o7.orderId,status:st})]);
+ await rejects('kitchen cannot mark served',()=>q("select ops.console_action($1,$2,'order-status',$3::jsonb)",[b,br,JSON.stringify({orderId:o7.orderId,status:'served'})]),'ROLE_ACTION_FORBIDDEN');
+ await auth(extra[0]);await q("select ops.console_action($1,$2,'order-status',$3::jsonb)",[b,br,JSON.stringify({orderId:o7.orderId,status:'served'})]);
+ const calls=(await q("select ops.merchant_manage($1,$2,'resolve-request',$3::jsonb) as j",[b,br,JSON.stringify({id:call.id})]))[0].j;check('waiter resolves service request',calls.requests.length===0);
+ await auth(extra[2]);const cash=(await q('select ops.counter_info($1,$2,$3) as j',[b,br,cid7]))[0].j;
+ const closed7=(await q('select ops.counter_close($1,$2,$3,$4,$5::bigint,$6::bigint,$7,$8) as j',[b,br,cid7,op(105),cash.revision,'45000','cash',null]))[0].j;check('cashier closes variant check',closed7.status==='closed');
+ await db.exec('reset role');await db.exec('set role anon');
+ const wa=(await q('select ops.whatsapp_quote($1,$2,$3::jsonb) as j',[b,br,JSON.stringify([{productId:p3,quantity:2,option:'Çilek'}])]))[0].j;
+ check('anonymous WA quote prices entirely server-side',wa.totalMinor==='30000'&&wa.lines[0].option==='Çilek');
+ await rejects('invalid WA option blocked',()=>q('select ops.whatsapp_quote($1,$2,$3::jsonb)',[b,br,JSON.stringify([{productId:p3,quantity:1,option:'Bogus'}])]),'OPTION_REQUIRED');
+ await rejects('empty WA quote blocked',()=>q("select ops.whatsapp_quote($1,$2,'[]')",[b,br]),'INVALID_CART');
+ await rejects('anonymous staff metadata denied',()=>q('select * from ops.staff_invites'),'42501');
+ await db.exec('reset role');
  fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);
 }catch(e){console.error('SQL TEST FAILED',e.message,e.detail,e.where);process.exitCode=1;}finally{await db.close();}

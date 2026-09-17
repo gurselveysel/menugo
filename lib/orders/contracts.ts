@@ -5,6 +5,7 @@ export type CartInput = {
   productId: string;
   delta: number; // Quantity delta, NOT money.
   expectedRevision: string;
+  option?: string;
 };
 export type Scope = { businessId: string; branchId: string };
 export type CheckRouteContext = { params: Promise<{ checkId: string }> };

@@ -1,0 +1,8 @@
+'use client';
+import {useEffect,useState} from 'react';import Link from 'next/link';import {api,explain} from './transport';import {Console} from './Console';
+const permissions:Record<string,string[]>={merchant:['owner','manager'],waiter:['owner','manager','waiter'],kitchen:['owner','manager','kitchen'],cashier:['owner','manager','cashier']};
+const home:Record<string,string>={owner:'/isletme',manager:'/isletme',waiter:'/garson',kitchen:'/mutfak',cashier:'/kasa'};
+export function RoleWorkspace({view}:{view:'merchant'|'waiter'|'kitchen'|'cashier'}){const[state,setState]=useState<{role:string|null;error?:string}|null>(null);
+ useEffect(()=>{let alive=true;void(async()=>{try{try{await api('/api/session',{});}catch{}const data=await api('/api/merchant/claim',{});if(alive)setState({role:data.role});}catch(e){if(alive)setState({role:null,error:explain(e)});}})();return()=>{alive=false;};},[view]);
+ if(state?.role&&permissions[view].includes(state.role))return <Console view={view}/>;
+ return <main className="role-gate"><img src="/media/sariyer-brand.avif" width="600" height="200" alt="Meşhur Sarıyer Börekçisi Sandviç"/><h1>{!state?'Güvenli erişim kontrol ediliyor…':'İşletme hesabınızla giriş yapın'}</h1><p>{state?.error??(state?'Bu çalışma alanı için yöneticinizin tanımladığı personel yetkisi gerekiyor.':'Şube ve personel yetkileriniz doğrulanıyor.')}</p>{state&&<div><Link className="btn primary" href={'/giris?role='+view}>Giriş yap</Link>{state.role&&home[state.role]&&<Link className="btn" href={home[state.role]}>Yetkili ekranımı aç</Link>}<Link className="btn" href="/bahcesehir">Menüye dön</Link></div>}</main>;}

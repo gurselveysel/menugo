@@ -1,1 +1,1 @@
-import {legacy} from '@/lib/legacy';export const dynamic='force-dynamic';export const runtime='nodejs';export async function GET(){return legacy('platform');}
+import {legacy} from '@/lib/legacy';export const dynamic='force-dynamic';export const runtime='nodejs';export async function GET(req:Request){if(new URL(req.url).hostname==='sariyerborekcisi.menugo.app')return Response.redirect(new URL('/bahcesehir',req.url),307);return legacy('platform');}

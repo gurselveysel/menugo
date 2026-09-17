@@ -14,14 +14,14 @@ export type RpcDatabase = {
   public: EmptySchema;
   ops: Omit<EmptySchema, 'Functions'> & {
     Functions: {
-      cart_mutate: {
+      cart_mutate_choice: {
         Args: {
           p_business_id: string;
           p_branch_id: string;
           p_check_id: string;
           p_operation_id: string;
           p_product_id: string;
-          p_delta: number;
+          p_delta: number; p_option: string | null;
           p_expected_revision: string;
         };
         Returns: Json;

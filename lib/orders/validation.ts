@@ -21,8 +21,8 @@ export function integerString(value: unknown, field: string): string {
 }
 export function cartInput(value: unknown): CartInput {
   const input = record(value);
-  const allowed = ['operationId', 'productId', 'delta', 'expectedRevision'];
-  if (Object.keys(input).some(key => !allowed.includes(key)) || Object.keys(input).length !== 4)
+  const allowed = ['operationId', 'productId', 'delta', 'expectedRevision', 'option'];
+  if (Object.keys(input).some(key => !allowed.includes(key)) || ![4,5].includes(Object.keys(input).length) || (input.option!==undefined && (typeof input.option!=='string'||input.option.length<1||input.option.length>100)))
     throw new ApiError(400, 'UNEXPECTED_FIELDS', 'Yalnızca operationId, productId, delta ve expectedRevision gönderin.');
   if (typeof input.delta !== 'number' || !Number.isSafeInteger(input.delta) ||
       input.delta === 0 || input.delta < -999 || input.delta > 999)
@@ -31,7 +31,7 @@ export function cartInput(value: unknown): CartInput {
     operationId: uuid(input.operationId, 'operationId'),
     productId: uuid(input.productId, 'productId'),
     delta: input.delta,
-    expectedRevision: integerString(input.expectedRevision, 'expectedRevision'),
+    expectedRevision: integerString(input.expectedRevision, 'expectedRevision'),...(input.option!==undefined?{option:input.option as string}:{}),
   };
 }
 /** Bodyless order requests still carry a stable key and a reviewed cart revision. */

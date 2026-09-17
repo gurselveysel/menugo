@@ -266,12 +266,12 @@ export class LiveCartStore {
   canMutate = (): boolean => this.readable() && !this.state.stale && !this.state.storageError &&
     !this.state.pending && this.state.mutation === 'idle' && this.state.cart?.status === 'open' &&
     this.state.cart.canMutate;
-  mutateCart = async (productId: string, delta: number): Promise<MutationResult> => {
+  mutateCart = async (productId: string, delta: number, option?: string): Promise<MutationResult> => {
     if (!this.canMutate()) return { kind: 'rejected', code: this.state.pending ? 'RESOLVE_PENDING_OPERATION' : 'CART_NOT_READY' };
     let command: Command;
     try {
       command = readCommand({ operationId: this.ports.newOperationId(), productId, delta,
-        expectedRevision: this.state.cart!.revision.toString() });
+        expectedRevision: this.state.cart!.revision.toString(),...(option!==undefined?{option}:{}), });
     } catch { return { kind: 'rejected', code: 'INVALID_CART_INPUT' }; }
     try { this.ports.journal.save(command); } // Persist intent BEFORE attempting the POST.
     catch {

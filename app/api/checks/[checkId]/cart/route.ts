@@ -19,13 +19,13 @@ export async function POST(request: Request, context: CheckRouteContext) {
     const input = cartInput(await jsonBody(request));
 
     // ONE transaction. lock_check is called INSIDE cart_mutate.
-    const { data, error } = await supabase.schema('ops').rpc('cart_mutate', {
+    const { data, error } = await supabase.schema('ops').rpc('cart_mutate_choice', {
       p_business_id: scope.businessId,
       p_branch_id: scope.branchId,
       p_check_id: checkId,
       p_operation_id: input.operationId,
       p_product_id: input.productId,
-      p_delta: input.delta,
+      p_delta: input.delta,p_option:input.option??null,
       p_expected_revision: input.expectedRevision,
     });
     if (error) throw fromDatabaseError(error);

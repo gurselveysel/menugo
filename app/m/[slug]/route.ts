@@ -1,1 +1,1 @@
-import {legacy} from '@/lib/legacy';export async function GET(_req:Request,ctx:{params:Promise<{slug:string}>}){const{slug}=await ctx.params;return ['meshur-sariyer-borekcisi-sandvic','sariyer-borekcisi'].includes(slug)?legacy('branch'):new Response('Not found',{status:404});}
+export async function GET(req:Request){return Response.redirect(new URL('/bahcesehir',req.url),307);}

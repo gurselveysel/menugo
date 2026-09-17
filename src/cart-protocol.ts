@@ -5,11 +5,11 @@ export type Scope = Readonly<{
   businessId: string; branchId: string; checkId: string; userId: string;
 }>;
 export type Command = Readonly<{
-  operationId: string; productId: string; delta: number; expectedRevision: string;
+  operationId: string; productId: string; delta: number; expectedRevision: string; option?: string;
 }>;
 export type CartLine = Readonly<{
   cartLineId: string; productId: string; productName: string; quantity: number;
-  unitPriceMinor: bigint; lineTotalMinor: bigint;
+  unitPriceMinor: bigint; lineTotalMinor: bigint; option?: string;
 }>;
 export type CartSnapshot = Readonly<{
   businessId: string; branchId: string; checkId: string; viewerUserId: string;
@@ -48,12 +48,12 @@ export function scopeOf(scope: Scope): Scope {
 }
 export function readCommand(raw: unknown): Command {
   const v = object(raw);
-  if (Object.keys(v).length !== 4 || typeof v.delta !== 'number' ||
+  if (Object.keys(v).some(k=>!['operationId','productId','delta','expectedRevision','option'].includes(k)) || ![4,5].includes(Object.keys(v).length) || (v.option!==undefined && (typeof v.option!=='string'||v.option.length<1||v.option.length>100)) || typeof v.delta !== 'number' ||
       !Number.isSafeInteger(v.delta) || v.delta === 0 || Math.abs(v.delta) > 999) {
     throw new ProtocolError();
   }
   return Object.freeze({ operationId: uuid(v.operationId), productId: uuid(v.productId),
-    delta: v.delta, expectedRevision: integer(v.expectedRevision).toString() });
+    delta: v.delta, expectedRevision: integer(v.expectedRevision).toString(),...(v.option!==undefined?{option:v.option as string}:{}) });
 }
 export function readSnapshot(raw: unknown, scope: Scope): CartSnapshot {
   const v = object(raw);
@@ -72,7 +72,7 @@ export function readSnapshot(raw: unknown, scope: Scope): CartSnapshot {
     }
     ids.add(id);
     return Object.freeze({ cartLineId: id, productId: uuid(row.productId),
-      productName: row.productName, quantity: row.quantity,
+      productName: row.productName, quantity: row.quantity,...(typeof row.option==='string'?{option:row.option}:{}),
       unitPriceMinor: integer(row.unitPriceMinor), lineTotalMinor: integer(row.lineTotalMinor) });
   });
   // Do not recompute lineTotalMinor or totalMinor, even to populate the UI.
@@ -107,7 +107,7 @@ export function fromHttp(status: number, body: unknown): HttpError {
 export const ROLLED_BACK_CODES = new Set([
   'REVISION_CONFLICT', 'STALE_CHECK_REVISION', 'PRICE_CHANGED', 'CHECK_NOT_OPEN',
   'ORDERING_DISABLED', 'TABLE_INACTIVE', 'PRODUCT_NOT_ORDERABLE',
-  'OPTIONS_NOT_SUPPORTED', 'INVALID_CATALOG_PRICE', 'CART_LINE_NOT_FOUND', 'PRODUCT_NOT_FOUND',
+  'OPTIONS_NOT_SUPPORTED', 'OPTION_REQUIRED', 'INVALID_CATALOG_PRICE', 'CART_LINE_NOT_FOUND', 'PRODUCT_NOT_FOUND',
   'CART_EMPTY', 'QUANTITY_OUT_OF_RANGE', 'CART_LIMIT_EXCEEDED', 'AMOUNT_LIMIT_EXCEEDED',
 ]);
 export const ACCESS_HTTP = new Set([401, 403, 404]);
