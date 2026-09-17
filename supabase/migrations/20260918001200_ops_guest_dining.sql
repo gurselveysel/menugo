@@ -378,7 +378,7 @@ BEGIN
     JOIN ops.cart_lines cl ON cl.product_source_id=p.source_id
       AND cl.branch_id=p.branch_id AND cl.business_id=p.business_id
     WHERE cl.business_id=p_business_id AND cl.branch_id=p_branch_id
-      AND cl.check_id=p_check_id
+      AND cl.check_id=p_check_id AND cl.created_by_user_id=auth.uid() AND cl.guest_session_id IS NULL
     ORDER BY p.id FOR SHARE OF p;
 
   -- Core trigger yeni order için önce draft zorunlu kılar. Sipariş turu
@@ -397,7 +397,7 @@ BEGIN
   END;
 
   FOR line IN SELECT * FROM ops.cart_lines
-    WHERE business_id=p_business_id AND branch_id=p_branch_id AND check_id=p_check_id
+    WHERE business_id=p_business_id AND branch_id=p_branch_id AND check_id=p_check_id AND created_by_user_id=auth.uid() AND guest_session_id IS NULL
     ORDER BY id FOR UPDATE
   LOOP
     SELECT * INTO product FROM public.menu_items

@@ -206,6 +206,13 @@ try{
  check('plain SKU may exist in two personal carts',(await gs(0)).lines.filter(x=>x.productId===p2).length===2);
  await auth(users[0]);await q('select ops.join_table($1,$2,$3,$4)',[b,br,c9,invited9.token]);
  await rejects('staff cannot submit customer drafts',async()=>q('select ops.order_submit($1,$2,$3,$4,$5::bigint)',[b,br,c9,op(242),(await q('select ops.get_cart_snapshot($1,$2,$3) as j',[b,br,c9]))[0].j.revision]),'CART_EMPTY');
+
+ const ownStaffSnapshot=async()=>(await q('select ops.get_cart_snapshot($1,$2,$3) as j',[b,br,c9]))[0].j;
+ const guestDraftsBefore=(await ownStaffSnapshot()).lines.length;
+ await q('select ops.cart_mutate_choice($1,$2,$3,$4,$5,1,$6::bigint,null)',[b,br,c9,op(243),p2,(await ownStaffSnapshot()).revision]);
+ const ownStaffOrder=(await q('select ops.order_submit($1,$2,$3,$4,$5::bigint) as j',[b,br,c9,op(244),(await ownStaffSnapshot()).revision]))[0].j;
+ check('staff with own line submits only own one charge',ownStaffOrder.chargeCount===1&&ownStaffOrder.lines.length===1);
+ check('staff mixed-cart submit preserves every guest draft',(await ownStaffSnapshot()).lines.length===guestDraftsBefore);
  await db.exec('reset role');
  fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);
 }catch(e){console.error('SQL TEST FAILED',e.message,e.detail,e.where);process.exitCode=1;}finally{await db.close();}
