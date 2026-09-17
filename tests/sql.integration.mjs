@@ -1,0 +1,84 @@
+// Runs only inside a fresh, in-memory PGlite instance. Never contacts a live database.
+import {PGlite} from '@electric-sql/pglite';import fs from 'node:fs';import assert from 'node:assert/strict';
+const db=new PGlite();const results=[];const check=(name,value)=>{assert.ok(value,name);results.push(name);};
+async function rejects(name,fn,code){try{await fn();throw Error('NOT_REJECTED');}catch(e){if(e.message==='NOT_REJECTED')throw e;if(code)assert.ok(String(e.message).includes(code)||e.code===code,`${name}: ${e.message}`);results.push(name);}}
+const b='11111111-1111-4111-8111-111111111111',br='22222222-2222-4222-8222-222222222222';
+const users=[1,2,3,4].map(n=>`33333333-3333-4333-8333-33333333333${n}`);const op=n=>`44444444-4444-4444-8444-${String(n).padStart(12,'0')}`;const p1='55555555-5555-4555-8555-555555555555',p2='66666666-6666-4666-8666-666666666666';
+const q=async(sql,args=[])=> (await db.query(sql,args)).rows;
+const auth=async(id)=>{await db.exec('reset role');await q("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:id,role:'authenticated'})]);await db.exec('set role authenticated');};
+try{
+ await db.exec(`CREATE ROLE anon NOLOGIN;CREATE ROLE authenticated NOLOGIN;CREATE ROLE service_role NOLOGIN BYPASSRLS;
+ CREATE SCHEMA auth;CREATE SCHEMA extensions;CREATE SCHEMA realtime;
+ CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,email_confirmed_at timestamptz);
+ CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$select(nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
+ GRANT USAGE ON SCHEMA auth TO anon,authenticated,service_role;
+ CREATE FUNCTION extensions.gen_random_bytes(n integer) RETURNS bytea LANGUAGE sql VOLATILE AS $$SELECT substring(decode(replace(gen_random_uuid()::text||gen_random_uuid()::text,'-',''),'hex') FROM 1 FOR n)$$;
+ CREATE TABLE realtime.messages(topic text,event text,payload jsonb,extension text,private boolean);
+ ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+ CREATE FUNCTION realtime.topic() RETURNS text LANGUAGE sql STABLE AS $$select current_setting('test.realtime_topic',true)$$;
+ CREATE FUNCTION realtime.send(p jsonb,e text,t text,priv boolean) RETURNS void LANGUAGE sql AS $$insert into realtime.messages values(t,e,p,'broadcast',priv)$$;
+ CREATE TABLE public.businesses(id uuid PRIMARY KEY,slug text,name text);
+ CREATE TABLE public.branches(id uuid PRIMARY KEY,business_id uuid REFERENCES public.businesses(id),slug text,name text,phone text,UNIQUE(id,business_id));
+ CREATE TABLE public.menu_items(id uuid PRIMARY KEY,business_id uuid NOT NULL,branch_id uuid NOT NULL,source_id text NOT NULL,name text NOT NULL,category_key text DEFAULT 'sandvic',subcategory text DEFAULT 'Sandviçler',description text,quantity_label text,source_price numeric,approved_price numeric,price_approved boolean DEFAULT false,available boolean DEFAULT true,options jsonb DEFAULT '[]',updated_at timestamptz DEFAULT now(),sort_order integer DEFAULT 0,UNIQUE(branch_id,source_id),FOREIGN KEY(branch_id,business_id) REFERENCES public.branches(id,business_id));`);
+ for(const [i,id] of users.entries())await q('insert into auth.users values($1,$2,now())',[id,i===0?'owner@example.test':`fixture${i}@example.test`]);
+ await q('insert into public.businesses values($1,$2,$3)',[b,'sariyerborekcisi','Meşhur Sarıyer Börekçisi Sandviç']);await q('insert into public.branches values($1,$2,$3,$4,$5)',[br,b,'bahcesehir','Bahçeşehir','0539 483 00 31']);
+ await q("insert into public.menu_items(id,business_id,branch_id,source_id,name,source_price,approved_price,price_approved)values($1,$2,$3,'TIR-TEST-1','Test ürün',33.33,33.33,true),($4,$2,$3,'TIR-TEST-2','Test ilave',0.01,0.01,true)",[p1,b,br,p2]);
+ const before=JSON.stringify(await q('select * from public.menu_items order by id'));
+ for(const file of fs.readdirSync('supabase/migrations').filter(f=>f.endsWith('.sql')).sort()){try{await db.exec(fs.readFileSync('supabase/migrations/'+file,'utf8'));console.log('SQL MIGRATION OK',file);}catch(e){console.error('MIGRATION FAILED',file,e.message,e.detail,e.where);throw e;}}
+ await q('insert into ops.owner_invites values($1,$2,$3)', ['owner@example.test',b,br]);
+ check('catalogue rows unchanged by migrations',JSON.stringify(await q('select * from public.menu_items order by id'))===before);
+ await db.exec('set role anon');check('anonymous public catalogue works',(await q('select ops.catalogue($1,$2) as j',[b,br]))[0].j.items.length===2);
+ await rejects('anonymous cannot read customer data',()=>q('select * from ops.customers'),'42501');
+ await auth(users[1]);await rejects('non-owner cannot bootstrap',()=>q('select ops.bootstrap_owner()'),'OWNER_INVITATION_REQUIRED');
+ await auth(users[0]);check('verified owner allowlist links role',(await q('select ops.bootstrap_owner() as j'))[0].j.linked);
+ await rejects('authenticated direct financial writes denied',()=>q("insert into ops.payment_intents(id) values(gen_random_uuid())"),'42501');
+ check('console reads real empty rows',(await q('select ops.console_snapshot($1,$2) as j',[b,br]))[0].j.orders.length===0);
+ await q("select ops.console_action($1,$2,'create-table',$3::jsonb)",[b,br,JSON.stringify({code:'masa-14',name:'Masa 14'})]);
+ const state=(await q('select ops.console_snapshot($1,$2) as j',[b,br]))[0].j;const tableId=state.tables[0].id;
+ const join=(await q('select ops.start_table($1,$2,$3) as j',[b,br,tableId]))[0].j;check('secure join token length',join.token.length===64);
+ const cid=join.checkId;
+ for(const user of users.slice(1)){await auth(user);await q('select ops.join_table($1,$2,$3,$4)',[b,br,cid,join.token]);}
+ const snap=async()=> (await q('select ops.get_cart_snapshot($1,$2,$3) as j',[b,br,cid]))[0].j;
+ check('joined member snapshot authorized',(await snap()).viewerUserId===users[3]);
+ await rejects('ordering default remains disabled',async()=>q('select ops.cart_mutate($1,$2,$3,$4,$5,1,$6::bigint)',[b,br,cid,op(1),p1,(await snap()).revision]),'ORDERING_DISABLED');
+ await db.exec('reset role');await q('update ops.branch_settings set ordering_enabled=true,dine_in_enabled=true where branch_id=$1',[br]);await auth(users[1]);
+ const r0=(await snap()).revision;const cart=(await q('select ops.cart_mutate($1,$2,$3,$4,$5,3,$6::bigint) as j',[b,br,cid,op(2),p1,r0]))[0].j;
+ check('server bigint cart total',cart.totalMinor==='9999');
+ check('same command idempotent',JSON.stringify((await q('select ops.cart_mutate($1,$2,$3,$4,$5,3,$6::bigint) as j',[b,br,cid,op(2),p1,r0]))[0].j)===JSON.stringify(cart));
+ const cart2=(await q('select ops.cart_mutate($1,$2,$3,$4,$5,1,$6::bigint) as j',[b,br,cid,op(3),p2,cart.revision]))[0].j;
+ const order=(await q('select ops.order_submit($1,$2,$3,$4,$5::bigint) as j',[b,br,cid,op(4),cart2.revision]))[0].j;
+ check('order clears shared cart',(await snap()).lines.length===0);check('one charge per unit',order.chargeCount===4);
+ await auth(users[0]);for(const s of ['accepted','preparing','ready','served','completed'])await q("select ops.console_action($1,$2,'order-status',$3::jsonb)",[b,br,JSON.stringify({orderId:order.orderId,status:s})]);
+ const split=(await q("select ops.prepare_split($1,$2,$3,$4,$5::bigint,'equal',$6::uuid[],'{}') as j",[b,br,cid,op(5),(await snap()).revision,users.slice(1)]))[0].j;
+ check('equal split preserves remainder',JSON.stringify(split.shares.map(s=>s.baseMinor))===JSON.stringify(['3334','3333','3333']));
+ await auth(users[1]);const mine=split.shares.find(s=>s.payerId===users[1]);const quote=(await q('select ops.payment_quote($1,$2,$3,$4,1000) as j',[b,br,cid,mine.id]))[0].j;
+ check('server quote distinguishes tip',quote.baseMinor==='3334'&&quote.tipMinor==='333'&&quote.amountMinor==='3667');
+ await rejects('unconfigured provider cannot create intent',()=>q('select ops.reserve_payment($1,$2,$3,$4,$5,1000)',[b,br,cid,mine.id,op(6)]),'PAYMENT_PROVIDER_NOT_CONFIGURED');
+ await db.exec('reset role');const candidates=(await q('select ops.crm_enqueue() as j'))[0].j;check('CRM evaluator sends no SMS',candidates.smsSent===0);check('no fabricated customer cohort',candidates.queued===0&&candidates.dryRun===0);
+ await auth(users[1]);await rejects('customer cannot invoke sender',()=>q('select ops.crm_claim()'),'42501');
+ await db.exec('reset role');const sig=await q("select payload from realtime.messages where extension='broadcast'");check('only revision is broadcast',sig.length>0&&sig.every(r=>Object.keys(r.payload).join(',')==='revision'));
+ const rls=await q("select relname,relrowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='ops' and relkind='r'");check('all operational tables protected by RLS',rls.length>=30&&rls.every(r=>r.relrowsecurity));
+
+ await auth(users[1]);await rejects('customer cannot open cashier',()=>q('select ops.counter_info($1,$2,$3)',[b,br,cid]),'CASHIER_REQUIRED');
+ await auth(users[0]);const counter=(await q('select ops.counter_info($1,$2,$3) as j',[b,br,cid]))[0].j;
+ check('counter total from immutable charge records',counter.totalMinor==='10000'&&counter.serviceComplete&&counter.cartEmpty);
+ await rejects('counter rejects changed confirmed amount',()=>q('select ops.counter_close($1,$2,$3,$4,$5::bigint,$6::bigint,$7,$8)',[b,br,cid,op(80),counter.revision,'9999','cash',null]),'AMOUNT_CHANGED');
+ await rejects('external POS requires reference',()=>q('select ops.counter_close($1,$2,$3,$4,$5::bigint,$6::bigint,$7,$8)',[b,br,cid,op(81),counter.revision,'10000','external_pos',null]),'INVALID_COUNTER_RECEIPT');
+ const paid=(await q('select ops.counter_close($1,$2,$3,$4,$5::bigint,$6::bigint,$7,$8) as j',[b,br,cid,op(82),counter.revision,'10000','cash',null]))[0].j;
+ check('cashier closes complete check',paid.status==='closed'&&paid.amountMinor==='10000');
+ const replay=(await q('select ops.counter_close($1,$2,$3,$4,$5::bigint,$6::bigint,$7,$8) as j',[b,br,cid,op(82),counter.revision,'10000','cash',null]))[0].j;
+ check('cashier operation replay does not duplicate',replay.replayed&&replay.receiptId===paid.receiptId);
+ await rejects('same table cannot be collected twice',()=>q('select ops.counter_close($1,$2,$3,$4,$5::bigint,$6::bigint,$7,$8)',[b,br,cid,op(83),counter.revision,'10000','cash',null]),'CHECK_ALREADY_SETTLED');
+ const panel=(await q('select ops.operator_snapshot($1,$2) as j',[b,br]))[0].j;
+ check('cash receipt visible and closed table freed',panel.receipts.length===1&&panel.tables[0].status==='empty');
+ const prod=panel.products.find(x=>x.id===p1);await q("select ops.manage_pilot($1,$2,'save-product',$3::jsonb)",[b,br,JSON.stringify({productId:p1,priceMinor:'16001',available:false,expectedUpdatedAt:prod.updatedAt})]);
+ const panel2=(await q('select ops.operator_snapshot($1,$2) as j',[b,br]))[0].j;
+ check('price management keeps exact cents',panel2.products.find(x=>x.id===p1).priceMinor==='16001');
+ check('availability immediately gates live catalogue',!panel2.catalogue.items.find(x=>x.id===p1).canOrder);
+ await rejects('stale menu editor update rejected',()=>q("select ops.manage_pilot($1,$2,'save-product',$3::jsonb)",[b,br,JSON.stringify({productId:p1,priceMinor:'1',available:true,expectedUpdatedAt:prod.updatedAt})]),'PRODUCT_CHANGED');
+ await q("select ops.manage_pilot($1,$2,'dine-in',$3::jsonb)",[b,br,JSON.stringify({enabled:false})]);
+ check('owner can pause new orders',!(await q('select ops.catalogue($1,$2) as j',[b,br]))[0].j.orderingEnabled);
+ await auth(users[1]);await rejects('closed check member loses access',()=>q('select ops.get_cart_snapshot($1,$2,$3)',[b,br,cid]),'CHECK_NOT_FOUND');
+ await db.exec('reset role');await rejects('receipt is append only',()=>q('update ops.counter_receipts set amount_minor=1 where id=$1',[paid.receiptId]),'APPEND_ONLY_RECORD');
+ fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);
+}catch(e){console.error('SQL TEST FAILED',e.message,e.detail,e.where);process.exitCode=1;}finally{await db.close();}

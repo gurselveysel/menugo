@@ -1,13 +1,22 @@
 # MenüGO
 
-Yeni Nesil Dijital Menü — işletme, masa siparişi ve mutfak yönetimi.
+Yeni Nesil Dijital Menü — Next.js, TypeScript, Supabase.
 
-Bu depo, mevcut Next.js / Supabase uygulamasının kaynaklarının taşınması için hazırlanıyor.
+## Çalıştırma
 
-## Güvenlik
+Node 22/24. `npm ci` (kilit dosyası yoksa `npm install`), `npm run test:sql`, `npm test`, `npm run build`, `npm start`.
 
-- API sırları, `.env` dosyaları, yönetici parolaları, müşteri kayıtları ve veritabanı dökümleri depoya eklenmez.
-- Gerçek ödeme, SMS ve kurye işlemleri yalnızca sağlayıcı kabul testleri tamamlandığında açılır.
-- Veritabanı migration'ları otomatik olarak canlı ortama uygulanmaz.
+## r6
 
-Tüm hakları saklıdır. Kamuya açık depo, kod veya marka için açık kaynak lisansı verildiği anlamına gelmez.
+- Supabase üzerinde onaylı fiyat ve stok uygunluğu.
+- Yönetici menü/fiyat ekranı, masa QR katılımı, ortak sepet, mutfak kuyruğu.
+- Kasada gerçekten alınmış nakit/harici POS tutarının append-only kaydı ve atomik masa kapatma.
+- Kişi bazlı hesap paylaşımı; PSP, kurye ve SMS için kapalı güvenlik kapıları.
+
+Mevcut veritabanında eski migration'ları tekrar çalıştırmayın. r6 migration sonrası pilot kabul testleri yapılmalıdır.
+Supabase publishable anahtarı frontend için tasarlanmıştır; service-role, veritabanı parolası veya müşteri verisi bu depoda bulunmaz.
+`docs/pilot-r6.md` işletim ve eksik sağlayıcı bağlantılarını açıklar.
+
+Testler gerçek SQL motorlu izole PGlite ortamında çalışır; Auth/Realtime taklitleri canlı dört telefon testinin yerine geçmez.
+
+Tüm hakları saklıdır. Public depo açık kaynak lisansı değildir.

@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.test-build/
+.env
+.env.*
+!.env.example
+.vercel/
+test-results/
+public/qa/
+*.log
