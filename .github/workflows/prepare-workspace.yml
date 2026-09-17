@@ -1,0 +1,28 @@
+name: Prepare isolated workspace
+on:
+  push:
+    branches: ['release/merchant-r7']
+    paths: ['.github/workflows/prepare-workspace.yml']
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: |
+          mkdir -p /tmp/menugo-workspace
+          tar --exclude=.git --exclude=.next --exclude=node_modules --exclude=public/qa -czf /tmp/menugo-workspace/source.tar.gz .
+          tar -czf /tmp/menugo-workspace/dependencies.tar.gz node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: isolated-source-dependencies
+          path: /tmp/menugo-workspace/
+          retention-days: 1
+          compression-level: 0
