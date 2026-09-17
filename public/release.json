@@ -1,1 +1,21 @@
-{"version": "menugo-merchant-20260917-r7", "merchantMenu": true, "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"], "whatsapp": "customer-confirmed-click-to-chat", "onlinePayments": false, "automatedCourier": false, "marketingSms": false, "liveData": "Supabase"}
+{
+  "version": "menugo-transparent-branding-20260917-r8",
+  "merchantMenu": true,
+  "roleInterfaces": [
+    "customer",
+    "owner",
+    "manager",
+    "waiter",
+    "kitchen",
+    "cashier"
+  ],
+  "whatsapp": "customer-confirmed-click-to-chat",
+  "onlinePayments": false,
+  "automatedCourier": false,
+  "marketingSms": false,
+  "liveData": "Supabase",
+  "previous": "menugo-merchant-20260917-r7",
+  "transparentMerchantBrand": true,
+  "whiteMerchantFooter": true,
+  "dataAndPermissionsUnchanged": true
+}
