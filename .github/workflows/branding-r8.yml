@@ -1,0 +1,63 @@
+name: Transparent branding release
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/branding-r8.yml']
+permissions:
+  contents: write
+jobs:
+  branding:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Import scoped logo and stylesheet update
+        env:
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-d630-8246-bafc-7ea511113fc1/raw?se=2026-09-17T19%3A02%3A17Z&sp=r&sv=2026-02-06&sr=b&scid=37a10eea-07e9-567d-990a-0149536841b1&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T17%3A05%3A04Z&ske=2026-09-18T17%3A05%3A04Z&sks=b&skv=2026-02-06&sig=s5B5qc7GYrlufXLpTWxYN9Bg09gAlDrHuXfcL%2Bm%2B6/8%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync,existsSync,mkdirSync} from 'node:fs';
+          import {dirname} from 'node:path';
+          import {createHash} from 'node:crypto';
+          import {gunzipSync} from 'node:zlib';
+          const sha=b=>createHash('sha256').update(b).digest('hex');
+          const allowed=['components/MerchantMenu.tsx','components/RoleWorkspace.tsx','components/Customer.tsx','components/CustomerAccount.tsx','components/Login.tsx','app/merchant.css','tests/merchant-ui.integration.mjs','public/release.json','public/media/sariyer-brand-transparent-r8.webp','tests/branding-ui.integration.mjs'];
+          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});
+          if(!r.ok)throw Error('Transfer failed '+r.status);
+          const bytes=Buffer.from(await r.arrayBuffer());
+          if(sha(bytes)!=='a354b3ed2026def9d56ca626a34dc9bab78f8970cb64f29734fb837ac2da54eb')throw Error('Transfer checksum mismatch');
+          const bundle=JSON.parse(gunzipSync(bytes));
+          if(bundle.release!=='menugo-transparent-branding-20260917-r8')throw Error('Wrong release');
+          if(JSON.stringify(Object.keys(bundle.files).sort())!==JSON.stringify([...allowed].sort()))throw Error('Unexpected file scope');
+          for(const [path,entry] of Object.entries(bundle.files)){
+            if(entry.beforeSha256){if(!existsSync(path)||sha(readFileSync(path))!==entry.beforeSha256)throw Error('Concurrent source edit '+path);}
+            else if(existsSync(path))throw Error('Unexpected existing file '+path);
+          }
+          for(const [path,entry] of Object.entries(bundle.files)){mkdirSync(dirname(path),{recursive:true});writeFileSync(path,Buffer.from(entry.data,'base64'));}
+          console.log('Only merchant logo, CSS, referencing components and branding tests changed. No API or DB changes.');
+          NODE
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/merchant-ui.integration.mjs
+      - run: node tests/branding-ui.integration.mjs
+      - name: Commit verified source without force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add components/MerchantMenu.tsx components/RoleWorkspace.tsx components/Customer.tsx components/CustomerAccount.tsx components/Login.tsx app/merchant.css tests/merchant-ui.integration.mjs public/release.json public/media/sariyer-brand-transparent-r8.webp tests/branding-ui.integration.mjs
+          git commit -m 'fix: transparent merchant logos and clean white MenuGO footer'
+          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-branding-r8-qa
+          path: public/qa
+          retention-days: 3
+          if-no-files-found: ignore
