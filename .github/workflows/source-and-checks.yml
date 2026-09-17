@@ -1,0 +1,73 @@
+name: MenuGO source and checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+concurrency:
+  group: menugo-source-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Import exact audited source once
+        if: github.event_name == 'push' && hashFiles('docs/pilot-r6.md') == ''
+        env:
+          SOURCE_URL: 'https://sdmntprnortheu.oaiusercontent.com/files/00000000-ee78-81f4-97ec-b254b0432849/raw?se=2026-09-17T16%3A30%3A15Z&sp=r&sv=2026-02-06&sr=b&scid=62777d35-af71-5ea0-bedc-533aadbb2324&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T02%3A12%3A59Z&ske=2026-09-18T02%3A12%3A59Z&sks=b&skv=2026-02-06&sig=m0Mm5rty3UFH4cjZk9bi343ygyTtSPhqUYeJrCePyXI%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import {createHash} from 'node:crypto';
+          import {gunzipSync} from 'node:zlib';
+          import {mkdirSync,writeFileSync} from 'node:fs';
+          import {resolve,dirname,sep} from 'node:path';
+          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});
+          if(!r.ok)throw Error('Source download failed: '+r.status);
+          const b=Buffer.from(await r.arrayBuffer());
+          if(createHash('sha256').update(b).digest('hex')!=='d7ca1586d1184b44a0e010e816dedd0c2386a3db64fe7a208e1cce7b47a6b2f3')throw Error('Source checksum mismatch');
+          const pack=JSON.parse(gunzipSync(b));
+          if(pack.version!=='menugo-counter-pilot-20260917-r6')throw Error('Unexpected version');
+          for(const[path,entry]of Object.entries(pack.files)){
+            const dest=resolve(path);
+            if(!dest.startsWith(process.cwd()+sep)||path.startsWith('.git/'))throw Error('Unsafe source path');
+            mkdirSync(dirname(dest),{recursive:true});writeFileSync(dest,Buffer.from(entry.data,entry.encoding==='base64'?'base64':'utf8'));
+          }
+          console.log('Verified and extracted',Object.keys(pack.files).length,'source files');
+          NODE
+          node scripts/sync-live-static.mjs
+          node scripts/finish-static.mjs
+          git config user.name 'Menugo Build'
+          git config user.email 'menugo-build@users.noreply.github.com'
+          git add .
+          git commit -m 'feat: import MenuGO application with counter checkout and menu management'
+          git push origin HEAD:main
+      - run: npm install --no-audit --no-fund
+      - run: npm run test:sql
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: npm run test:ui
+      - name: Commit dependency lock after successful validation
+        if: github.event_name == 'push'
+        run: |
+          git config user.name 'Menugo Build'
+          git config user.email 'menugo-build@users.noreply.github.com'
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'build: lock validated dependency versions'
+            git push origin HEAD:main
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-qa
+          path: public/qa
+          if-no-files-found: ignore
