@@ -1,0 +1,72 @@
+name: Live guest-first acceptance
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/guest-live.yml']
+permissions:
+  contents: read
+jobs:
+  live-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Wait for verified production version
+        run: |
+          node --input-type=module <<'NODE'
+          let ready=false;
+          for(let i=0;i<30;i++){
+            const r=await fetch('https://www.menugo.app/release.json',{cache:'no-store',signal:AbortSignal.timeout(15000)});
+            if(r.ok&&(await r.json()).version==='menugo-guest-first-20260918-r9'){ready=true;break;}
+            await new Promise(resolve=>setTimeout(resolve,3000));
+          }
+          if(!ready)throw Error('Guest release is not live');
+          console.log('Production guest-first release confirmed');
+          NODE
+      - name: Production logos and responsive layout
+        run: node tests/branding-ui.integration.mjs
+        env:
+          BRAND_TEST_BASE_URL: https://sariyerborekcisi.menugo.app
+      - name: Real guest pages and API guards (no accounts, orders or messages)
+        run: |
+          node --input-type=module <<'NODE'
+          import {chromium as pw} from 'playwright-core';import chromium from '@sparticuz/chromium';import assert from 'node:assert/strict';import fs from 'node:fs';
+          const base='https://sariyerborekcisi.menugo.app';const out='public/qa/guest-live';fs.mkdirSync(out,{recursive:true});const checks=[],errors=[];
+          const browser=await pw.launch({executablePath:await chromium.executablePath(),headless:true,args:chromium.args.filter(a=>!a.startsWith('--disable-web-security')&&a!=='--single-process')});
+          try{
+            const context=await browser.newContext();const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+            for(const width of [360,390,768,1024,1440]){
+              await page.setViewportSize({width,height:900});
+              for(const path of ['/siparis','/hesabim']){
+                await page.goto(base+path,{waitUntil:'networkidle'});
+                await page.getByRole('heading',{name:path==='/siparis'?'Hoş geldiniz.':'Siparişlerim',exact:true}).waitFor();
+                assert.equal(new URL(page.url()).pathname,path,'must not redirect guest to login');
+                assert.equal(await page.locator('input[type=email],input[type=password]').count(),0);
+                assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+                await page.screenshot({path:`${out}/${path.slice(1)}-${width}.png`,fullPage:true});checks.push(`No account gate or overflow: ${path} at ${width}`);
+              }
+            }
+            const visits=await context.request.get(base+'/api/guest/visits');assert.equal(visits.status(),200);assert.deepEqual(await visits.json(),[]);checks.push('Anonymous visits endpoint returns empty own-session history');
+            const protectedPaths=['/api/session','/api/ops/console','/api/guest/00000000-0000-4000-8000-000000000001/cart','/api/guest/00000000-0000-4000-8000-000000000001/orders'];
+            for(const path of protectedPaths){const r=await context.request.get(base+path);assert.equal(r.status(),401,path);checks.push('No unauthenticated data exposure: '+path);}
+            const cat=await context.request.get(base+'/api/catalogue');assert.equal(cat.status(),200);const catalogue=await cat.json();assert.equal(catalogue.items.length,76);assert.equal(catalogue.items.filter(p=>p.priceApproved).length,71);checks.push('Original 76 catalogue items and 71 approvals preserved');
+            await page.goto(base+'/giris?role=customer',{waitUntil:'networkidle'});await page.getByRole('link',{name:'Üye olmadan devam et'}).waitFor();checks.push('Optional account offers explicit guest continuation');
+            assert.deepEqual(errors,[]);checks.push('No JavaScript runtime exceptions');
+            fs.writeFileSync(out+'/results.json',JSON.stringify({passed:checks.length,checks,errors,production:true,noDatabaseWrites:true,realStaffSignIn:false,realOrderOrPayment:false,generatedAt:new Date().toISOString()},null,2));console.log('LIVE GUEST ACCEPTANCE PASS',checks.length);
+          }finally{await browser.close();}
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-live-guest-acceptance
+          path: |
+            public/qa/branding-live
+            public/qa/guest-live
+          retention-days: 3
+          if-no-files-found: ignore
