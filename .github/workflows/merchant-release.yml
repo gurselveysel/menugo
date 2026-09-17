@@ -1,14 +1,13 @@
 name: Merchant release acceptance
 on:
-  push:
-    paths: ['.github/workflows/merchant-release.yml']
-    branches: [main]
+  workflow_dispatch:
+  pull_request:
 permissions:
-  contents: write
+  contents: read
 jobs:
-  verify-source:
+  acceptance:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     services:
       postgres:
         image: postgres:17
@@ -24,29 +23,6 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Verify and import reviewed release source
-        env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-ee34-8246-9183-3a7e28695723/raw?se=2026-09-17T18%3A14%3A56Z&sp=r&sv=2026-02-06&sr=b&scid=5c29f8b8-973e-543b-8158-e63db9666861&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T08%3A44%3A01Z&ske=2026-09-18T08%3A44%3A01Z&sks=b&skv=2026-02-06&sig=hwUjMMtHPjmVV2ODXtf%2BJeyxhjTcbgw9cypbdp%2BoRrw%3D'
-        run: |
-          node --input-type=module <<'NODE'
-          import {mkdirSync,writeFileSync,rmSync} from 'node:fs';
-          import {resolve,dirname,sep} from 'node:path';
-          import {gunzipSync} from 'node:zlib';
-          import {createHash} from 'node:crypto';
-          const response=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});
-          if(!response.ok)throw Error('Source transfer failed: '+response.status);
-          const bytes=Buffer.from(await response.arrayBuffer());
-          if(createHash('sha256').update(bytes).digest('hex')!=='b12f1f6be6dd5d569093bfb7be136da453efc12bca87ccceaa1d6447d3d6d93b')throw Error('Source hash mismatch');
-          const bundle=JSON.parse(gunzipSync(bytes));
-          if(bundle.release!=='menugo-merchant-20260917-r7')throw Error('Wrong source');
-          for(const [path,data] of Object.entries(bundle.files)){
-            if(path.startsWith('/')||path.split('/').some(p=>['..','.git','.github','node_modules'].includes(p))||(path.startsWith('.env')&&path!=='.env.example'))throw Error('Invalid source path');
-            const file=resolve(path);if(!file.startsWith(process.cwd()+sep))throw Error('Outside source root');
-            mkdirSync(dirname(file),{recursive:true});writeFileSync(file,Buffer.from(data,'base64'));
-          }
-          for(const path of bundle.delete){if(path!=='app/bahcesehir/route.ts')throw Error('Unexpected deletion');rmSync(path,{force:true});}
-          console.log('Reviewed source hash verified; no secrets or customer records imported.');
-          NODE
       - run: npm ci --no-audit --no-fund
       - run: npm run test:sql
       - run: node tests/native-postgres.integration.mjs
@@ -57,31 +33,14 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: '1'
       - run: npm run test:ui
-      - name: Cashier acceptance
-        id: cashier
-        continue-on-error: true
-        run: node tests/pilot-ui.integration.mjs
-      - name: Merchant and role interface acceptance
-        id: merchant
-        continue-on-error: true
-        run: node tests/merchant-ui.integration.mjs
-      - name: Require all acceptance checks
-        run: test '${{ steps.cashier.outcome }}' = 'success' && test '${{ steps.merchant.outcome }}' = 'success'
-      - name: Commit verified source (never force push)
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app components lib hooks src public/release.json supabase/migrations tests README.md next.config.mjs
-          git diff --cached --quiet || git commit -m 'feat: verified merchant menu, WhatsApp, staff roles and cashier workflow'
-          git push origin HEAD:main
-          git archive --format=zip -o /tmp/menugo-verified-merchant.zip HEAD
+      - run: node tests/pilot-ui.integration.mjs
+      - run: node tests/merchant-ui.integration.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: menugo-merchant-acceptance
+          name: merchant-acceptance
           path: |
             public/qa
             test-results
-            /tmp/menugo-verified-merchant.zip
-          if-no-files-found: ignore
           retention-days: 3
+          if-no-files-found: ignore
