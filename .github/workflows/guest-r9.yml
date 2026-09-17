@@ -26,7 +26,7 @@ jobs:
           cache: npm
       - name: Import reviewed source, reject concurrent edits
         env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-41fc-8246-be55-bd319ccd870b/raw?se=2026-09-17T22%3A43%3A33Z&sp=r&sv=2026-02-06&sr=b&scid=bf345348-d0ab-5ce5-a45b-5333d06283ec&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T08%3A43%3A59Z&ske=2026-09-18T08%3A43%3A59Z&sks=b&skv=2026-02-06&sig=zEKstCDP/875Ztwa/Xdf3gmAcE8qIYy3stnm%2BrzbwPU%3D'
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-5270-8246-9f10-401fd59deb3f/raw?se=2026-09-17T22%3A48%3A15Z&sp=r&sv=2026-02-06&sr=b&scid=e2504d4a-0d2f-5435-945c-70d6e7656df5&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T02%3A15%3A07Z&ske=2026-09-18T02%3A15%3A07Z&sks=b&skv=2026-02-06&sig=5FVnMdO6J4GtwlCYbY1Rd3DYsrQ4IytMQdrjxgOj6Rk%3D'
         run: |
           node --input-type=module <<'NODE'
           import {readFileSync,writeFileSync,existsSync,mkdirSync} from 'node:fs';
@@ -37,7 +37,7 @@ jobs:
           const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});
           if(!r.ok)throw Error('Source transfer failed '+r.status);
           const bytes=Buffer.from(await r.arrayBuffer());
-          if(sha(bytes)!=='9cfa182b97fa374c402427be6ee93367e02cfd2a3daa137d5333922fb5f01412')throw Error('Source checksum mismatch');
+          if(sha(bytes)!=='10ff3fb51d4fc8d611a3b68751839269254bff47cbeb215ec55dbd7ce20adb00')throw Error('Source checksum mismatch');
           const bundle=JSON.parse(gunzipSync(bytes));
           if(bundle.release!=='menugo-guest-first-20260918-r9'||Object.keys(bundle.files).length!==30)throw Error('Unexpected source release');
           for(const [path,entry] of Object.entries(bundle.files)){
