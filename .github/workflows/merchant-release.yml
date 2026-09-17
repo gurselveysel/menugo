@@ -17,7 +17,7 @@ jobs:
           POSTGRES_PASSWORD: disposable-ci-only
           POSTGRES_DB: menugo_ci
         ports: ['5432:5432']
-        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+        options: --health-cmd 'pg_isready -U postgres' --health-interval 5s --health-timeout 5s --health-retries 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +26,7 @@ jobs:
           cache: npm
       - name: Verify and import reviewed release source
         env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-efe4-8246-b73b-58efb649b5e1/raw?se=2026-09-17T18%3A02%3A16Z&sp=r&sv=2026-02-06&sr=b&scid=be9696c9-88b4-5caa-99bf-035323ea2cd1&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T03%3A11%3A14Z&ske=2026-09-18T03%3A11%3A14Z&sks=b&skv=2026-02-06&sig=kS3qrB3tNa0DubsgVptIDtHCzK46FqVmBljcykoHvOE%3D'
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-b990-8246-8398-b07e9aef07fc/raw?se=2026-09-17T18%3A12%3A18Z&sp=r&sv=2026-02-06&sr=b&scid=921419ce-11d2-5676-9b22-3574ef9303ec&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T04%3A33%3A34Z&ske=2026-09-18T04%3A33%3A34Z&sks=b&skv=2026-02-06&sig=UcggWeMS2Svvdtrvzl11QmcU05T2e4XYFRJdpCri7j8%3D'
         run: |
           node --input-type=module <<'NODE'
           import {mkdirSync,writeFileSync,rmSync} from 'node:fs';
@@ -36,7 +36,7 @@ jobs:
           const response=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});
           if(!response.ok)throw Error('Source transfer failed: '+response.status);
           const bytes=Buffer.from(await response.arrayBuffer());
-          if(createHash('sha256').update(bytes).digest('hex')!=='58ed318eb56584a895e0aacd63bc753250e9e7089e077492be6b2ef67b278fae')throw Error('Source hash mismatch');
+          if(createHash('sha256').update(bytes).digest('hex')!=='b12f1f6be6dd5d569093bfb7be136da453efc12bca87ccceaa1d6447d3d6d93b')throw Error('Source hash mismatch');
           const bundle=JSON.parse(gunzipSync(bytes));
           if(bundle.release!=='menugo-merchant-20260917-r7')throw Error('Wrong source');
           for(const [path,data] of Object.entries(bundle.files)){
@@ -56,13 +56,23 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      - run: npm run test:ui && node tests/pilot-ui.integration.mjs && node tests/merchant-ui.integration.mjs
+      - run: npm run test:ui
+      - name: Cashier acceptance
+        id: cashier
+        continue-on-error: true
+        run: node tests/pilot-ui.integration.mjs
+      - name: Merchant and role interface acceptance
+        id: merchant
+        continue-on-error: true
+        run: node tests/merchant-ui.integration.mjs
+      - name: Require all acceptance checks
+        run: test '${{ steps.cashier.outcome }}' = 'success' && test '${{ steps.merchant.outcome }}' = 'success'
       - name: Commit verified source (never force push)
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app components lib hooks src public/release.json supabase/migrations tests README.md next.config.mjs
-          git diff --cached --quiet || git commit -m 'feat: publish verified Sarıyer merchant interfaces and staff workflows'
+          git diff --cached --quiet || git commit -m 'feat: verified merchant menu, WhatsApp, staff roles and cashier workflow'
           git push origin HEAD:main
           git archive --format=zip -o /tmp/menugo-verified-merchant.zip HEAD
       - uses: actions/upload-artifact@v4
