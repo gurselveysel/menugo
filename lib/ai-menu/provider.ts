@@ -3,6 +3,16 @@ import {getVercelOidcToken} from '@vercel/oidc';
 import {validateDraft,extractionSchema,SYSTEM_PROMPT,ImportError} from './contracts';
 export const MODEL='google/gemini-2.5-flash';
 export async function gatewayCredential(){if(process.env.AI_GATEWAY_API_KEY)return process.env.AI_GATEWAY_API_KEY;try{return await getVercelOidcToken();}catch{return null;}}
+/** Read-only readiness; never purchases credit or performs inference. */
+export async function checkGatewayAccess(token:string){
+ let response:Response;
+ try{response=await fetch('https://ai-gateway.vercel.sh/v1/credits',{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(5000),cache:'no-store'});}catch{throw new ImportError('AI_UNAVAILABLE');}
+ if(!response.ok){await response.body?.cancel();throw new ImportError([401,403].includes(response.status)?'AI_ACCESS_REQUIRED':'AI_UNAVAILABLE');}
+ let body:unknown;try{body=await response.json();}catch{throw new ImportError('AI_UNAVAILABLE');}
+ const balance=(body as {balance?:unknown})?.balance;
+ if(typeof balance!=='string'||!/^\d+(\.\d+)?$/.test(balance))throw new ImportError('AI_UNAVAILABLE');
+ if(!/[1-9]/.test(balance))throw new ImportError('AI_CREDIT_REQUIRED');
+}
 export async function extractMenu(base64:string,mime:string,token:string){
  const attachment=mime==='application/pdf'?{type:'file',file:{filename:'menu.pdf',file_data:`data:${mime};base64,${base64}`}}:{type:'image_url',image_url:{url:`data:${mime};base64,${base64}`}};
  let r:Response;

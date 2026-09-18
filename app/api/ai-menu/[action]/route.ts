@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import {actor,rpc,scope,json,failed,origin,uuid,revision,Failure} from '@/lib/api';
 import {fileKind,MAX_FILE,ImportError} from '@/lib/ai-menu/contracts';
 import {validateReview} from '@/lib/ai-menu/review';
-import {gatewayCredential,MODEL} from '@/lib/ai-menu/provider';
+import {gatewayCredential,checkGatewayAccess,MODEL} from '@/lib/ai-menu/provider';
 import {processImport} from '@/lib/ai-menu/worker';
 export const runtime='nodejs';export const dynamic='force-dynamic';export const maxDuration=60;
 async function input(req:Request,limit:number){
@@ -15,10 +15,10 @@ async function input(req:Request,limit:number){
 }
 async function manager(){const {s}=await actor();await rpc(s,'ai_menu_job',{...scope,p_action:'list'});return s;}
 function error(e:unknown){if(e instanceof ImportError)return json({error:{code:e.code}},400);return failed(e);}
-async function work(s:Awaited<ReturnType<typeof manager>>,id:string,retry=false){const token=await gatewayCredential();if(!token)throw new Failure('AI_NOT_CONFIGURED',503);const claimed=await rpc(s,'ai_menu_job',{...scope,p_action:'claim',p_job_id:id,p_payload:{retry,model:MODEL}});if(claimed.claimed)after(async()=>{try{await processImport(s,id,claimed,token);}catch{console.error('MENUGO_AI_IMPORT_WORK_UNFINISHED');}});return claimed.claimed===true;}
+async function work(s:Awaited<ReturnType<typeof manager>>,id:string,retry=false){const token=await gatewayCredential();if(!token)throw new Failure('AI_NOT_CONFIGURED',503);await checkGatewayAccess(token);const claimed=await rpc(s,'ai_menu_job',{...scope,p_action:'claim',p_job_id:id,p_payload:{retry,model:MODEL}});if(claimed.claimed)after(async()=>{try{await processImport(s,id,claimed,token);}catch{console.error('MENUGO_AI_IMPORT_WORK_UNFINISHED');}});return claimed.claimed===true;}
 export async function GET(req:Request,{params}:{params:Promise<{action:string}>}){try{
  origin(req);const s=await manager(),{action}=await params;const u=new URL(req.url);
- if(action==='list'){const data=await rpc(s,'ai_menu_job',{...scope,p_action:'list'});return json({...data,aiConfigured:!!await gatewayCredential(),model:MODEL});}
+ if(action==='list'){const data=await rpc(s,'ai_menu_job',{...scope,p_action:'list'});let reason:string|null=null;const token=await gatewayCredential();if(!token)reason='AI_NOT_CONFIGURED';else try{await checkGatewayAccess(token);}catch(e){reason=e instanceof ImportError?e.code:'AI_UNAVAILABLE';}return json({...data,aiConfigured:reason===null,aiUnavailableReason:reason,model:MODEL});}
  if(action==='source'){const v=await rpc(s,'ai_menu_job',{...scope,p_action:'source',p_job_id:uuid(u.searchParams.get('id'))});const b=Buffer.from(v.data,'base64');return new Response(b,{headers:{'Content-Type':v.mime,'Content-Disposition':v.mime==='application/pdf'?'attachment; filename="menu-source.pdf"':'inline','Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});}
  if(action==='snapshot')return json(await rpc(s,'ai_menu_job',{...scope,p_action:'snapshot',p_job_id:uuid(u.searchParams.get('id'))}));
  throw new Failure('NOT_FOUND',404);

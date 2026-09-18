@@ -15,7 +15,7 @@ try{
  if(typeof balance!=='string'||!/^\d+(\.\d+)?$/.test(balance))throw Error('CREDIT_CHECK_UNAVAILABLE');
  const [whole,fraction='']=balance.split('.');
  const micros=BigInt(whole)*1000000n+BigInt((fraction+'000000').slice(0,6));
- if(micros<1000000n)throw Error('EXISTING_CREDIT_REQUIRED_FOR_TEST');
+ report.creditAvailable=micros>0n; if(micros<100000n)throw Error(micros===0n?'AI_CREDIT_REQUIRED':'TEST_CREDIT_MARGIN_REQUIRED');
  report.checks.push('existing credit confirmed without purchase');
  dir=mkdtempSync(join(tmpdir(),'menugo-ai-probe-'));
  const transpile=source=>ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
