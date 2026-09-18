@@ -1,0 +1,75 @@
+name: Codeless table ordering acceptance
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/codeless-r12.yml']
+permissions:
+  contents: write
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Import scoped source with concurrency protection
+        env:
+          SOURCE_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-caac-81f5-970b-1a1c28755c5c/raw?se=2026-09-18T10%3A21%3A44Z&sp=r&sv=2026-02-06&sr=b&scid=01276e60-3eb4-5206-af38-841cc19c0bfa&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T06%3A30%3A54Z&ske=2026-09-19T06%3A30%3A54Z&sks=b&skv=2026-02-06&sig=WOFQltw3TxIMBlXFOxwbOzwN3MMVOAKbbO83j564agc%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
+          const hash=x=>createHash('sha256').update(x).digest('hex');
+          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source unavailable '+r.status);
+          const bytes=Buffer.from(await r.arrayBuffer());if(hash(bytes)!=='de299ac7491010b93c07438a05571c6d6a529422de16e6327f6b72f8549c71aa')throw Error('Transfer checksum mismatch');
+          const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-codeless-ordering-20260918-r12')throw Error('Wrong release');
+          const allowed=new Set(['lib/config.ts','tests/sql.integration.mjs','tests/codeless-e2e.integration.mjs','tests/handover-e2e.integration.mjs','tests/guest-e2e.integration.mjs','tests/mobile-qr.integration.mjs','tests/native-postgres.integration.mjs','components/TableQR.tsx','components/TableEntry.tsx','components/ServiceInsights.tsx','components/Console.tsx','components/ApprovedTableEntry.tsx','components/GuestTable.tsx','components/TableAccess.tsx','components/transport.ts','public/release.json','supabase/migrations/20260918001500_ops_codeless_table.sql','app/yardim/page.tsx','app/api/table/[tableId]/route.ts','app/api/merchant/[action]/route.ts']);
+          if(Object.keys(patch.files).length!==allowed.size)throw Error('Unexpected scope');
+          for(const[p,e]of Object.entries(patch.files)){if(!allowed.has(p))throw Error('Invalid source path');if(e.beforeSha256){if(!existsSync(p)||hash(readFileSync(p))!==e.beforeSha256)throw Error('Concurrent edit '+p);}else if(existsSync(p))throw Error('New source conflict '+p);}
+          for(const[p,e]of Object.entries(patch.files)){mkdirSync(dirname(p),{recursive:true});writeFileSync(p,Buffer.from(e.data,'base64'));}
+          console.log('Scoped no-code ordering source verified; no catalog, credentials or customer data imported.');
+          NODE
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:sql
+      - run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Four code-free customers with real Next routes and isolated SQL
+        run: node tests/codeless-e2e.integration.mjs
+      - name: Optional strict mode and legacy invitation regression
+        run: node tests/handover-e2e.integration.mjs && node tests/guest-e2e.integration.mjs
+      - name: Staff, QR and branding regressions
+        run: node tests/merchant-ui.integration.mjs && node tests/pilot-ui.integration.mjs && node tests/mobile-qr.integration.mjs && node tests/branding-ui.integration.mjs
+      - name: Commit only after acceptance, never force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/config.ts tests components public/release.json supabase/migrations/20260918001500_ops_codeless_table.sql app/yardim/page.tsx 'app/api/table/[tableId]/route.ts' 'app/api/merchant/[action]/route.ts'
+          git commit -m 'feat: code-free table QR with private guest orders and staff acceptance'
+          git push origin HEAD:main
+          git archive --format=zip -o /tmp/menugo-r12-accepted-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-codeless-acceptance
+          path: |
+            public/qa
+            test-results
+            /tmp/menugo-r12-accepted-source.zip
+          retention-days: 3
+          if-no-files-found: ignore
