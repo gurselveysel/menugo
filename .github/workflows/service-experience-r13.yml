@@ -26,13 +26,13 @@ jobs:
           cache: npm
       - name: Verify narrowly scoped source
         env:
-          SOURCE_URL: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-a598-8210-988c-e9ce493309db/raw?se=2026-09-18T16%3A25%3A40Z&sp=r&sv=2026-02-06&sr=b&scid=39932443-0a5d-526c-a2a2-ec7cf3f3bad9&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T11%3A57%3A59Z&ske=2026-09-19T11%3A57%3A59Z&sks=b&skv=2026-02-06&sig=6PJT4cnWZYW9V0Khpm7BNVLgAY23f4IO2U3cq3dKpTA%3D'
+          SOURCE_URL: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-a064-8210-be3c-fc3224dc63c5/raw?se=2026-09-18T16%3A28%3A28Z&sp=r&sv=2026-02-06&sr=b&scid=4fcf118a-3d39-5f52-995c-70f682d891a8&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T12%3A02%3A23Z&ske=2026-09-19T12%3A02%3A23Z&sks=b&skv=2026-02-06&sig=gxctCutSa%2Bos1tfcMjqQZx7H3LkYsWcr%2BLcj8t7%2Bchc%3D'
         run: |
           node --input-type=module <<'NODE'
           import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
           const sha=x=>createHash('sha256').update(x).digest('hex');
           const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source transfer failed '+r.status);
-          const bytes=Buffer.from(await r.arrayBuffer());if(sha(bytes)!=='8a4c9397c3cc4c483fcb2da5e668841b467fc57124be63ad467e68da4e55ca29')throw Error('Source checksum mismatch');
+          const bytes=Buffer.from(await r.arrayBuffer());if(sha(bytes)!=='b6303bf64fe9b229952e721b6bfe3e2dc63447f7868194ab60677f8ae0111447')throw Error('Source checksum mismatch');
           const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-service-experience-20260918-r13')throw Error('Wrong version');
           const allowed=new Set(['app/api/guest/[checkId]/[action]/route.ts','app/api/merchant/[action]/route.ts','app/layout.tsx','app/menu-yazdir/page.tsx','app/service-experience.css','components/Console.tsx','components/GuestTable.tsx','components/KitchenBoard.tsx','components/MerchantMenu.tsx','components/PrintMenu.tsx','components/ServiceExperience.tsx','components/transport.ts','docs/benchmark-20260918.md','lib/config.ts','lib/menu-discovery.ts','public/release.json','supabase/migrations/20260918001600_ops_service_experience.sql','tests/experience-ui.integration.mjs','tests/service-experience.test.mjs','tests/sql.integration.mjs']);
           if(Object.keys(patch.files).length!==allowed.size)throw Error('Invalid source scope');
