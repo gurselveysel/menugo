@@ -1,0 +1,68 @@
+name: In-page camera QR acceptance
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/camera-entry-r14.yml']
+permissions:
+  contents: write
+jobs:
+  scanner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Import scoped camera interface changes
+        env:
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-8d8c-8246-bb0e-301ac6fb5863/raw?se=2026-09-18T18%3A16%3A02Z&sp=r&sv=2026-02-06&sr=b&scid=5d4a71f7-b0b0-5af3-85e0-38968c1e0d26&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T11%3A46%3A51Z&ske=2026-09-19T11%3A46%3A51Z&sks=b&skv=2026-02-06&sig=nCkmC1a7fMLqW3qfH0%2Bl3ABaKZuwLd2E6C/2aFxd1jA%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
+          const hash=b=>createHash('sha256').update(b).digest('hex');
+          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source unavailable '+r.status);
+          const bytes=Buffer.from(await r.arrayBuffer());if(hash(bytes)!=='a7da39e2c9a7ea242ba15437e03ad3fc50cfc793f77ee347bf0c925560882662')throw Error('Source integrity mismatch');
+          const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-camera-entry-20260918-r14')throw Error('Wrong release');
+          const allowed=new Set(['components/GuestTable.tsx','components/TableEntry.tsx','components/TableScanner.tsx','lib/table-qr-target.ts','app/qr-scanner.css','app/layout.tsx','app/yardim/page.tsx','next.config.mjs','lib/config.ts','public/release.json','package.json','tests/table-scanner.test.mjs','tests/scanner-ui.integration.mjs']);
+          if(Object.keys(patch.files).length!==allowed.size)throw Error('Invalid source scope');
+          if(hash(readFileSync('package-lock.json'))!==patch.lockBeforeSha256)throw Error('Concurrent dependency edit');
+          for(const[p,e]of Object.entries(patch.files)){if(!allowed.has(p))throw Error('Invalid path');if(e.beforeSha256){if(!existsSync(p)||hash(readFileSync(p))!==e.beforeSha256)throw Error('Concurrent source edit '+p);}else if(existsSync(p))throw Error('New file conflict '+p);}
+          for(const[p,e]of Object.entries(patch.files)){mkdirSync(dirname(p),{recursive:true});writeFileSync(p,Buffer.from(e.data,'base64'));}
+          console.log('Camera UI, local decoder, navigation validator and tests imported. No API/DB/order/auth changes.');
+          NODE
+      - name: Lock exact QR decoder dependency
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Real QR decoding with virtual camera and denied-permission scenarios
+        run: node tests/scanner-ui.integration.mjs
+      - name: Codeless four-guest regression
+        run: node tests/codeless-e2e.integration.mjs
+      - name: Mobile and branding regression
+        run: node tests/mobile-qr.integration.mjs && node tests/branding-ui.integration.mjs
+      - name: Existing service experience regression
+        run: node tests/experience-ui.integration.mjs
+      - name: Commit only accepted source; never force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add components/GuestTable.tsx components/TableEntry.tsx components/TableScanner.tsx lib/table-qr-target.ts app/qr-scanner.css app/layout.tsx app/yardim/page.tsx next.config.mjs lib/config.ts public/release.json package.json package-lock.json tests/table-scanner.test.mjs tests/scanner-ui.integration.mjs
+          git commit -m 'feat: in-page table QR camera scanner with permission and image fallbacks'
+          git push origin HEAD:main
+          git archive --format=zip -o /tmp/menugo-r14-accepted-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-camera-entry-acceptance
+          path: |
+            public/qa/scanner
+            public/qa/codeless
+            test-results
+            /tmp/menugo-r14-accepted-source.zip
+          retention-days: 3
+          if-no-files-found: ignore
