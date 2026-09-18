@@ -10,7 +10,7 @@ const server=spawn(process.execPath,['node_modules/next/dist/bin/next','start','
 server.stdout.on('data',d=>logs+=d);server.stderr.on('data',d=>logs+=d);
 async function session(mode='deny',width=390){
  if(browser)await browser.close();
- browser=await pw.launch({executablePath:await chromium.executablePath(),args:chromium.args,headless:true});
+ browser=await pw.launch({headless:true});
  console.log('Scanner scenario',mode,width);
  const context=await browser.newContext({viewport:{width,height:844}});const metrics={requests:0,stops:0,posts:0};
  await context.exposeBinding('qrMetric',(_,name)=>{metrics[name]++;});
@@ -42,7 +42,7 @@ try{
   assert.equal(metrics.requests,0);checks.push('no camera on page load '+width);
   if(width===390)await page.screenshot({path:out+'/welcome-390.png'});
   await page.getByRole('button',{name:'Kamerayı aç ve masa QR’sini tara'}).click();
-  await page.getByRole('alert').filter({hasText:'Kamera izni verilmedi'}).waitFor();assert.equal(metrics.requests,1);checks.push('denial handled '+width);
+  await page.getByRole('alert').filter({hasText:'Kamera izni verilmedi'}).waitFor();assert.equal(metrics.requests,1);checks.push('denial handled '+width);assert.equal(await page.getByLabel('QR fotoğrafı',{exact:true}).isVisible(),false);checks.push('native file input stays hidden '+width);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);checks.push('responsive '+width);
   assert.equal(metrics.posts,0);checks.push('no orders created by scanner '+width);
   if(width===390)await page.screenshot({path:out+'/camera-denied-390.png'});
@@ -53,7 +53,7 @@ try{
   await page.waitForURL('**/siparis?check='+check,{timeout:20000});assert.ok(metrics.requests===1&&metrics.stops>=1);checks.push('actual virtual-camera QR decoded, stream stopped, same-origin table route');assert.equal(metrics.posts,1);checks.push('only fixture join, no order POST');
  }
  {
-  const{page}=await session();await page.goto(base+'/siparis',{waitUntil:'networkidle'});await page.getByRole('button',{name:'Kamerayı aç ve masa QR’sini tara'}).click();await page.getByRole('alert').waitFor();
+  const{page}=await session();await page.goto(base+'/siparis',{waitUntil:'networkidle'});await page.getByRole('button',{name:'Kamerayı aç ve masa QR’sini tara'}).click();await page.getByRole('dialog').getByRole('alert').waitFor();
   await page.getByLabel('QR fotoğrafı',{exact:true}).setInputFiles({name:'wrong.png',mimeType:'image/png',buffer:invalidPng});await page.getByRole('alert').filter({hasText:'bağlantısı değil'}).waitFor();assert.equal(new URL(page.url()).pathname,'/siparis');checks.push('foreign QR refused');
   await page.getByLabel('QR fotoğrafı',{exact:true}).setInputFiles({name:'table.png',mimeType:'image/png',buffer:png});await page.waitForURL('**/siparis?check='+check);checks.push('actual photo QR decode after permission denial');
  }
@@ -67,7 +67,7 @@ try{
   const{page,metrics}=await session();await page.goto(base+tablePath,{waitUntil:'networkidle'});await page.waitForURL('**/siparis?check='+check);assert.equal(metrics.requests,0);assert.equal(await page.getByRole('button',{name:'Kamerayı aç ve masa QR’sini tara'}).count(),0);checks.push('existing valid table QR requires no second scan');
  }
  {
-  const{page,metrics}=await session();await page.goto(base+'/siparis',{waitUntil:'networkidle'});await page.getByRole('button',{name:'Kamerayı aç ve masa QR’sini tara'}).click();await page.getByRole('alert').waitFor();await page.getByText('Masa bağlantısını yapıştır',{exact:true}).click();await page.getByLabel('Masa QR bağlantısı',{exact:true}).fill('https://sariyerborekcisi.menugo.app'+tablePath);await page.getByRole('button',{name:'Masaya geç',exact:true}).click();await page.waitForURL('**/siparis?check='+check);checks.push('manual table link fallback');
+  const{page,metrics}=await session();await page.goto(base+'/siparis',{waitUntil:'networkidle'});await page.getByRole('button',{name:'Kamerayı aç ve masa QR’sini tara'}).click();await page.getByRole('dialog').getByRole('alert').waitFor();await page.getByText('Masa bağlantısını yapıştır',{exact:true}).click();await page.getByLabel('Masa QR bağlantısı',{exact:true}).fill('https://sariyerborekcisi.menugo.app'+tablePath);await page.getByRole('button',{name:'Masaya geç',exact:true}).click();await page.waitForURL('**/siparis?check='+check);checks.push('manual table link fallback');
  }
  assert.deepEqual(errors,[]);checks.push('no uncaught browser errors');fs.writeFileSync(out+'/results.json',JSON.stringify({passed:checks.length,checks,errors,physicalCamera:false,production:false,backend:'isolated route fixtures',source:'real jsQR decoder'},null,2));console.log('CAMERA QR PASS',checks.length);
 }catch(e){fs.writeFileSync(out+'/failure.json',JSON.stringify({error:e.message,checks,errors,logs:logs.slice(-3000)},null,2));console.error(e);process.exitCode=1;}finally{if(browser)await browser.close();server.kill('SIGTERM');}

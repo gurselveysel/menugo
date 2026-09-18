@@ -1,5 +1,5 @@
 {
-  "version": "menugo-service-experience-20260918-r13",
+  "version": "menugo-camera-entry-20260918-r14",
   "merchantMenu": true,
   "roleInterfaces": [
     "customer",
@@ -14,7 +14,7 @@
   "automatedCourier": false,
   "marketingSms": false,
   "liveData": "Supabase",
-  "previous": "menugo-codeless-ordering-20260918-r12",
+  "previous": "menugo-service-experience-20260918-r13",
   "transparentMerchantBrand": true,
   "whiteMerchantFooter": true,
   "dataAndPermissionsUnchanged": false,
@@ -45,5 +45,9 @@
   "timedBusyMode": true,
   "privateVisitFeedback": true,
   "dailyServiceReport": true,
-  "benchmarkedBrands": 24
+  "benchmarkedBrands": 24,
+  "cameraEntry": true,
+  "localQrDecoder": true,
+  "photoFallback": true,
+  "menuUnchanged": true
 }
