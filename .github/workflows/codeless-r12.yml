@@ -26,13 +26,13 @@ jobs:
           cache: npm
       - name: Import scoped source with concurrency protection
         env:
-          SOURCE_URL: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-e73c-8210-aa34-78c8a9001ff4/raw?se=2026-09-18T10%3A24%3A38Z&sp=r&sv=2026-02-06&sr=b&scid=e583fba4-9177-58e5-8ff1-7301fded2b28&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T08%3A32%3A47Z&ske=2026-09-19T08%3A32%3A47Z&sks=b&skv=2026-02-06&sig=uh1sCuWhXv2fVh5JT4yhJBsJ4ssZpB7GbMDUAU0MfCE%3D'
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-3918-8246-9cde-d49e82ec77cb/raw?se=2026-09-18T10%3A31%3A16Z&sp=r&sv=2026-02-06&sr=b&scid=08cf7cbf-30f1-5a95-a253-0f5ce725d3c3&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T06%3A56%3A40Z&ske=2026-09-19T06%3A56%3A40Z&sks=b&skv=2026-02-06&sig=%2BeJ/n8jNQHdZ7mav4uvthkbsE6Fk1uvBE4tPH0eVog0%3D'
         run: |
           node --input-type=module <<'NODE'
           import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
           const hash=x=>createHash('sha256').update(x).digest('hex');
           const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source unavailable '+r.status);
-          const bytes=Buffer.from(await r.arrayBuffer());if(hash(bytes)!=='42577e48700fc9b347a563c549b333616a758dda4444bb0dce52b86acc05dffa')throw Error('Transfer checksum mismatch');
+          const bytes=Buffer.from(await r.arrayBuffer());if(hash(bytes)!=='a349d7be307a0af420e33925109e25db6a34671ade68186b54bb24e641a3881b')throw Error('Transfer checksum mismatch');
           const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-codeless-ordering-20260918-r12')throw Error('Wrong release');
           const allowed=new Set(['lib/config.ts','tests/sql.integration.mjs','tests/codeless-e2e.integration.mjs','tests/handover-e2e.integration.mjs','tests/guest-e2e.integration.mjs','tests/mobile-qr.integration.mjs','tests/native-postgres.integration.mjs','components/TableQR.tsx','components/TableEntry.tsx','components/ServiceInsights.tsx','components/Console.tsx','components/ApprovedTableEntry.tsx','components/GuestTable.tsx','components/TableAccess.tsx','components/transport.ts','public/release.json','supabase/migrations/20260918001500_ops_codeless_table.sql','app/yardim/page.tsx','app/api/table/[tableId]/route.ts','app/api/merchant/[action]/route.ts']);
           if(Object.keys(patch.files).length!==allowed.size)throw Error('Unexpected scope');
@@ -50,11 +50,35 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: '1'
       - name: Four code-free customers with real Next routes and isolated SQL
+        id: codeless
+        continue-on-error: true
         run: node tests/codeless-e2e.integration.mjs
-      - name: Optional strict mode and legacy invitation regression
-        run: node tests/handover-e2e.integration.mjs && node tests/guest-e2e.integration.mjs
-      - name: Staff, QR and branding regressions
-        run: node tests/merchant-ui.integration.mjs && node tests/pilot-ui.integration.mjs && node tests/mobile-qr.integration.mjs && node tests/branding-ui.integration.mjs
+      - name: Optional strict mode regression
+        id: strict
+        continue-on-error: true
+        run: node tests/handover-e2e.integration.mjs
+      - name: Private legacy guest regression
+        id: guest
+        continue-on-error: true
+        run: node tests/guest-e2e.integration.mjs
+      - name: Staff menu regression
+        id: merchant
+        continue-on-error: true
+        run: node tests/merchant-ui.integration.mjs
+      - name: Cashier regression
+        id: cashier
+        continue-on-error: true
+        run: node tests/pilot-ui.integration.mjs
+      - name: Responsive waiter QR regression
+        id: mobile
+        continue-on-error: true
+        run: node tests/mobile-qr.integration.mjs
+      - name: Transparent branding regression
+        id: branding
+        continue-on-error: true
+        run: node tests/branding-ui.integration.mjs
+      - name: Require every acceptance suite
+        run: test '${{ steps.codeless.outcome }}' = 'success' && test '${{ steps.strict.outcome }}' = 'success' && test '${{ steps.guest.outcome }}' = 'success' && test '${{ steps.merchant.outcome }}' = 'success' && test '${{ steps.cashier.outcome }}' = 'success' && test '${{ steps.mobile.outcome }}' = 'success' && test '${{ steps.branding.outcome }}' = 'success'
       - name: Commit only after acceptance, never force push
         run: |
           git config user.name 'github-actions[bot]'
