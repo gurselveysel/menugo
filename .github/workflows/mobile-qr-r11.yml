@@ -1,0 +1,58 @@
+name: Mobile and waiter QR acceptance
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/mobile-qr-r11.yml']
+permissions:
+  contents: write
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Import narrowly scoped UI changes
+        env:
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-a48c-8246-9bc4-fb4cc60f58e6/raw?se=2026-09-18T01%3A23%3A47Z&sp=r&sv=2026-02-06&sr=b&scid=54a2d1f1-0c47-5282-90f5-394d0cb09398&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T17%3A00%3A32Z&ske=2026-09-18T17%3A00%3A32Z&sks=b&skv=2026-02-06&sig=ziIPQPdavPqrWgVUPvET0UByN283OY/UvZ1KEHe01MU%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
+          const hash=x=>createHash('sha256').update(x).digest('hex');
+          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source unavailable '+r.status);
+          const b=Buffer.from(await r.arrayBuffer());if(hash(b)!=='41ef325ac98f2877edbe00ec8bf91c6fe6518d3bde535a6d5784e92917896ae8')throw Error('Transfer integrity mismatch');
+          const patch=JSON.parse(gunzipSync(b));if(patch.version!=='menugo-mobile-qr-20260918-r11')throw Error('Wrong source version');
+          const allowed=new Set(['app/layout.tsx','app/yardim/page.tsx','components/Console.tsx','components/GuestTable.tsx','components/MerchantMenu.tsx','components/Pilot.tsx','components/TableAccess.tsx','public/release.json','tests/pilot-ui.integration.mjs','app/service-mobile.css','components/TableQR.tsx','hooks/useMerchantViewport.ts','tests/mobile-qr.integration.mjs']);
+          if(Object.keys(patch.files).length!==allowed.size)throw Error('Invalid source scope');
+          for(const[p,e]of Object.entries(patch.files)){if(!allowed.has(p))throw Error('Invalid path '+p);if(e.beforeSha256){if(!existsSync(p)||hash(readFileSync(p))!==e.beforeSha256)throw Error('Concurrent source change '+p);}else if(existsSync(p))throw Error('New file conflict '+p);}
+          for(const[p,e]of Object.entries(patch.files)){mkdirSync(dirname(p),{recursive:true});writeFileSync(p,Buffer.from(e.data,'base64'));}
+          console.log('13 UI/test files verified. No database, product, price, secret or authentication changes.');
+          NODE
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:sql
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/mobile-qr.integration.mjs
+      - run: node tests/merchant-ui.integration.mjs
+      - run: node tests/pilot-ui.integration.mjs
+      - run: node tests/branding-ui.integration.mjs
+      - run: node tests/handover-e2e.integration.mjs
+      - name: Commit tested source, never force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/layout.tsx app/yardim/page.tsx app/service-mobile.css components/Console.tsx components/GuestTable.tsx components/MerchantMenu.tsx components/Pilot.tsx components/TableAccess.tsx components/TableQR.tsx hooks/useMerchantViewport.ts public/release.json tests/pilot-ui.integration.mjs tests/mobile-qr.integration.mjs
+          git commit -m 'fix: responsive merchant menu and full-screen waiter QR controls'
+          git push origin HEAD:main
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-mobile-qr-acceptance
+          path: public/qa
+          retention-days: 3
+          if-no-files-found: ignore
