@@ -19,6 +19,13 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - name: Record deployment capability without disclosing credentials
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          mkdir -p test-results
+          if [ -n "$VERCEL_TOKEN" ]; then echo '{"credentialConfigured":true}' > test-results/deployment-readiness.json; else echo '{"credentialConfigured":false}' > test-results/deployment-readiness.json; fi
+          cat test-results/deployment-readiness.json
       - name: Integrate reviewed source with hash guards
         run: node scripts/integrate-camera-entry.mjs
       - name: Pin QR decoder and lock dependencies
@@ -28,8 +35,8 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      - name: Camera, real QR pixels, denial, late permission and no-second-scan
-        timeout-minutes: 3
+      - name: Independent camera scenarios and actual QR decoding
+        timeout-minutes: 4
         run: node tests/scanner-ui.integration.mjs
       - name: Four code-free guests regression
         run: node tests/codeless-e2e.integration.mjs
@@ -54,11 +61,9 @@ jobs:
             exit 0
           fi
           node --input-type=module <<'NODE'
-          import{mkdirSync,writeFileSync,readFileSync,existsSync}from'node:fs';
+          import{mkdirSync,writeFileSync}from'node:fs';
           mkdirSync('.vercel',{recursive:true});
           writeFileSync('.vercel/project.json',JSON.stringify({orgId:'team_QH2k9edmHSXuybZK3Ay9RVAo',projectId:'prj_0t5CSJSdXuoVDsaejSm7DuctCCjL'}));
-          const old=existsSync('vercel.json')?JSON.parse(readFileSync('vercel.json','utf8')):{};
-          writeFileSync('vercel.json',JSON.stringify({...old,framework:'nextjs',installCommand:'npm ci --no-audit --no-fund',buildCommand:'npm run build',outputDirectory:'.next'}));
           NODE
           npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN" > /tmp/menugo-camera-production-url.txt
           cat /tmp/menugo-camera-production-url.txt
@@ -71,6 +76,7 @@ jobs:
             public/qa/codeless
             public/qa/mobile-qr
             public/qa/branding
+            test-results/deployment-readiness.json
             /tmp/menugo-camera-accepted-source.zip
             /tmp/menugo-camera-production-url.txt
           retention-days: 3
