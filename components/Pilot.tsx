@@ -2,6 +2,7 @@
 import {useEffect,useState} from 'react';
 import {Card,Empty} from './Shell';
 import {api,explain,money} from './transport';
+import {TableQR} from './TableQR';
 
 export function PriceEditor({products,reload,demo=false}:{products:any[];reload:()=>Promise<void>;demo?:boolean}) {
  const [search,setSearch]=useState('');const [selected,setSelected]=useState<any>(null);const [price,setPrice]=useState('');const [available,setAvailable]=useState(true);const [busy,setBusy]=useState(false);const [notice,setNotice]=useState('');
@@ -10,10 +11,9 @@ export function PriceEditor({products,reload,demo=false}:{products:any[];reload:
  return <><Card><h2>Menü & fiyat yönetimi</h2><p>Onayladığınız fiyatlar kuruş hassasiyetiyle kaydedilir. Tükenen ürünleri satışa kapatabilirsiniz.</p><input aria-label="Menü yönetiminde ürün ara" placeholder="Ürün ara…" value={search} onChange={e=>setSearch(e.target.value)}/>{notice&&<p className="notice" role="status">{notice}</p>}<div className="menu-editor-list">{products.filter(p=>p.name.toLocaleLowerCase('tr').includes(search.toLocaleLowerCase('tr'))).map(p=><div className="list-row" key={p.id}><div><strong>{p.name}</strong><small>{p.available?'Satışta':'Tükendi'} · {p.approved?'Fiyat onaylı':'Fiyat gerekli'}{p.optionCount>0?' · Seçenekli ürün':''}</small></div><strong>{money(p.priceMinor)}</strong><button className="btn" onClick={()=>edit(p)}>Düzenle</button></div>)}</div></Card>{selected&&<div className="pilot-modal-backdrop" role="presentation"><section className="pilot-modal" role="dialog" aria-modal="true" aria-labelledby="edit-product-title"><h2 id="edit-product-title">{selected.name}</h2><label>Satış fiyatı (TL)<input autoFocus inputMode="decimal" value={price} onChange={e=>setPrice(e.target.value)} placeholder="160,00"/></label><label className="check-label"><input type="checkbox" checked={available} onChange={e=>setAvailable(e.target.checked)}/> Satışa uygun</label>{notice&&<p className="notice" role="status">{notice}</p>}<div className="inline-actions"><button className="btn" disabled={busy} onClick={()=>setSelected(null)}>Vazgeç</button><button className="btn primary" disabled={busy} onClick={()=>void save()}>{busy?'Kaydediliyor…':'Fiyatı onayla ve kaydet'}</button></div></section></div>}</>;
 }
 
-export function TableInvitation({url}:{url:string}) {
- const [image,setImage]=useState('');const [message,setMessage]=useState('');
- useEffect(()=>{let alive=true;void import('qrcode').then(q=>q.toDataURL(url,{width:420,margin:4,errorCorrectionLevel:'M'})).then(v=>{if(alive)setImage(v);}).catch(()=>setMessage('QR oluşturulamadı; bağlantıyı kullanabilirsiniz.'));return()=>{alive=false;};},[url]);
- return <Card><h2>Masa katılımı</h2><p>Bu QR aynı açık adisyona katılır. Katılım bağlantısı 10 dakika geçerlidir; yeniden bağlantı oluşturmak mevcut sepeti silmez.</p><div className="table-qr">{image&&<img src={image} width={260} height={260} alt="Masa katılım QR kodu"/>}<div><a className="btn primary" href={url} target="_blank" rel="noreferrer">Bu masada sipariş aç ↗</a><button className="btn" onClick={async()=>{try{await navigator.clipboard.writeText(url);setMessage('Bağlantı kopyalandı.');}catch{setMessage('Bağlantıyı aşağıdaki alandan kopyalayın.');}}}>Bağlantıyı kopyala</button><input aria-label="Masa katılım bağlantısı" readOnly value={url} onFocus={e=>e.target.select()}/><p className="helper">QR’yi yalnızca bu masadaki misafirlerle paylaşın. Uzun süreli baskı için değil, açık adisyon katılımı içindir.</p>{message&&<p role="status">{message}</p>}</div></div></Card>;
+export function TableInvitation({url,tableName='Masa katılımı',expiresAt}:{url:string;tableName?:string;expiresAt?:number}) {
+ const[open,setOpen]=useState(false);
+ return <Card><h2>{tableName} · Ziyaret bağlantısı</h2><p>Bu kısa süreli QR yalnızca mevcut adisyona katılır. Müşteriye telefonunuzda gösterin; masa baskısı için masa kartındaki “QR göster” seçeneğini kullanın.</p><button type="button" className="btn primary" onClick={()=>setOpen(true)}>Ziyaret QR’sini göster</button><TableQR open={open} url={url} tableName={tableName} kind="visit" expiresAt={expiresAt} onClose={()=>setOpen(false)}/></Card>;
 }
 
 export function PilotSettings({settings,reload,demo=false}:{settings:any;reload:()=>Promise<void>;demo?:boolean}) {

@@ -1,0 +1,148 @@
+/* r11: resolve intrinsic-width conflicts instead of hiding page overflow. */
+.merchant-site{--merchant-dock-height:78px;--merchant-tabs-height:56px;width:100%;min-width:0;padding-bottom:calc(var(--merchant-dock-height) + 16px)}
+.merchant-site .merchant-main,.merchant-site .merchant-content,.merchant-site .merchant-identity,.merchant-site .merchant-footer{width:100%;min-width:0}
+.merchant-site .merchant-header{display:grid;grid-template-columns:140px minmax(0,1fr) 140px;gap:16px;height:auto;min-height:84px;padding:10px max(20px,calc((100% - 1120px)/2));align-items:center}
+.merchant-site .merchant-header select{justify-self:start;min-height:44px;margin:0;width:63px}
+.merchant-site .merchant-wordmark{display:block;width:100%;max-width:290px;min-width:0;justify-self:center}
+.merchant-site .merchant-wordmark img{width:100%;height:auto;max-width:100%;max-height:68px;object-fit:contain}
+.merchant-site .merchant-entry{justify-self:end;min-width:0;max-width:100%;min-height:44px;justify-content:center}
+.merchant-site .merchant-entry svg{flex-shrink:0}
+.merchant-site .merchant-entry span{max-width:none;overflow-wrap:anywhere}
+.merchant-site .merchant-identity{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.merchant-site .merchant-identity h1{max-width:100%;overflow-wrap:anywhere;text-wrap:balance}
+.merchant-site .merchant-identity>*{min-width:0}
+.merchant-site .merchant-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:16px;width:100%}
+.merchant-site .merchant-quick>a,.merchant-site .merchant-quick>button{min-width:0;min-height:44px;width:100%;white-space:normal;line-height:1.4;text-align:center;display:flex;justify-content:center;align-items:center;padding:11px 12px}
+.merchant-site .merchant-quick>.merchant-table-order{grid-column:1/-1;background:var(--gold);color:#242218;border-color:var(--gold);font-weight:600}
+.merchant-site .merchant-table-hint{font-size:12px;line-height:1.55;text-align:center;margin-top:9px}
+.merchant-site .merchant-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;width:100%}
+.merchant-site .merchant-tabs button{justify-content:center;min-width:0;min-height:48px;line-height:1.5;white-space:normal}
+.merchant-site .merchant-content{scroll-margin-top:calc(var(--merchant-tabs-height) + 12px)}
+.merchant-site .merchant-search{min-width:0;width:100%}
+.merchant-site .merchant-search input{font-size:16px;min-width:0;width:0;flex:1 1 0}
+.merchant-site .merchant-search>svg{flex-shrink:0}
+.merchant-site .merchant-section-title{gap:12px}
+.merchant-site .merchant-section-title h2{min-width:0;overflow-wrap:anywhere}
+.merchant-site .merchant-views{flex-shrink:0}
+.merchant-site .merchant-bottom{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;padding-inline:max(4px,env(safe-area-inset-left)) max(4px,env(safe-area-inset-right));padding-bottom:env(safe-area-inset-bottom)}
+.merchant-site .merchant-bottom button{width:100%;max-width:none;min-width:0;min-height:68px;gap:5px;padding:10px 4px;line-height:1.25}
+.merchant-site .merchant-bottom span{font-size:11px;overflow-wrap:anywhere;white-space:normal}
+.merchant-site .merchant-bottom svg{flex-shrink:0}
+.merchant-site[data-keyboard-open=true] .merchant-bottom{visibility:hidden;pointer-events:none}
+.merchant-site .merchant-toast{bottom:calc(var(--merchant-dock-height) + 12px);max-width:calc(100% - 24px)}
+.merchant-site .merchant-footer{padding-bottom:32px}
+.merchant-site .merchant-footer-links{min-width:0;gap:10px 22px}
+.merchant-site .merchant-dialog{width:min(580px,calc(100% - 24px));max-height:calc(100dvh - 24px);overscroll-behavior:contain;overflow-wrap:anywhere}
+.merchant-site .merchant-dialog header>button{width:44px;height:44px}
+.merchant-site .merchant-dialog input,.merchant-site .merchant-dialog textarea,.merchant-site .merchant-dialog select{font-size:16px}
+#table-access-requests{scroll-margin-top:20px;min-width:0}
+.table-card .table-show-qr{display:flex;width:100%;min-height:46px;background:#fff8e7;border-color:#d4b46b;color:#634719;font-size:14px;margin-top:12px}
+.table-card .table-request-link{display:flex;width:100%;flex-wrap:wrap;gap:8px;font-size:12px;min-height:44px;margin-top:8px}
+.table-access-card .section-heading{flex-wrap:wrap;gap:14px}
+.table-access-card .section-heading>div{min-width:0;flex:1 1 220px}
+.table-access-card .section-heading h2{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.table-access-card .entry-request label{min-width:0}
+.table-access-card p{overflow-wrap:anywhere}
+.table-qr-dialog{width:min(540px,calc(100% - 24px));max-width:none;max-height:calc(100dvh - 24px);margin:auto;padding:24px;box-sizing:border-box;border:1px solid #dbd4c2;border-radius:18px;background:#fff;color:#23261e;overflow:auto;overscroll-behavior:contain;box-shadow:0 20px 80px #0005}
+.table-qr-dialog::backdrop{background:#101811c9}
+.table-qr-heading{display:flex;gap:16px;justify-content:space-between;align-items:start;margin-bottom:12px}
+.table-qr-heading>div{min-width:0}
+.table-qr-heading p{font-size:10px;letter-spacing:1.7px;color:#7c632e;margin:0 0 5px}
+.table-qr-heading h2{font-size:clamp(24px,5vw,34px);line-height:1.25;margin:0;overflow-wrap:anywhere}
+.table-qr-close{width:44px;height:44px;flex:none;border-radius:10px;border:1px solid #e5ded2;background:#faf8f3;font-size:28px;line-height:1;color:#24251d}
+.table-qr-stage{display:flex;justify-content:center;align-items:center;min-height:120px;background:#fff}
+.table-qr-image{width:min(100%,320px);height:auto;aspect-ratio:1;object-fit:contain;background:#fff;flex-shrink:1}
+.table-qr-instruction{font-size:15px;line-height:1.65;color:#514f43;text-align:center;margin:12px 0 16px}
+.table-qr-expiry{font-size:12px;text-align:center;color:#836119;font-variant-numeric:tabular-nums}
+.table-qr-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.table-qr-actions .btn{font-size:12px;padding:10px;overflow-wrap:anywhere;min-width:0}
+.qr-present-button{width:100%;margin:10px 0 6px}
+.table-qr-tools input{font-size:14px;min-width:0;width:100%}
+.table-qr-tools p{font-size:12px;line-height:1.7;margin:14px 0 0}
+.table-qr-message{font-size:13px;color:#52652a;overflow-wrap:anywhere;text-align:center;margin:12px 0 0}
+.table-qr-print-brand{display:none}
+.table-qr-dialog.is-presenting{width:100%;height:100dvh;max-height:100dvh;max-width:100%;border:0;border-radius:0;margin:0;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center}
+.table-qr-dialog.is-presenting .table-qr-heading{width:100%;max-width:760px;flex-shrink:0}
+.table-qr-dialog.is-presenting .table-qr-stage{width:100%;min-height:100px;flex:1;max-height:calc(100dvh - 240px)}
+.table-qr-dialog.is-presenting .table-qr-image{width:min(90vw,calc(100dvh - 240px),660px);max-width:100%;max-height:100%;height:auto;object-fit:contain}
+.table-qr-dialog.is-presenting .table-qr-instruction{max-width:550px;flex-shrink:0}
+.table-qr-dialog.is-presenting .qr-present-button{max-width:440px;flex-shrink:0}
+.table-qr-dialog.is-presenting .table-qr-tools,.table-qr-dialog.is-presenting .table-qr-message{display:none}
+@media(min-width:901px){
+ .merchant-site .merchant-identity{grid-template-columns:minmax(0,1fr) minmax(290px,380px);gap:0 24px}
+ .merchant-site .merchant-identity>.merchant-eyebrow,.merchant-site .merchant-identity>h1,.merchant-site .merchant-identity>p:not(.merchant-table-hint){grid-column:1}
+ .merchant-site .merchant-identity>.merchant-quick{grid-column:2;grid-row:1/4;margin:0;align-self:center}
+ .merchant-site .merchant-identity>.merchant-table-hint{grid-column:2;grid-row:4}
+}
+@media(max-width:700px){
+ .merchant-site .merchant-header{grid-template-columns:44px minmax(0,1fr) 44px;gap:12px;min-height:76px;padding:10px max(14px,env(safe-area-inset-left)) 10px max(14px,env(safe-area-inset-right))}
+ .merchant-site .merchant-header select{width:44px;height:44px;padding:8px 3px;font-size:14px}
+ .merchant-site .merchant-wordmark{width:100%;max-width:230px}
+ .merchant-site .merchant-wordmark img{height:auto;max-height:56px;max-width:100%;width:100%}
+ .merchant-site .merchant-header .merchant-entry{width:44px!important;height:44px;padding:10px!important;gap:0}
+ .merchant-site .merchant-header .merchant-entry span{display:none!important}
+ .merchant-site .merchant-header .merchant-entry svg{width:22px;height:22px}
+ .merchant-site .merchant-cover-compact>img{height:auto!important;aspect-ratio:16/9;object-fit:contain;object-position:center;width:100%}
+ .merchant-site .merchant-cover-bottom{left:14px;right:14px;bottom:10px;gap:10px}
+ .merchant-site .merchant-cover-bottom>button{width:44px;min-height:44px;padding:10px;display:grid;place-items:center}
+ .merchant-site .merchant-cover-bottom>span{max-width:calc(100% - 56px);overflow-wrap:anywhere}
+ .merchant-site .merchant-identity{padding:18px 16px 14px}
+ .merchant-site .merchant-identity h1{font-size:clamp(21px,5.5vw,26px);line-height:1.25;text-wrap:balance}
+ .merchant-site .merchant-identity .merchant-eyebrow{font-size:9px!important;margin-bottom:8px!important}
+ .merchant-site .merchant-identity p{font-size:12px}
+ .merchant-site .merchant-quick{margin-top:14px;gap:8px}
+ .merchant-site .merchant-quick>a,.merchant-site .merchant-quick>button{font-size:13px;padding:10px;min-height:44px}
+ .merchant-site .merchant-table-hint{font-size:11px;line-height:1.55}
+ .merchant-site .merchant-tabs{padding:0 16px}
+ .merchant-site .merchant-tabs button{min-height:48px;font-size:14px;padding:12px 8px}
+ .merchant-site .merchant-content{padding:18px 16px 28px}
+ .merchant-site .merchant-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .merchant-site .merchant-category-grid.as-list{grid-template-columns:minmax(0,1fr)}
+ .merchant-site .merchant-products{grid-template-columns:minmax(0,1fr)}
+ .guest-header,.table-brand,.customer-account>header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:10px 14px}
+ .guest-header>a,.table-brand>a,.customer-account>header>a{min-width:0}
+ .guest-header img,.table-brand img,.customer-account>header img{width:100%;max-width:220px;height:auto;max-height:60px;object-fit:contain}
+ .guest-header a:last-child,.table-brand a:last-child,.customer-account>header a:last-child{max-width:100px;white-space:normal;text-align:right;overflow-wrap:anywhere}
+ .guest-footer{flex-wrap:wrap;gap:14px 24px}
+ .guest-context{flex-wrap:wrap}
+ .guest-line{flex-wrap:wrap}
+ .guest-line>div{min-width:0;overflow-wrap:anywhere}
+ .guest-dock{padding-bottom:max(12px,env(safe-area-inset-bottom))}
+ .table-qr-dialog{padding:18px}
+ .table-qr-tools input{font-size:16px}
+}
+@media(max-width:480px){
+ .workspace .table-grid{grid-template-columns:minmax(0,1fr)}
+ .workspace .table-card{padding:20px}
+ .workspace .table-card h2{font-size:22px}
+ .workspace .table-actions .btn{font-size:13px;padding:11px;min-height:44px}
+ .workspace .table-card .table-show-qr{font-size:15px}
+ .workspace .workspace-top{height:auto;min-height:55px;padding:12px 16px;gap:10px;flex-wrap:wrap}
+ .workspace .workspace-top>div{gap:10px;flex-wrap:wrap}
+ .workspace .heading-actions{flex-wrap:wrap}
+ .workspace .inline-form{flex-wrap:wrap}
+ .table-access-card .entry-request{display:grid;grid-template-columns:minmax(0,1fr)}
+ .table-access-card .entry-request>div,.table-access-card .entry-request label{width:100%;min-width:0}
+ .table-access-card .entry-request input{min-height:48px;font-size:22px}
+ .table-access-card .entry-request .btn{width:100%;min-height:46px}
+}
+@media(max-height:540px) and (orientation:landscape){
+ .table-qr-dialog.is-presenting .table-qr-stage{max-height:none}
+ .table-qr-dialog.is-presenting .table-qr-image{width:min(50vh,250px)}
+ .table-qr-dialog.is-presenting .table-qr-instruction{font-size:12px;line-height:1.4;margin:6px 0}
+ .table-qr-dialog.is-presenting .table-qr-heading h2{font-size:22px}
+ .table-qr-dialog.is-presenting .table-qr-heading{margin-bottom:4px}
+ .table-qr-dialog.is-presenting .qr-present-button{min-height:40px;padding:8px;margin:4px 0}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.merchant-site *{scroll-behavior:auto!important}}
+@media print{
+ body:has(>.table-qr-dialog[open])>*:not(.table-qr-dialog){display:none!important}
+ dialog.table-qr-dialog[open]{display:block!important;position:static;width:100mm;max-width:100%;height:auto;max-height:none;margin:12mm auto;border:1px solid #777;border-radius:3mm;box-shadow:none;padding:6mm;background:#fff;color:#000}
+ .table-qr-dialog .table-qr-close,.table-qr-dialog .table-qr-tools,.table-qr-dialog .qr-present-button,.table-qr-dialog .table-qr-message,.table-qr-dialog .table-qr-expiry{display:none!important}
+ .table-qr-dialog .table-qr-stage{display:block;max-height:none!important;min-height:0}
+ .table-qr-dialog .table-qr-image{width:80mm!important;height:80mm!important;max-width:100%;margin:auto}
+ .table-qr-dialog .table-qr-heading{text-align:center;display:block}
+ .table-qr-dialog .table-qr-instruction{font-size:12pt;line-height:1.5}
+ .table-qr-dialog .table-qr-print-brand{display:block;text-align:center;font-size:10pt}
+ .merchant-site .merchant-header,.merchant-site .merchant-bottom{display:none!important}
+}
