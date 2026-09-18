@@ -1,0 +1,12 @@
+import {test}from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import ts from'typescript';
+fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/table-qr-target.mjs',ts.transpileModule(fs.readFileSync('lib/table-qr-target.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const{tableQrTarget:parse,cameraMessage}=await import('../test-results/table-qr-target.mjs');
+const id='11111111-1111-4111-8111-111111111111',origin='https://sariyerborekcisi.menugo.app',table='/masaya-katil?masa='+id,token='a'.repeat(64);
+for(const host of ['',origin,'https://menugo.app','https://www.menugo.app','https://menugo-tau.vercel.app'])test('recognized origin '+host,()=>assert.deepEqual(parse(host+table,origin),{kind:'table',tableId:id,path:table}));
+test('permanent path accepts trailing slash',()=>assert.equal(parse('/masaya-katil/?masa='+id,origin)?.path,table));
+test('visit capability retained without external navigation',()=>assert.deepEqual(parse('https://menugo.app/siparis?check='+id+'&token='+token,origin),{kind:'visit',checkId:id,path:'/siparis?check='+id+'&token='+token}));
+test('local dev only on its own origin',()=>assert.equal(parse('http://localhost:3417'+table,'http://localhost:3417')?.path,table));
+for(const value of ['javascript:alert(1)','data:text/html,abc','https://evil.test'+table,'https://menugo.app.evil.test'+table,'//menugo.app'+table,'https://evil@menugo.app'+table,'https://menugo.app:444'+table,'http://menugo.app'+table,'http://localhost:3417'+table,table+'&next=/isletme',table+'&masa='+id,table+'#a',table+'\nX','/isletme','/siparis?check='+id,'/siparis?check='+id+'&token=bad','/siparis?check='+id+'&token='+token+'&next=/isletme','/masaya-katil?masa=1','/\\evil.test','a'.repeat(2049),''])test('reject '+JSON.stringify(value).slice(0,70),()=>assert.equal(parse(value,origin),null));
+test('error messages do not include raw sensitive input',()=>assert.ok(!cameraMessage({name:'Other',message:'SECRET'}).includes('SECRET')));
+test('permission denied explains alternatives',()=>assert.ok(cameraMessage({name:'NotAllowedError'}).includes('izin')));
+test('scanner asks for video only and loads decoder locally',()=>{const s=fs.readFileSync('components/TableScanner.tsx','utf8');assert.match(s,/audio:false/);assert.match(s,/getTracks\(\)\.forEach\(t=>t\.stop\(\)\)/);assert.match(s,/import\('jsqr'\)/);assert.doesNotMatch(s,/new FormData|MediaRecorder|console\.log/);});
