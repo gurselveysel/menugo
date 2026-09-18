@@ -1,0 +1,13 @@
+'use client';
+import {useEffect,useState,type FormEvent} from 'react';
+import Link from 'next/link';
+import {getBrowserClient} from '@/lib/supabase/browser';
+export function PasswordRecovery(){
+ const[ready,setReady]=useState(false),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[repeat,setRepeat]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ useEffect(()=>{let alive=true;void getBrowserClient().auth.getUser().then(({data})=>{if(alive)setReady(!!data.user&&!data.user.is_anonymous);});return()=>{alive=false;};},[]);
+ async function submit(e:FormEvent){e.preventDefault();if(busy)return;setBusy(true);setMessage('');try{
+  if(ready){if(password!==repeat){setMessage('Yeni parolalar eşleşmiyor.');return;}const{error}=await getBrowserClient().auth.updateUser({password});if(error){setMessage('Parola güncellenemedi. Yeni bir doğrulama bağlantısı isteyip tekrar deneyin.');return;}setPassword('');setRepeat('');setMessage('Parolanız güncellendi.');}
+  else {const{error}=await getBrowserClient().auth.resetPasswordForEmail(email.trim(),{redirectTo:location.origin+'/auth/callback?next=/parola'});setMessage(error?'Talep işlenemedi. Biraz sonra tekrar deneyin.':'Bu adrese bağlı uygun bir hesap varsa parola yenileme bağlantısı gönderilir. Gelen kutunuzu kontrol edin.');}
+ }catch{setMessage('Bağlantı kurulamadı. Yeniden deneyin.');}finally{setBusy(false);}}
+ return <main className="recovery-page"><Link href="/bahcesehir"><img src="/media/sariyer-brand-transparent-r8.webp" width={300} height={100} alt="Meşhur Sarıyer Börekçisi Sandviç"/></Link><section className="guest-card"><h1>{ready?'Yeni parola belirleyin':'Parola yenileme'}</h1><p>{ready?'En az 12 karakterli, başka yerde kullanmadığınız bir parola seçin.':'Hesabınızın e-posta adresini yazın. Masa siparişi için hesap gerekmez.'}</p><form onSubmit={submit}>{ready?<><label>Yeni parola<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={password} onChange={e=>setPassword(e.target.value)}/></label><label>Yeni parola tekrar<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={repeat} onChange={e=>setRepeat(e.target.value)}/></label></>:<label>E-posta<input type="email" autoComplete="email" required value={email} onChange={e=>setEmail(e.target.value)}/></label>}<button className="btn primary" disabled={busy}>{busy?'İşlem sürüyor…':ready?'Parolayı güncelle':'Yenileme bağlantısı iste'}</button></form>{message&&<p className="notice" role="status">{message}</p>}<Link className="btn" href="/giris">Giriş ekranı</Link><Link className="text-button" href="/bahcesehir">Menüye dön</Link></section></main>;
+}

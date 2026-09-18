@@ -7,6 +7,8 @@ export async function GET(req:Request,ctx:Context){try{origin(req);const{action}
  if(action==='profile')return json(await rpc(await client(),'merchant_profile',scope));
  if(action==='product-information')return json(await rpc(await client(),'product_information_read',{...scope,p_admin:false}));
  const{s}=await actor();
+ if(action==='readiness')return json(await rpc(s,'handover_readiness',scope));
+ if(action==='table-requests')return json(await rpc(s,'table_entry_pending',scope));
  if(action==='service-dashboard')return json(await rpc(s,'service_dashboard',scope));
  if(action==='linked-visits')return json(await rpc(s,'linked_guest_visits',scope));
  if(action==='product-editor')return json(await rpc(s,'product_information_read',{...scope,p_admin:true}));
@@ -29,6 +31,8 @@ export async function POST(req:Request,ctx:Context){try{origin(req);const{action
  const{s}=await actor();
  if(action==='claim')return json(await rpc(s,'staff_bootstrap',scope));
  const b=await body(req);
+ if(action==='table-decision'){if(typeof b.approve!=='boolean'||typeof b.code!=='string'||(b.approve&&!/^[0-9]{4}$/.test(b.code)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_entry_decide',{...scope,p_request_id:uuid(b.id),p_code:b.code,p_approve:b.approve}));}
+ if(action==='close-empty')return json(await rpc(s,'close_empty_check',{...scope,p_check_id:uuid(b.checkId)}));
  if(action==='end-guest')return json(await rpc(s,'guest_revoke',{...scope,p_check_id:uuid(b.checkId),p_guest_id:uuid(b.guestId)}));
  if(action==='save-information')return json(await rpc(s,'product_information_save',{...scope,p_product_id:uuid(b.productId),p_value:b.value}));
  if(action==='service-control')return json(await rpc(s,'service_control',{...scope,p_value:b}));

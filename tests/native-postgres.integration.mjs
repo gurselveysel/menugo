@@ -27,7 +27,7 @@ try{
  await a.query('ROLLBACK');
  assert.equal((await b.query('select id from ops.checks where id=$1 for update',[row.id])).rows.length,1);
  // Simultaneous guests attempting the same observed revision: one commit, one conflict.
- const guestRows=(await a.query("select g.*,c.revision::text from ops.guest_sessions g join ops.checks c on c.id=g.check_id where g.revoked_at is null and c.status='open' and g.seat_no in(1,2) order by g.created_at desc limit 2")).rows;
+ const guestRows=(await a.query("select g.*,c.revision::text from ops.guest_sessions g join ops.checks c on c.id=g.check_id where g.revoked_at is null and c.status='open' and g.seat_no in(1,2) and g.secret_hash=encode(sha256(convert_to(repeat(g.seat_no::text,64),'UTF8')),'hex') order by g.created_at desc limit 2")).rows;
  assert.equal(guestRows.length,2);
  const product=(await a.query("select id from public.menu_items where source_id='TIR-TEST-2'")).rows[0].id;
  const revision=guestRows[0].revision;

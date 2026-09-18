@@ -1,0 +1,11 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import ts from 'typescript';import fs from 'node:fs';
+fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/auth-destination.mjs',ts.transpileModule(fs.readFileSync('lib/auth-destination.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const{safeDestination,accountDestination}=await import('../test-results/auth-destination.mjs');
+for(const value of ['https://evil.test','//evil.test','/\\evil.test','/isletme\n','/unknown','/%2f%2fevil.test','/isletme#token','/isletme/../unknown'])test('reject unsafe auth destination '+JSON.stringify(value),()=>assert.equal(safeDestination(value),null));
+test('customer selector never grants manager privileges',()=>assert.equal(accountDestination(null,'merchant','/isletme'),'/hesabim'));
+test('waiter signed in with wrong screen choice routed to waiter',()=>assert.equal(accountDestination('waiter','merchant',null),'/garson'));
+test('kitchen cannot select cashier return destination',()=>assert.equal(accountDestination('kitchen','cashier','/kasa'),'/mutfak'));
+test('owner can use authorized cashier return',()=>assert.equal(accountDestination('owner','merchant','/kasa'),'/kasa'));
+test('password recovery destination stays local',()=>assert.equal(accountDestination('owner','merchant','/parola'),'/parola'));
+test('customer scope link can retain own visit query',()=>assert.equal(safeDestination('/siparis?check=123'),'/siparis?check=123'));
+test('ledger and price fields not introduced by table handover migration',()=>{const sql=fs.readFileSync('supabase/migrations/20260918001400_ops_handover.sql','utf8');assert.doesNotMatch(sql,/update\s+(?:public\.|auth\.)/i);assert.match(sql,/ENABLE ROW LEVEL SECURITY/);assert.match(sql,/FOR UPDATE/);assert.match(sql,/CHECK_NOT_EMPTY/);});
