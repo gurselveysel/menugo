@@ -38,6 +38,9 @@ jobs:
           const matches=source.split(before).length-1;
           if(matches!==0&&matches!==2)throw Error('Unexpected scanner test source');
           source=source.replaceAll(before,after);
+          source=source.replace("browser=await pw.launch({executablePath:await chromium.executablePath(),args:chromium.args,headless:true});","browser=await pw.launch({headless:true});");
+          const assertion="assert.equal(metrics.requests,1);checks.push('denial handled '+width);";
+          source=source.replace(assertion,assertion+"assert.equal(await page.getByLabel('QR fotoğrafı',{exact:true}).isVisible(),false);checks.push('native file input stays hidden '+width);");
           fs.writeFileSync(path,source);
           NODE
       - name: Pin QR decoder and lock dependencies
@@ -47,6 +50,8 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+      - name: Install full Chromium for media and permission tests
+        run: node node_modules/playwright-core/cli.js install --with-deps chromium
       - name: Independent camera scenarios and actual QR decoding
         timeout-minutes: 4
         run: node tests/scanner-ui.integration.mjs
