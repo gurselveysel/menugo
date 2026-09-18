@@ -14,13 +14,16 @@
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.100.0",
+    "@vercel/oidc": "3.8.8",
     "jsqr": "1.4.0",
     "next": "16.3.5",
+    "pdf-lib": "1.17.1",
     "pg": "^8.16.3",
     "qrcode": "1.5.4",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "sharp": "0.34.5"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.0",
