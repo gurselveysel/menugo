@@ -2,6 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "npm ci --no-audit --no-fund",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build && node scripts/ai-menu-provider-smoke.mjs",
   "outputDirectory": ".next"
 }
