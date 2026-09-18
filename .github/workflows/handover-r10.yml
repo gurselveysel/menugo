@@ -1,0 +1,75 @@
+name: Service handover acceptance
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/handover-r10.yml']
+permissions:
+  contents: write
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Import scoped source with concurrency guard
+        env:
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-75cc-8246-8d98-103d860885ac/raw?se=2026-09-18T00%3A28%3A50Z&sp=r&sv=2026-02-06&sr=b&scid=4b969baf-8002-5cea-85c1-dcfba4a41e4c&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-17T07%3A23%3A25Z&ske=2026-09-18T07%3A23%3A25Z&sks=b&skv=2026-02-06&sig=X6bTaSFKYxu1tAqWcd0qfqoDW%2B4%2B63WUXoeU%2Beoq8JI%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';
+          import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
+          const hash=x=>createHash('sha256').update(x).digest('hex');
+          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source unavailable '+r.status);
+          const b=Buffer.from(await r.arrayBuffer());if(hash(b)!=='d5acd65bdaae8aa140ca4c6fa318a58d797e98c8801ebf6cd7c8e3b2155ffaa0')throw Error('Transfer hash mismatch');
+          const patch=JSON.parse(gunzipSync(b));if(patch.version!=='menugo-service-handover-20260918-r10')throw Error('Wrong version');
+          const allowed=new Set(['components/Login.tsx','components/transport.ts','components/Handover.tsx','components/GuestTable.tsx','components/PasswordRecovery.tsx','components/Console.tsx','components/TableAccess.tsx','components/OfflineShell.tsx','components/TableEntry.tsx','lib/api.ts','lib/auth-destination.ts','lib/config.ts','public/sw.js','public/offline.html','public/manifest.webmanifest','public/release.json','app/layout.tsx','app/guest.css','tests/sql.integration.mjs','tests/handover.test.mjs','tests/handover-e2e.integration.mjs','tests/native-postgres.integration.mjs','supabase/migrations/20260918001400_ops_handover.sql','app/yardim/page.tsx','app/masaya-katil/page.tsx','app/parola/page.tsx','app/auth/callback/route.ts','app/api/merchant/[action]/route.ts','app/api/table/[tableId]/route.ts']);
+          if(Object.keys(patch.files).length!==allowed.size)throw Error('Unexpected file scope');
+          for(const[p,e]of Object.entries(patch.files)){if(!allowed.has(p))throw Error('Unexpected path '+p);if(e.beforeSha256){if(!existsSync(p)||hash(readFileSync(p))!==e.beforeSha256)throw Error('Concurrent edit '+p);}else if(existsSync(p))throw Error('Unexpected existing file '+p);}
+          for(const[p,e]of Object.entries(patch.files)){mkdirSync(dirname(p),{recursive:true});writeFileSync(p,Buffer.from(e.data,'base64'));}
+          console.log('Scoped release source verified. No credentials, customer records or public catalogue changes.');
+          NODE
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:sql
+      - run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: npm run test:ui
+      - run: node tests/pilot-ui.integration.mjs
+      - run: node tests/merchant-ui.integration.mjs
+      - run: node tests/guest-e2e.integration.mjs
+      - run: node tests/handover-e2e.integration.mjs
+      - name: Commit accepted source without force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add components lib app src hooks public/release.json public/sw.js public/offline.html public/manifest.webmanifest supabase/migrations tests
+          git commit -m 'feat: staff-approved permanent QR, role-aware login and usable service handover'
+          git push origin HEAD:main
+          git archive --format=zip -o /tmp/menugo-r10-verified-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-handover-r10-acceptance
+          path: |
+            public/qa
+            test-results
+            /tmp/menugo-r10-verified-source.zip
+          retention-days: 3
+          if-no-files-found: ignore
