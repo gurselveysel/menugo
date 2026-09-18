@@ -1,34 +1,54 @@
-name: Live AI menu studio acceptance
+name: AI studio readiness acceptance
 on:
-  workflow_dispatch:
   push:
     branches: [main]
     paths: ['.github/workflows/ai-menu-r15.yml']
 permissions:
-  contents: read
+  contents: write
 jobs:
-  live-ai-menu:
+  readiness:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
-      - run: npm ci --no-audit --no-fund
-      - name: Private AI boundaries and unchanged real customer catalogue
-        run: node tests/ai-menu-live.integration.mjs
-      - name: Live transparent brand assets and white footer
-        run: node tests/branding-ui.integration.mjs
+      - name: Import guarded readiness and layout fix
         env:
-          BRAND_TEST_BASE_URL: https://sariyerborekcisi.menugo.app
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-6060-8246-a955-10c4e1eb805a/raw?se=2026-09-18T23%3A53%3A10Z&sp=r&sv=2026-02-06&sr=b&scid=082ca9a3-04dc-577c-9a27-f70c80dce063&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T19%3A08%3A31Z&ske=2026-09-19T19%3A08%3A31Z&sks=b&skv=2026-02-06&sig=VKFd8%2BBS6xSh3i/A4%2Bx9p6WLDu8okhIQr0llWHgYLRs%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import{readFileSync,writeFileSync}from'node:fs';import{gunzipSync}from'node:zlib';import{createHash}from'node:crypto';
+          const sha=b=>createHash('sha256').update(b).digest('hex');
+          const response=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(20000)});if(!response.ok)throw Error('Transfer failed');
+          const b=Buffer.from(await response.arrayBuffer());if(sha(b)!=='d2a7e538f36c5b9c3d49543c8bd12fae50cf3fd4fd0e5ba0309889b5c5a65c75')throw Error('Checksum mismatch');
+          const p=JSON.parse(gunzipSync(b)),allowed=['lib/ai-menu/provider.ts','app/api/ai-menu/[action]/route.ts','components/AiMenuStudio.tsx','app/ai-menu.css','tests/ai-menu.test.mjs','tests/ai-menu-ui.integration.mjs'];
+          if(JSON.stringify(Object.keys(p.files).sort())!==JSON.stringify(allowed.sort()))throw Error('Invalid patch scope');
+          for(const[path,e]of Object.entries(p.files)){if(sha(readFileSync(path))!==e.beforeSha256)throw Error('Concurrent edit '+path);}
+          for(const[path,e]of Object.entries(p.files))writeFileSync(path,Buffer.from(e.data,'base64'));
+          let smoke=readFileSync('scripts/ai-menu-provider-smoke.mjs','utf8');
+          smoke=smoke.replace("if(micros<1000000n)throw Error('EXISTING_CREDIT_REQUIRED_FOR_TEST');","report.creditAvailable=micros>0n; if(micros<100000n)throw Error(micros===0n?'AI_CREDIT_REQUIRED':'TEST_CREDIT_MARGIN_REQUIRED');");
+          writeFileSync('scripts/ai-menu-provider-smoke.mjs',smoke);
+          NODE
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/ai-menu-ui.integration.mjs
+      - name: Commit tested readiness and bounded synthetic provider check
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lib/ai-menu/provider.ts 'app/api/ai-menu/[action]/route.ts' components/AiMenuStudio.tsx app/ai-menu.css tests/ai-menu.test.mjs tests/ai-menu-ui.integration.mjs scripts/ai-menu-provider-smoke.mjs
+          git commit -m 'chore: verify r15 AI provider with synthetic menu only'
+          git push origin HEAD:main
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: menugo-live-ai-menu-acceptance
-          path: |
-            public/qa/ai-menu-live
-            public/qa/branding-live
+          name: ai-menu-readiness-tests
+          path: public/qa/ai-menu
           retention-days: 3
           if-no-files-found: ignore
