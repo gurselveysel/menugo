@@ -7,7 +7,7 @@ export const dynamic='force-dynamic';export const runtime='nodejs';
 type Context={params:Promise<{checkId:string;action:string}>};
 export async function GET(req:Request,ctx:Context){try{
  origin(req);const params=await ctx.params;const id=uuid(params.checkId);const{s,secret}=await guestContext(id);
- const names:Record<string,string>={cart:'guest_snapshot',orders:'guest_orders',recommendations:'guest_recommendations'};
+ const names:Record<string,string>={cart:'guest_snapshot',orders:'guest_orders',recommendations:'guest_recommendations',feedback:'guest_feedback'};
  if(!names[params.action])throw new Failure('NOT_FOUND',404);
  return json(await rpc(s,names[params.action],{...scope,p_check_id:id,p_secret:secret}));
 }catch(e){return failed(e);}}
@@ -35,6 +35,7 @@ export async function POST(req:Request,ctx:Context){try{
   if(typeof data.reason!=='string'||data.reason.trim().length<1||data.reason.length>300)throw new Failure('REASON_REQUIRED');
   return json(await rpc(s,'guest_cancel_request',{...args,p_order_id:uuid(data.orderId),p_reason:data.reason.trim()}));
  }
+ if(action==='feedback'){if(Object.keys(data).some(k=>!['operationId','rating','comment'].includes(k))||!Number.isInteger(data.rating)||Number(data.rating)<1||Number(data.rating)>5||typeof data.comment!=='string'||data.comment.length>500)throw new Failure('INVALID_FEEDBACK');return json(await rpc(s,'guest_feedback',{...args,p_operation_id:uuid(data.operationId),p_rating:data.rating,p_comment:data.comment.trim()}));}
  if(action==='link'){const{ s:authorized }=await actor();return json(await rpc(authorized,'guest_link',args));}
  throw new Failure('NOT_FOUND',404);
 }catch(e){return failed(e);}}

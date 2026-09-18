@@ -4,9 +4,13 @@ export const dynamic='force-dynamic';export const runtime='nodejs';
 type Context={params:Promise<{action:string}>};
 function text(v:unknown,max:number,optional=false){if(optional&&v===undefined)return '';if(typeof v!=='string'||v.length>max)throw new Failure('INVALID_INPUT');return v;}
 export async function GET(req:Request,ctx:Context){try{origin(req);const{action}=await ctx.params;
+ if(action==='availability')return json(await rpc(await client(),'service_availability',scope));
  if(action==='profile')return json(await rpc(await client(),'merchant_profile',scope));
  if(action==='product-information')return json(await rpc(await client(),'product_information_read',{...scope,p_admin:false}));
  const{s}=await actor();
+ if(action==='pause')return json(await rpc(s,'service_pause',scope));
+ if(action==='feedback')return json(await rpc(s,'feedback_inbox',scope));
+ if(action==='daily-report'){const day=new URL(req.url).searchParams.get('day');if(day&&(!/^\d{4}-\d{2}-\d{2}$/.test(day)||Number.isNaN(Date.parse(day+'T00:00:00Z'))||new Date(day+'T00:00:00Z').toISOString().slice(0,10)!==day))throw new Failure('INVALID_REPORT_DAY');return json(await rpc(s,'daily_service_report',{...scope,p_day:day}));}
  if(action==='table-policy')return json(await rpc(s,'table_ordering_policy',{...scope,p_mode:null}));
  if(action==='readiness')return json(await rpc(s,'handover_readiness',scope));
  if(action==='table-requests')return json(await rpc(s,'table_entry_pending',scope));
@@ -32,6 +36,8 @@ export async function POST(req:Request,ctx:Context){try{origin(req);const{action
  const{s}=await actor();
  if(action==='claim')return json(await rpc(s,'staff_bootstrap',scope));
  const b=await body(req);
+ if(action==='pause'){if(!Number.isInteger(b.minutes)||![0,15,30,60].includes(Number(b.minutes))||typeof b.version!=='string'||!/^\d{1,18}$/.test(b.version))throw new Failure('INVALID_INPUT');return json(await rpc(s,'service_pause',{...scope,p_minutes:b.minutes,p_version:b.version}));}
+ if(action==='feedback')return json(await rpc(s,'feedback_inbox',{...scope,p_review_id:uuid(b.id)}));
  if(action==='table-policy'){if(!['direct','staff_approved'].includes(String(b.mode)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_ordering_policy',{...scope,p_mode:b.mode}));}
  if(action==='reject-order'){if(typeof b.note!=='string'||!b.note.trim()||b.note.length>300)throw new Failure('REASON_REQUIRED');return json(await rpc(s,'reject_submitted_order',{...scope,p_order_id:uuid(b.orderId),p_note:b.note.trim()}));}
  if(action==='table-decision'){if(typeof b.approve!=='boolean'||typeof b.code!=='string'||(b.approve&&!/^[0-9]{4}$/.test(b.code)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_entry_decide',{...scope,p_request_id:uuid(b.id),p_code:b.code,p_approve:b.approve}));}

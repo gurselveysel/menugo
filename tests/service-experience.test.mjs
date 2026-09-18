@@ -1,0 +1,15 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import ts from 'typescript';import fs from 'node:fs';
+fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/menu-discovery.mjs',ts.transpileModule(fs.readFileSync('lib/menu-discovery.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const{discover,csvCell,productSharePath}=await import('../test-results/menu-discovery.mjs');
+const rows=[{id:'a',name:'Çay',priceMinor:'9007199254740993',available:true,priceApproved:true},{id:'b',name:'Börek',priceMinor:'9007199254740992',available:true,priceApproved:true},{id:'c',name:'İçecek',priceMinor:null,available:true,priceApproved:false},{id:'d',name:'Tatlı',priceMinor:'100',available:false,priceApproved:true}];
+const options={sort:'menu',availableOnly:false,informationOnly:false};
+test('catalogue default preserves source order without mutating input',()=>{const got=discover(rows,[],options);assert.deepEqual(got,rows);assert.notEqual(got,rows);});
+test('price sorting above JS safe integer retains exact cents',()=>assert.deepEqual(discover(rows,[],{...options,sort:'price-asc'}).map(x=>x.id),['d','b','a','c']));
+test('descending price keeps unknown prices last',()=>assert.deepEqual(discover(rows,[],{...options,sort:'price-desc'}).map(x=>x.id),['a','b','d','c']));
+test('sale suitability excludes unknown and unavailable products',()=>assert.deepEqual(discover(rows,[],{...options,availableOnly:true}).map(x=>x.id),['a','b']));
+test('information filter never infers unknown ingredients',()=>assert.deepEqual(discover(rows,[{productId:'a',ingredients:'Çay',published:true},{productId:'b',ingredients:'',published:true},{productId:'c',ingredients:'Test',published:false}],{...options,informationOnly:true}).map(x=>x.id),['a']));
+for(const v of ['=1+1','+SUM(1,2)','-cmd','@SUM(A1)','  =1','\t=1'])test('CSV formula guard '+JSON.stringify(v),()=>assert.ok(csvCell(v).startsWith('"\'')));
+test('CSV escapes delimiters safely',()=>assert.equal(csvCell('Çay; "Demli"'),'"Çay; ""Demli"""'));
+test('product sharing contains product only and no guest capability',()=>assert.equal(productSharePath('11111111-1111-4111-8111-111111111111'),'/bahcesehir?urun=11111111-1111-4111-8111-111111111111'));
+test('invalid product share identifier rejected',()=>assert.throws(()=>productSharePath('https://evil.test')));
+test('migration touches ops only and has zero automatic ratings',()=>{const s=fs.readFileSync('supabase/migrations/20260918001600_ops_service_experience.sql','utf8');assert.doesNotMatch(s,/(?:UPDATE|INSERT INTO|ALTER TABLE)\s+(public|auth)\./i);assert.match(s,/ENABLE ROW LEVEL SECURITY/);assert.match(s,/FEEDBACK_AFTER_SERVICE/);assert.match(s,/FOR UPDATE/);});
