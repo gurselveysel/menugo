@@ -1,0 +1,77 @@
+name: Camera fix validation
+on:
+  push:
+    branches: [fix/camera-entry-r14]
+    paths: [.github/workflows/camera-fix-validation.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: menugo-camera-fix
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Integrate reviewed source with hash guards
+        run: node scripts/integrate-camera-entry.mjs
+      - name: Pin QR decoder and lock dependencies
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund --save-exact jsqr@1.4.0
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Camera, real QR pixels, denial, late permission and no-second-scan
+        timeout-minutes: 3
+        run: node tests/scanner-ui.integration.mjs
+      - name: Four code-free guests regression
+        run: node tests/codeless-e2e.integration.mjs
+      - name: Mobile and brand regression
+        run: node tests/mobile-qr.integration.mjs && node tests/branding-ui.integration.mjs
+      - name: Service experience regression
+        run: node tests/experience-ui.integration.mjs
+      - name: Save accepted source to this branch without force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add components/GuestTable.tsx components/TableEntry.tsx app/yardim/page.tsx lib/config.ts public/release.json next.config.mjs package.json package-lock.json
+          git diff --cached --quiet || git commit -m 'feat: integrate tested QR camera into customer entry pages'
+          git push origin HEAD:fix/camera-entry-r14
+          git archive --format=zip -o /tmp/menugo-camera-accepted-source.zip HEAD
+      - name: Deploy only when existing repository credential is configured
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo 'SOURCE_ACCEPTED_DEPLOYMENT_BLOCKED: No VERCEL_TOKEN is configured. No production deployment attempted.'
+            exit 0
+          fi
+          node --input-type=module <<'NODE'
+          import{mkdirSync,writeFileSync,readFileSync,existsSync}from'node:fs';
+          mkdirSync('.vercel',{recursive:true});
+          writeFileSync('.vercel/project.json',JSON.stringify({orgId:'team_QH2k9edmHSXuybZK3Ay9RVAo',projectId:'prj_0t5CSJSdXuoVDsaejSm7DuctCCjL'}));
+          const old=existsSync('vercel.json')?JSON.parse(readFileSync('vercel.json','utf8')):{};
+          writeFileSync('vercel.json',JSON.stringify({...old,framework:'nextjs',installCommand:'npm ci --no-audit --no-fund',buildCommand:'npm run build',outputDirectory:'.next'}));
+          NODE
+          npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN" > /tmp/menugo-camera-production-url.txt
+          cat /tmp/menugo-camera-production-url.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-camera-fix-acceptance
+          path: |
+            public/qa/scanner
+            public/qa/codeless
+            public/qa/mobile-qr
+            public/qa/branding
+            /tmp/menugo-camera-accepted-source.zip
+            /tmp/menugo-camera-production-url.txt
+          retention-days: 3
+          if-no-files-found: ignore
