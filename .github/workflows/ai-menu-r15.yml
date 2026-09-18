@@ -26,13 +26,13 @@ jobs:
           cache: npm
       - name: Import scoped reviewed source
         env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-1928-8246-9317-2008802137df/raw?se=2026-09-18T23%3A29%3A37Z&sp=r&sv=2026-02-06&sr=b&scid=e46b696e-1543-50b6-95f1-e89874b19445&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T19%3A01%3A44Z&ske=2026-09-19T19%3A01%3A44Z&sks=b&skv=2026-02-06&sig=dvPP1NID97LhzCj0md6PhGOPf/XiRRAALlLEFrfxJfs%3D'
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-433c-8246-986e-f23e6de67863/raw?se=2026-09-18T23%3A31%3A53Z&sp=r&sv=2026-02-06&sr=b&scid=a6ed362e-f355-5382-a4a6-f1d9032b8b6e&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T18%3A32%3A16Z&ske=2026-09-19T18%3A32%3A16Z&sks=b&skv=2026-02-06&sig=UfyFRrWs35isBwpyr68jHOiTv2o/jB4yP0BIM6uT7oc%3D'
         run: |
           node --input-type=module <<'NODE'
           import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
           const hash=b=>createHash('sha256').update(b).digest('hex');
           const response=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!response.ok)throw Error('Source unavailable '+response.status);
-          const bytes=Buffer.from(await response.arrayBuffer());if(hash(bytes)!=='bfb5bd2fbe77c17acf2e4d65d17b91e709c00d000b6c9ca6918aa681beaffd8d')throw Error('Source integrity mismatch');
+          const bytes=Buffer.from(await response.arrayBuffer());if(hash(bytes)!=='a347e084d4e432c68289c27e8b6212dde011da9080825899df75ac222590bf45')throw Error('Source integrity mismatch');
           const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-ai-menu-studio-20260919-r15')throw Error('Wrong release');
           const allowed=new Set(['package.json','components/AiMenuStudio.tsx','components/Console.tsx','public/release.json','tests/ai-menu-ui.integration.mjs','tests/ai-menu.test.mjs','tests/sql.integration.mjs','app/layout.tsx','app/ai-menu.css','docs/ai-menu-studio.md','lib/config.ts','supabase/migrations/20260919001700_ops_ai_menu_import.sql','lib/ai-menu/contracts.ts','lib/ai-menu/review.ts','lib/ai-menu/provider.ts','lib/ai-menu/worker.ts','app/api/ai-menu/[action]/route.ts']);
           if(Object.keys(patch.files).length!==allowed.size)throw Error('Unexpected source scope');
@@ -41,12 +41,17 @@ jobs:
           for(const[p,e]of Object.entries(patch.files)){mkdirSync(dirname(p),{recursive:true});writeFileSync(p,Buffer.from(e.data,'base64'));}
           console.log('Scoped source verified. No customer sources, API keys or live price data imported.');
           NODE
-      - name: Pin exact provider and file parser dependencies
+      - name: Pin provider and file parser dependencies
         run: npm install --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund @vercel/oidc@latest pdf-lib@1.17.1 sharp@0.34.5
       - run: npm ci --no-audit --no-fund
       - run: npm test
-      - run: npm run test:sql
+      - name: SQL acceptance
+        id: sql
+        continue-on-error: true
+        run: npm run test:sql
       - name: Native PostgreSQL acceptance
+        id: native
+        continue-on-error: true
         run: node tests/native-postgres.integration.mjs
         env:
           POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
@@ -54,11 +59,19 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: '1'
       - name: Private studio review and undo interfaces
+        id: studio
+        continue-on-error: true
         run: node tests/ai-menu-ui.integration.mjs
       - name: Existing guest and cashier regressions
+        id: guest
+        continue-on-error: true
         run: node tests/codeless-e2e.integration.mjs && node tests/pilot-ui.integration.mjs
-      - name: Camera, menu, mobile and branding regressions
+      - name: Camera menu and branding regressions
+        id: camera
+        continue-on-error: true
         run: node tests/scanner-ui.integration.mjs && node tests/experience-ui.integration.mjs && node tests/branding-ui.integration.mjs
+      - name: Require all acceptance suites
+        run: test '${{ steps.sql.outcome }}' = 'success' && test '${{ steps.native.outcome }}' = 'success' && test '${{ steps.studio.outcome }}' = 'success' && test '${{ steps.guest.outcome }}' = 'success' && test '${{ steps.camera.outcome }}' = 'success'
       - name: Commit tested source without force push
         run: |
           git config user.name 'github-actions[bot]'
