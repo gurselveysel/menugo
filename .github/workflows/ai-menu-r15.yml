@@ -1,0 +1,79 @@
+name: AI menu studio acceptance
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/ai-menu-r15.yml']
+permissions:
+  contents: write
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Import scoped reviewed source
+        env:
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-1928-8246-9317-2008802137df/raw?se=2026-09-18T23%3A29%3A37Z&sp=r&sv=2026-02-06&sr=b&scid=e46b696e-1543-50b6-95f1-e89874b19445&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T19%3A01%3A44Z&ske=2026-09-19T19%3A01%3A44Z&sks=b&skv=2026-02-06&sig=dvPP1NID97LhzCj0md6PhGOPf/XiRRAALlLEFrfxJfs%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
+          const hash=b=>createHash('sha256').update(b).digest('hex');
+          const response=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!response.ok)throw Error('Source unavailable '+response.status);
+          const bytes=Buffer.from(await response.arrayBuffer());if(hash(bytes)!=='bfb5bd2fbe77c17acf2e4d65d17b91e709c00d000b6c9ca6918aa681beaffd8d')throw Error('Source integrity mismatch');
+          const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-ai-menu-studio-20260919-r15')throw Error('Wrong release');
+          const allowed=new Set(['package.json','components/AiMenuStudio.tsx','components/Console.tsx','public/release.json','tests/ai-menu-ui.integration.mjs','tests/ai-menu.test.mjs','tests/sql.integration.mjs','app/layout.tsx','app/ai-menu.css','docs/ai-menu-studio.md','lib/config.ts','supabase/migrations/20260919001700_ops_ai_menu_import.sql','lib/ai-menu/contracts.ts','lib/ai-menu/review.ts','lib/ai-menu/provider.ts','lib/ai-menu/worker.ts','app/api/ai-menu/[action]/route.ts']);
+          if(Object.keys(patch.files).length!==allowed.size)throw Error('Unexpected source scope');
+          if(hash(readFileSync('package-lock.json'))!==patch.lockBeforeSha256)throw Error('Dependency baseline changed');
+          for(const[p,e]of Object.entries(patch.files)){if(!allowed.has(p))throw Error('Unexpected path');if(e.beforeSha256){if(!existsSync(p)||hash(readFileSync(p))!==e.beforeSha256)throw Error('Concurrent edit '+p);}else if(existsSync(p))throw Error('New file conflict '+p);}
+          for(const[p,e]of Object.entries(patch.files)){mkdirSync(dirname(p),{recursive:true});writeFileSync(p,Buffer.from(e.data,'base64'));}
+          console.log('Scoped source verified. No customer sources, API keys or live price data imported.');
+          NODE
+      - name: Pin exact provider and file parser dependencies
+        run: npm install --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund @vercel/oidc@latest pdf-lib@1.17.1 sharp@0.34.5
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:sql
+      - name: Native PostgreSQL acceptance
+        run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Private studio review and undo interfaces
+        run: node tests/ai-menu-ui.integration.mjs
+      - name: Existing guest and cashier regressions
+        run: node tests/codeless-e2e.integration.mjs && node tests/pilot-ui.integration.mjs
+      - name: Camera, menu, mobile and branding regressions
+        run: node tests/scanner-ui.integration.mjs && node tests/experience-ui.integration.mjs && node tests/branding-ui.integration.mjs
+      - name: Commit tested source without force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json components/AiMenuStudio.tsx components/Console.tsx public/release.json tests/ai-menu-ui.integration.mjs tests/ai-menu.test.mjs tests/sql.integration.mjs app/layout.tsx app/ai-menu.css docs/ai-menu-studio.md lib/config.ts supabase/migrations/20260919001700_ops_ai_menu_import.sql lib/ai-menu 'app/api/ai-menu/[action]/route.ts'
+          git commit -m 'feat: private AI menu extraction with reviewed updates, exact cents and safe undo'
+          git push origin HEAD:main
+          git archive --format=zip -o /tmp/menugo-r15-accepted-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-ai-menu-acceptance
+          path: |
+            public/qa/ai-menu
+            test-results
+            /tmp/menugo-r15-accepted-source.zip
+          retention-days: 3
+          if-no-files-found: ignore
