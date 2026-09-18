@@ -1,87 +1,34 @@
-name: Service experience acceptance
+name: Live service experience acceptance
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths: ['.github/workflows/service-experience-r13.yml']
 permissions:
-  contents: write
+  contents: read
 jobs:
-  acceptance:
+  live-experience:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: disposable-ci-only
-          POSTGRES_DB: menugo_ci
-        ports: ['5432:5432']
-        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 12
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
           cache: npm
-      - name: Verify narrowly scoped source
-        env:
-          SOURCE_URL: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-a064-8210-be3c-fc3224dc63c5/raw?se=2026-09-18T16%3A28%3A28Z&sp=r&sv=2026-02-06&sr=b&scid=4fcf118a-3d39-5f52-995c-70f682d891a8&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T12%3A02%3A23Z&ske=2026-09-19T12%3A02%3A23Z&sks=b&skv=2026-02-06&sig=gxctCutSa%2Bos1tfcMjqQZx7H3LkYsWcr%2BLcj8t7%2Bchc%3D'
-        run: |
-          node --input-type=module <<'NODE'
-          import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
-          const sha=x=>createHash('sha256').update(x).digest('hex');
-          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source transfer failed '+r.status);
-          const bytes=Buffer.from(await r.arrayBuffer());if(sha(bytes)!=='b6303bf64fe9b229952e721b6bfe3e2dc63447f7868194ab60677f8ae0111447')throw Error('Source checksum mismatch');
-          const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-service-experience-20260918-r13')throw Error('Wrong version');
-          const allowed=new Set(['app/api/guest/[checkId]/[action]/route.ts','app/api/merchant/[action]/route.ts','app/layout.tsx','app/menu-yazdir/page.tsx','app/service-experience.css','components/Console.tsx','components/GuestTable.tsx','components/KitchenBoard.tsx','components/MerchantMenu.tsx','components/PrintMenu.tsx','components/ServiceExperience.tsx','components/transport.ts','docs/benchmark-20260918.md','lib/config.ts','lib/menu-discovery.ts','public/release.json','supabase/migrations/20260918001600_ops_service_experience.sql','tests/experience-ui.integration.mjs','tests/service-experience.test.mjs','tests/sql.integration.mjs']);
-          if(Object.keys(patch.files).length!==allowed.size)throw Error('Invalid source scope');
-          for(const[p,e]of Object.entries(patch.files)){if(!allowed.has(p))throw Error('Unexpected source file');if(e.beforeSha256){if(!existsSync(p)||sha(readFileSync(p))!==e.beforeSha256)throw Error('Concurrent source edit '+p);}else if(existsSync(p))throw Error('New file conflict '+p);}
-          for(const[p,e]of Object.entries(patch.files)){mkdirSync(dirname(p),{recursive:true});writeFileSync(p,Buffer.from(e.data,'base64'));}
-          console.log('20 scoped files verified; no credentials, customer records or product price modifications.');
-          NODE
       - run: npm ci --no-audit --no-fund
-      - run: npm test
-      - run: npm run test:sql
-      - run: node tests/native-postgres.integration.mjs
+      - name: Read-only live menu tools, print menu and private endpoint boundaries
+        run: node tests/experience-live.integration.mjs
+      - name: Live transparent logos and white merchant footer
+        run: node tests/branding-ui.integration.mjs
         env:
-          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
-      - run: npm run build
-        env:
-          NEXT_TELEMETRY_DISABLED: '1'
-      - name: Experience UI contracts
-        id: experience
-        continue-on-error: true
-        run: node tests/experience-ui.integration.mjs
-      - name: Four codeless guests
-        id: guests
-        continue-on-error: true
-        run: node tests/codeless-e2e.integration.mjs
-      - name: Merchant and cashier regressions
-        id: staff
-        continue-on-error: true
-        run: node tests/merchant-ui.integration.mjs && node tests/pilot-ui.integration.mjs
-      - name: Mobile QR and brand regressions
-        id: branding
-        continue-on-error: true
-        run: node tests/mobile-qr.integration.mjs && node tests/branding-ui.integration.mjs
-      - name: Require all acceptance suites
-        run: test '${{ steps.experience.outcome }}' = 'success' && test '${{ steps.guests.outcome }}' = 'success' && test '${{ steps.staff.outcome }}' = 'success' && test '${{ steps.branding.outcome }}' = 'success'
-      - name: Commit accepted source without force push
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add app components lib docs/benchmark-20260918.md public/release.json supabase/migrations/20260918001600_ops_service_experience.sql tests
-          git commit -m 'feat: researched menu tools, kitchen controls, service pause and private visit feedback'
-          git push origin HEAD:main
-          git archive --format=zip -o /tmp/menugo-r13-accepted-source.zip HEAD
+          BRAND_TEST_BASE_URL: https://sariyerborekcisi.menugo.app
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: menugo-service-experience-acceptance
+          name: menugo-live-service-experience
           path: |
-            public/qa
-            test-results
-            /tmp/menugo-r13-accepted-source.zip
+            public/qa/experience-live
+            public/qa/branding-live
           retention-days: 3
           if-no-files-found: ignore
