@@ -7,6 +7,7 @@ export async function GET(req:Request,ctx:Context){try{origin(req);const{action}
  if(action==='profile')return json(await rpc(await client(),'merchant_profile',scope));
  if(action==='product-information')return json(await rpc(await client(),'product_information_read',{...scope,p_admin:false}));
  const{s}=await actor();
+ if(action==='table-policy')return json(await rpc(s,'table_ordering_policy',{...scope,p_mode:null}));
  if(action==='readiness')return json(await rpc(s,'handover_readiness',scope));
  if(action==='table-requests')return json(await rpc(s,'table_entry_pending',scope));
  if(action==='service-dashboard')return json(await rpc(s,'service_dashboard',scope));
@@ -31,6 +32,8 @@ export async function POST(req:Request,ctx:Context){try{origin(req);const{action
  const{s}=await actor();
  if(action==='claim')return json(await rpc(s,'staff_bootstrap',scope));
  const b=await body(req);
+ if(action==='table-policy'){if(!['direct','staff_approved'].includes(String(b.mode)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_ordering_policy',{...scope,p_mode:b.mode}));}
+ if(action==='reject-order'){if(typeof b.note!=='string'||!b.note.trim()||b.note.length>300)throw new Failure('REASON_REQUIRED');return json(await rpc(s,'reject_submitted_order',{...scope,p_order_id:uuid(b.orderId),p_note:b.note.trim()}));}
  if(action==='table-decision'){if(typeof b.approve!=='boolean'||typeof b.code!=='string'||(b.approve&&!/^[0-9]{4}$/.test(b.code)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_entry_decide',{...scope,p_request_id:uuid(b.id),p_code:b.code,p_approve:b.approve}));}
  if(action==='close-empty')return json(await rpc(s,'close_empty_check',{...scope,p_check_id:uuid(b.checkId)}));
  if(action==='end-guest')return json(await rpc(s,'guest_revoke',{...scope,p_check_id:uuid(b.checkId),p_guest_id:uuid(b.guestId)}));

@@ -1,5 +1,5 @@
 {
-  "version": "menugo-mobile-qr-20260918-r11",
+  "version": "menugo-codeless-ordering-20260918-r12",
   "merchantMenu": true,
   "roleInterfaces": [
     "customer",
@@ -14,10 +14,10 @@
   "automatedCourier": false,
   "marketingSms": false,
   "liveData": "Supabase",
-  "previous": "menugo-service-handover-20260918-r10",
+  "previous": "menugo-mobile-qr-20260918-r11",
   "transparentMerchantBrand": true,
   "whiteMerchantFooter": true,
-  "dataAndPermissionsUnchanged": true,
+  "dataAndPermissionsUnchanged": false,
   "guestSessions": true,
   "personalDrafts": true,
   "customerAccountRequired": false,
@@ -26,11 +26,16 @@
   "serviceCancellation": true,
   "productInformationEditor": true,
   "persistent_table_qr": true,
-  "staff_verified_table_admission": true,
+  "staff_verified_table_admission": false,
   "empty_check_close": true,
   "role_aware_auth_callback": true,
   "auth_project_configuration_changed": false,
   "help_page": true,
   "responsive_fix": true,
-  "waiter_qr_display": true
+  "waiter_qr_display": true,
+  "codelessTableEntry": true,
+  "guestDataScope": "own-visit-only",
+  "staffOrderAcceptance": true,
+  "optional_staff_verified_table_admission": true,
+  "cataloguePricesUnchanged": true
 }

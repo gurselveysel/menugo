@@ -28,7 +28,9 @@ try{
  await pages[0].getByRole('button',{name:'Misafir Sandviç ekle'}).click();await pages[0].locator('.guest-dock strong').filter({hasText:'150,00'}).waitFor();
  await pages[1].locator('.guest-main[data-cart-revision="1"]').waitFor();
  await pages[1].getByRole('button',{name:'Misafir Sandviç ekle'}).click();await pages[1].locator('.guest-dock strong').filter({hasText:'150,00'}).waitFor();
- await pages[0].getByRole('button',{name:'Benim seçimlerim',exact:true}).click();await pages[0].locator('.guest-others summary').waitFor();ok('other draft visible read-only',await pages[0].locator('.guest-others button').count()===0);
+ // Private drafts no longer provide an other-person DOM marker; wait for the server revision signal instead.
+ await pages[0].locator('.guest-main[data-cart-revision="2"]').waitFor();
+ await pages[0].getByRole('button',{name:'Benim seçimlerim',exact:true}).click();ok('other guests drafts are not rendered',await pages[0].locator('.guest-others').count()===0);
  await pages[0].getByRole('button',{name:'Seçimlerimi siparişe gönder'}).click();await pages[0].getByText('Benim siparişim',{exact:false}).waitFor();
  await pages[1].getByRole('button',{name:'Benim seçimlerim',exact:true}).click();await pages[1].locator('.guest-line strong').filter({hasText:'Misafir Sandviç'}).waitFor();ok('one guest submission preserves other personal draft');
  const endpoint=base+'/api/guest/'+cid;

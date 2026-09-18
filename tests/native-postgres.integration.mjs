@@ -37,5 +37,13 @@ try{
  assert.equal(competing.filter(x=>x.status==='fulfilled').length,1);
  assert.ok(competing.some(x=>x.status==='rejected'&&x.reason.message==='REVISION_CONFLICT'));
  console.log('NATIVE GUEST CONCURRENCY PASS: single commit for a shared revision, second guest must refresh.');
+
+ await a.query('reset role');
+ const table=(await a.query("insert into ops.dining_tables(business_id,branch_id,table_code,display_name) values($1,$2,'parallel-entry','Parallel QR') returning id",[row.business_id,row.branch_id])).rows[0].id;
+ for(const conn of[a,b]){await conn.query('reset role');await conn.query("select set_config('request.jwt.claims','{}',false)");await conn.query('set role anon');}
+ const entries=await Promise.all([a,b].map((conn,i)=>conn.query('select ops.table_guest_join($1,$2,$3,$4) as j',[row.business_id,row.branch_id,table,String(i+5).repeat(64)])));
+ assert.equal(entries[0].rows[0].j.checkId,entries[1].rows[0].j.checkId);
+ assert.notEqual(entries[0].rows[0].j.viewerUserId,entries[1].rows[0].j.viewerUserId);
+ console.log('NATIVE CODELESS CONCURRENCY PASS: parallel table QR opens exactly one check and distinct private visitors.');
  console.log('NATIVE POSTGRES PASS: real row-lock exclusion and release, isolated Auth/Realtime fixtures');
 }finally{await a.query('ROLLBACK').catch(()=>{});await a.end().catch(()=>{});await b.end().catch(()=>{});}

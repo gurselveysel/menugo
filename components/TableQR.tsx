@@ -94,7 +94,7 @@ export function TableQR({url,tableName,kind,expiresAt,open,onClose}:TableQRProps
           :image?<img className="table-qr-image" src={image} width={1024} height={1024} alt={permanent?tableName+' kalıcı masa QR kodu':'Masa katılım QR kodu'}/>
           :<p role="status">QR hazırlanıyor…</p>}
       </div>
-      <p id={descriptionId} className="table-qr-instruction">{permanent?'Telefonunuzun kamerasıyla okutun. Katıl düğmesine dokunun ve çıkan kodu garsona gösterin.':'Telefonunuzun kamerasıyla okutun; bu ziyaretin sipariş ekranına doğrudan katılın.'}</p>
+      <p id={descriptionId} className="table-qr-instruction">{permanent?'Telefonunuzun kamerasıyla okutun. Ürünlerinizi seçin ve siparişinizi gönderin; üyelik gerekmez.':'Telefonunuzun kamerasıyla okutun; bu ziyaretin sipariş ekranına doğrudan katılın.'}</p>
       {!permanent&&seconds!==null&&!expired&&<p className="table-qr-expiry">Geçerlilik: {Math.floor(seconds/60)}:{String(seconds%60).padStart(2,'0')} · Yalnızca masadaki müşteriye gösterin.</p>}
       {error&&<div role="alert"><p>{error}</p><button className="btn" onClick={()=>setAttempt(v=>v+1)}>Yeniden dene</button></div>}
       <button type="button" className="btn primary qr-present-button" disabled={!image||expired} onClick={()=>setPresentation(v=>!v)}>{presentation?'Garson ekranına dön':'Müşteriye göster · Tam ekran'}</button>
@@ -105,7 +105,7 @@ export function TableQR({url,tableName,kind,expiresAt,open,onClose}:TableQRProps
           <button type="button" className="btn" disabled={expired} onClick={()=>void share()}>Paylaş</button>
           {permanent&&image&&<><a className="btn" href={image} download={'Sariyer-'+tableName.replace(/[^a-zA-Z0-9ığüşöçİĞÜŞÖÇ-]/g,'-')+'-QR.png'}>QR’yi kaydet</a><button type="button" className="btn" onClick={()=>window.print()}>Masa kartını yazdır</button></>}
         </div>
-        <p className="helper">{permanent?'Bu QR masada basılı kalabilir. Müşteri geldiğinde adisyonu açın; telefonundaki kodu Katılım istekleri bölümünden onaylayın. QR’yi göstermek tek başına sipariş veya adisyon oluşturmaz.':'Kısa süreli ziyaret QR’si basılmaz. Bağlantıyı yalnızca fiziksel olarak bu masada bulunan müşterilerle paylaşın. Yeni bağlantı öncekinin geçerliliğini sonlandırabilir.'}</p>
+        <p className="helper">{permanent?'Bu QR masada basılı kalabilir. Standart akışta ilk müşteri masanın sipariş ekranını açar; katılım onayı gerekmez. Personel yalnızca gelen siparişi kabul eder. QR’yi göstermek tek başına sipariş oluşturmaz.':'Kısa süreli ziyaret QR’si basılmaz. Bağlantıyı yalnızca fiziksel olarak bu masada bulunan müşterilerle paylaşın. Yeni bağlantı öncekinin geçerliliğini sonlandırabilir.'}</p>
       </div>
       <p className="table-qr-message" role="status">{message}</p>
       <p className="table-qr-print-brand">Meşhur Sarıyer Börekçisi Sandviç · Bahçeşehir</p>

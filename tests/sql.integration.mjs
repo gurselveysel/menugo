@@ -151,15 +151,15 @@ try{
  await rejects('guest cannot decrement another selection',()=>mutate9(1,-1,203),'CART_LINE_NOT_FOUND');
  await mutate9(1,1,204);await mutate9(2,2,205);
  const shared9=await gs(3);
- check('all four share table total without shared write ownership',shared9.totalMinor==='90000'&&shared9.ownTotalMinor==='0'&&shared9.lines.every(l=>!l.isMine));
+ check('guest without selections cannot read table drafts or amount',shared9.totalMinor==='0'&&shared9.ownTotalMinor==='0'&&shared9.lines.length===0);
  check('first guest owns precisely three units',(await gs(0)).lines.filter(l=>l.isMine).length===1&&(await gs(0)).ownTotalMinor==='45000');
  const go=(await q('select ops.guest_order_submit($1,$2,$3,$4,$5::bigint,$6) as j',[b,br,c9,op(206),(await gs(0)).revision,secrets[0]]))[0].j;
  check('personal submission creates three unit charges',go.chargeCount===3&&go.totalMinor==='45000');
- check('personal submission leaves other drafts',(await gs(1)).lines.length===2&&(await gs(1)).ownTotalMinor==='15000');
+ check('personal submission leaves other drafts',(await gs(1)).lines.length===1&&(await gs(1)).ownTotalMinor==='15000');
  const goReplay=(await q('select ops.guest_order_submit($1,$2,$3,$4,$5::bigint,$6) as j',[b,br,c9,op(206),shared9.revision,secrets[0]]))[0].j;
  check('guest order safely replays',goReplay.orderId===go.orderId);
  const visible9=(await q('select ops.guest_orders($1,$2,$3,$4) as j',[b,br,c9,secrets[1]]))[0].j;
- check('other diners see status not cancellation authority',visible9.length===1&&!visible9[0].isMine);
+ check('other diners cannot read any other order',visible9.length===0);
  await rejects('cannot cancel someone else order',()=>q('select ops.guest_cancel_request($1,$2,$3,$4,$5,$6)',[b,br,c9,secrets[1],go.orderId,'Olmaz']),'ORDER_NOT_FOUND');
  const cancel9=(await q('select ops.guest_cancel_request($1,$2,$3,$4,$5,$6) as j',[b,br,c9,secrets[0],go.orderId,'Yanlış seçim']))[0].j;
  const service9=(await q("select ops.guest_service($1,$2,$3,$4,'waiter') as j",[b,br,c9,secrets[0]]))[0].j;
@@ -203,7 +203,7 @@ try{
 
  await anon();
  for(const i of [0,1])await q('select ops.guest_cart_mutate($1,$2,$3,$4,$5,1,$6::bigint,$7,null)',[b,br,c9,op(240+i),p2,(await gs(i)).revision,secrets[i]]);
- check('plain SKU may exist in two personal carts',(await gs(0)).lines.filter(x=>x.productId===p2).length===2);
+ check('same SKU in separate carts remains private',(await gs(0)).lines.filter(x=>x.productId===p2).length===1&&(await gs(1)).lines.filter(x=>x.productId===p2).length===1);
  await auth(users[0]);await q('select ops.join_table($1,$2,$3,$4)',[b,br,c9,invited9.token]);
  await rejects('staff cannot submit customer drafts',async()=>q('select ops.order_submit($1,$2,$3,$4,$5::bigint)',[b,br,c9,op(242),(await q('select ops.get_cart_snapshot($1,$2,$3) as j',[b,br,c9]))[0].j.revision]),'CART_EMPTY');
 
@@ -214,6 +214,8 @@ try{
  check('staff with own line submits only own one charge',ownStaffOrder.chargeCount===1&&ownStaffOrder.lines.length===1);
  check('staff mixed-cart submit preserves every guest draft',(await ownStaffSnapshot()).lines.length===guestDraftsBefore);
  await db.exec('reset role');
+ // Explicit optional staff-approved policy preserves existing verification workflow.
+ await auth(users[0]);await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'staff_approved']);
  // r10 permanent table QR is an identity, never an active-check capability.
  await db.exec('reset role');
  await q("insert into ops.dining_tables(id,business_id,branch_id,table_code,display_name) values($1,$2,$3,'ci-permanent','Kalıcı QR Testi')",[op(501),b,br]);
@@ -261,5 +263,76 @@ try{
  check('owner gets real setup counts',readiness.tableCount>=1&&readiness.approvedProducts>=1&&readiness.profile);
  await auth(users[1]);await rejects('guest cannot read setup counts',()=>q('select ops.handover_readiness($1,$2)',[b,br]),'MANAGER_REQUIRED');
  await db.exec('reset role');
+
+ // r12 recommended direct entry: code-free, own financial and order data only.
+ await auth(users[0]);
+ await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'direct']);
+ await db.exec('reset role');
+ const directTable=op(600),directSecrets=['c'.repeat(64),'d'.repeat(64)];
+ await q("insert into ops.dining_tables(id,business_id,branch_id,table_code,display_name) values($1,$2,$3,'direct-ci','Doğrudan Masa')",[directTable,b,br]);
+ const checksBefore=(await q('select count(*)::integer as n from ops.checks'))[0].n;
+ const usersBefore=(await q('select count(*)::integer as n from auth.users'))[0].n;
+ await anon();
+ const directInfo=(await q('select ops.table_entry_info($1,$2,$3) as j',[b,br,directTable]))[0].j;
+ check('direct default has no current check or verification code',directInfo.entryMode==='direct'&&!('checkId'in directInfo)&&!('code'in directInfo));
+ check('GET status does not require code',(await q('select ops.table_guest_status($1,$2,$3,$4) as j',[b,br,directTable,directSecrets[0]]))[0].j.state==='idle');
+ await db.exec('reset role');check('GET created no adisyon',(await q('select count(*)::integer as n from ops.checks'))[0].n===checksBefore);
+ await anon();
+ const directA=(await q('select ops.table_guest_join($1,$2,$3,$4) as j',[b,br,directTable,directSecrets[0]]))[0].j;
+ const directB=(await q('select ops.table_guest_join($1,$2,$3,$4) as j',[b,br,directTable,directSecrets[1]]))[0].j;
+ check('new visitor opens same adisyon without staff entry approval',directA.checkId===directB.checkId&&directA.viewerUserId!==directB.viewerUserId);
+ check('same secret reuses the same guest',(await q('select ops.table_guest_join($1,$2,$3,$4) as j',[b,br,directTable,directSecrets[0]]))[0].j.viewerUserId===directA.viewerUserId);
+ const directSnap=async(i)=>(await q('select ops.guest_snapshot($1,$2,$3,$4) as j',[b,br,directA.checkId,directSecrets[i]]))[0].j;
+ await q('select ops.guest_cart_mutate($1,$2,$3,$4,$5,1,$6::bigint,$7,null)',[b,br,directA.checkId,op(601),p2,(await directSnap(0)).revision,directSecrets[0]]);
+ check('second guest sees no first guest drafts',(await directSnap(1)).lines.length===0&&(await directSnap(1)).totalMinor==='0');
+ const firstRev=(await directSnap(0)).revision;
+ const directOrder=(await q('select ops.guest_order_submit($1,$2,$3,$4,$5::bigint,$6) as j',[b,br,directA.checkId,op(602),firstRev,directSecrets[0]]))[0].j;
+ check('order remains submitted pending staff acceptance',directOrder.status==='submitted');
+ check('other guest has zero visible debt',(await directSnap(1)).billMinor==='0'&&(await directSnap(1)).ownBillMinor==='0');
+ check('other guest order list remains empty',(await q('select ops.guest_orders($1,$2,$3,$4) as j',[b,br,directA.checkId,directSecrets[1]]))[0].j.length===0);
+ await rejects('anonymous cannot reject orders',()=>q('select ops.reject_submitted_order($1,$2,$3,$4)',[b,br,directOrder.orderId,'no']),'42501');
+ await rejects('anonymous cannot change table policy',()=>q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'staff_approved']),'42501');
+ await auth(users[0]);
+ await rejects('cannot prepare before acceptance',()=>q('select ops.console_action($1,$2,$3,$4::jsonb)',[b,br,'order-status',JSON.stringify({orderId:directOrder.orderId,status:'preparing'})]),'INVALID_STATUS_TRANSITION');
+ await q('select ops.reject_submitted_order($1,$2,$3,$4)',[b,br,directOrder.orderId,'Ürün kalmadı']);
+ check('rejection is idempotent',(await q('select ops.reject_submitted_order($1,$2,$3,$4) as j',[b,br,directOrder.orderId,'Ürün kalmadı']))[0].j.replayed===true);
+ await anon();
+ const rejectedList=(await q('select ops.guest_orders($1,$2,$3,$4) as j',[b,br,directA.checkId,directSecrets[0]]))[0].j;
+ check('only owner sees rejected status without staff note',rejectedList.length===1&&rejectedList[0].rejected&&!JSON.stringify(rejectedList).includes('Ürün kalmadı'));
+ check('rejected order leaves no payable debt',(await directSnap(0)).billMinor==='0');
+ // 51 units exceed the default order cap but remain editable in a personal cart.
+ await q('select ops.guest_cart_mutate($1,$2,$3,$4,$5,51,$6::bigint,$7,null)',[b,br,directA.checkId,op(603),p2,(await directSnap(0)).revision,directSecrets[0]]);
+ await rejects('large order is not forwarded',async()=>q('select ops.guest_order_submit($1,$2,$3,$4,$5::bigint,$6)',[b,br,directA.checkId,op(604),(await directSnap(0)).revision,directSecrets[0]]),'ORDER_LIMIT_EXCEEDED');
+ await q('select ops.guest_cart_mutate($1,$2,$3,$4,$5,-50,$6::bigint,$7,null)',[b,br,directA.checkId,op(605),p2,(await directSnap(0)).revision,directSecrets[0]]);
+ for(let i=0;i<2;i++){
+ if(i)await q('select ops.guest_cart_mutate($1,$2,$3,$4,$5,1,$6::bigint,$7,null)',[b,br,directA.checkId,op(606+i*2),p2,(await directSnap(0)).revision,directSecrets[0]]);
+ await q('select ops.guest_order_submit($1,$2,$3,$4,$5::bigint,$6)',[b,br,directA.checkId,op(607+i*2),(await directSnap(0)).revision,directSecrets[0]]);
+ }
+ await q('select ops.guest_cart_mutate($1,$2,$3,$4,$5,1,$6::bigint,$7,null)',[b,br,directA.checkId,op(610),p2,(await directSnap(0)).revision,directSecrets[0]]);
+ await rejects('third pending order waits for staff',async()=>q('select ops.guest_order_submit($1,$2,$3,$4,$5::bigint,$6)',[b,br,directA.checkId,op(611),(await directSnap(0)).revision,directSecrets[0]]),'ORDER_AWAITING_ACCEPTANCE');
+ const replayFirst=(await q('select ops.guest_order_submit($1,$2,$3,$4,$5::bigint,$6) as j',[b,br,directA.checkId,op(602),firstRev,directSecrets[0]]))[0].j;
+ check('successful replay survives pending-order guard',replayFirst.orderId===directOrder.orderId);
+ await db.exec('reset role');
+ check('guest joins did not create Auth users',(await q('select count(*)::integer as n from auth.users'))[0].n===usersBefore);
+ check('direct access made no code approval requests',(await q('select count(*)::integer as n from ops.table_access_requests where table_id=$1',[directTable]))[0].n===0);
+ // A fresh empty direct visit can close, then the old cookie cannot follow a new visit.
+
+ await anon();await q('select ops.guest_cart_mutate($1,$2,$3,$4,$5,-1,$6::bigint,$7,null)',[b,br,directA.checkId,op(612),p2,(await directSnap(0)).revision,directSecrets[0]]);
+ await auth(users[0]);
+ for(const o of (await q('select ops.guest_orders($1,$2,$3,$4) as j',[b,br,directA.checkId,directSecrets[0]]))[0].j.filter(o=>o.status==='submitted'))await q('select ops.reject_submitted_order($1,$2,$3,$4)',[b,br,o.id,'Test iptal']);
+ check('entirely rejected visit can close without deleting history',(await q('select ops.close_empty_check($1,$2,$3) as j',[b,br,directA.checkId]))[0].j.status==='cancelled');
+ await db.exec('reset role');
+ check('all rejected orders preserved',(await q('select count(*)::integer as n from ops.orders where check_id=$1',[directA.checkId]))[0].n===3);
+ const emptyTable=op(620),emptySecret='e'.repeat(64);
+ await q("insert into ops.dining_tables(id,business_id,branch_id,table_code,display_name) values($1,$2,$3,'direct-close','Kapanış Masa')",[emptyTable,b,br]);await anon();
+ const emptyG=(await q('select ops.table_guest_join($1,$2,$3,$4) as j',[b,br,emptyTable,emptySecret]))[0].j;
+ await auth(users[0]);await q('select ops.close_empty_check($1,$2,$3)',[b,br,emptyG.checkId]);await anon();
+ await rejects('closed cookie cannot join next visit',()=>q('select ops.table_guest_join($1,$2,$3,$4)',[b,br,emptyTable,emptySecret]),'ENTRY_FINISHED');
+ const newG=(await q('select ops.table_guest_join($1,$2,$3,$4) as j',[b,br,emptyTable,'f'.repeat(64)]))[0].j;
+ check('new visit creates a different check',newG.checkId!==emptyG.checkId);
+ await rejects('old cookie cannot access later bill',()=>q('select ops.guest_snapshot($1,$2,$3,$4)',[b,br,newG.checkId,emptySecret]),'GUEST_SESSION_EXPIRED');
+ await auth(users[0]);await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'staff_approved']);await anon();
+ await rejects('optional staff approval cannot be bypassed',()=>q('select ops.table_guest_join($1,$2,$3,$4)',[b,br,emptyTable,'0'.repeat(64)]),'ENTRY_APPROVAL_REQUIRED');
+ await auth(users[0]);await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'direct']);await db.exec('reset role');
  fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);
 }catch(e){console.error('SQL TEST FAILED',e.message,e.detail,e.where);process.exitCode=1;}finally{await db.close();}

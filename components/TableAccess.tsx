@@ -7,7 +7,7 @@ import {TableQR} from './TableQR';
 type EntryRequest={id:string;tableId:string;tableName:string;createdAt:string;expiresAt:string};
 type RequestsProps={tableId?:string|null;showEmpty?:boolean;onCounts?:(counts:Record<string,number>)=>void;onClear?:()=>void};
 
-export function TableAccessRequests({tableId=null,showEmpty=false,onCounts,onClear}:RequestsProps={}){
+function StrictTableAccessRequests({tableId=null,showEmpty=false,onCounts,onClear}:RequestsProps={}){
  const[rows,setRows]=useState<EntryRequest[]>([]),[codes,setCodes]=useState<Record<string,string>>({}),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
  const alive=useRef(false),running=useRef(false);const onCountsRef=useRef(onCounts);onCountsRef.current=onCounts;
  const load=useCallback(async()=>{
@@ -41,6 +41,12 @@ export function TableAccessRequests({tableId=null,showEmpty=false,onCounts,onCle
   {!filtered.length&&!error&&<p className="helper" role="status">{loading?'Katılım istekleri yükleniyor…':'Bekleyen katılım isteği yok. Müşteri masanın QR’sini okutunca talebi burada görünür.'}</p>}
   {filtered.map(r=><div className="entry-request" key={r.id}><div><strong>{r.tableName}</strong><small>{new Date(r.createdAt).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</small></div><label>Telefondaki kod<input aria-label={r.tableName+' katılım kodu'} inputMode="numeric" autoComplete="off" pattern="[0-9]{4}" maxLength={4} value={codes[r.id]??''} onChange={e=>setCodes(v=>({...v,[r.id]:e.target.value.replace(/[^0-9]/g,'')}))}/></label><button type="button" className="btn primary" disabled={busy||!/^[0-9]{4}$/.test(codes[r.id]??'')} onClick={()=>void decide(r.id,true)}>Müşteri masada · onayla</button><button type="button" className="btn" disabled={busy} onClick={()=>void decide(r.id,false)}>Reddet</button></div>)}
  </section></Card>;
+}
+
+export function TableAccessRequests(props:Parameters<typeof StrictTableAccessRequests>[0]){
+ const[mode,setMode]=useState('direct');
+ useEffect(()=>{let alive=true;api('/api/merchant/table-policy').then(v=>{if(alive)setMode(v.mode);}).catch(()=>{});return()=>{alive=false;};},[]);
+ return mode==='staff_approved'?<StrictTableAccessRequests {...props}/>:null;
 }
 
 export function PermanentTableQR({table}:{table:{id:string;name:string}}){

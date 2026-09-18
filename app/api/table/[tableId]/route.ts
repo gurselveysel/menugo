@@ -16,24 +16,32 @@ export async function GET(req:Request,ctx:Context){
    secret=randomBytes(32).toString('hex');
    jar.set(cookieName(id),secret,{httpOnly:true,secure:new URL(req.url).protocol==='https:',sameSite:'lax',path:'/',maxAge:8*3600});
   }
-  const request=await rpc(s,'table_entry_status',{...scope,p_table_id:id,p_secret:secret});
+  const request=await rpc(s,table.entryMode==='direct'?'table_guest_status':'table_entry_status',{...scope,p_table_id:id,p_secret:secret});
   return json({table,request});
  }catch(e){return failed(e);}
 }
 export async function POST(req:Request,ctx:Context){
  try{
   origin(req);const id=uuid((await ctx.params).tableId);const data=await body(req);
-  if(Object.keys(data).some(k=>k!=='action')||!['request','claim','restart'].includes(String(data.action)))throw new Failure('INVALID_INPUT');
+  if(Object.keys(data).some(k=>k!=='action')||!['join','request','claim','restart'].includes(String(data.action)))throw new Failure('INVALID_INPUT');
   const jar=await cookies();let secret=jar.get(cookieName(id))?.value;
   if(!valid(secret))throw new Failure('ENTRY_SESSION_REQUIRED',401);
   const s=await client();
+  const table=await rpc(s,'table_entry_info',{...scope,p_table_id:id});
   if(data.action==='restart'){
-   const previous=await rpc(s,'table_entry_status',{...scope,p_table_id:id,p_secret:secret});
+   const previous=await rpc(s,table.entryMode==='direct'?'table_guest_status':'table_entry_status',{...scope,p_table_id:id,p_secret:secret});
    if(!['expired','finished','declined','idle'].includes(previous.state))throw new Failure('ENTRY_ALREADY_PENDING',409);
    secret=randomBytes(32).toString('hex');
    jar.set(cookieName(id),secret,{httpOnly:true,secure:new URL(req.url).protocol==='https:',sameSite:'lax',path:'/',maxAge:8*3600});
    return json({state:'idle'});
   }
+  if(data.action==='join'){
+   const cart=await rpc(s,'table_guest_join',{...scope,p_table_id:id,p_secret:secret});
+   uuid(cart.checkId);
+   jar.set(guestCookie(cart.checkId),secret,{httpOnly:true,secure:new URL(req.url).protocol==='https:',sameSite:'lax',path:'/',maxAge:8*3600});
+   return json({checkId:cart.checkId});
+  }
+  if(table.entryMode!=='staff_approved')throw new Failure('ENTRY_MODE_CHANGED',409);
   if(data.action==='request')return json(await rpc(s,'table_entry_request',{...scope,p_table_id:id,p_secret:secret}));
   const cart=await rpc(s,'table_entry_claim',{...scope,p_table_id:id,p_secret:secret});
   uuid(cart.checkId);

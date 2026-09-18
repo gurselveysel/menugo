@@ -30,6 +30,7 @@ try{
   else if(path==='/api/merchant/claim')data={role:'waiter'};
   else if(path==='/api/ops/console')data=state;
   else if(path==='/api/merchant/service-dashboard')data={summary:{waitingAcceptance:0,overdue:0,preparing:0,ready:0},cancellations:[],guestVisits:0,guestOrders:0};
+  else if(path==='/api/merchant/table-policy')data={mode:'direct'};
   else if(path==='/api/merchant/table-requests')data=requests;
   else if(path==='/api/merchant/table-decision'){const b=req.postDataJSON();assert.equal(b.code,'4821');assert.equal(b.id,id(30));assert.equal(b.approve,true);requests=[];data={state:'approved'};}
   else if(path==='/api/ops/start-table')data={checkId:tables[0].checkId,token:'a'.repeat(64),expiresInSeconds:600};
@@ -77,10 +78,7 @@ try{
  }
  await page.setViewportSize({width:390,height:844});await page.keyboard.press('Escape');await dialog.waitFor({state:'hidden'});
  ok('Escape restores body scroll and trigger focus',await page.evaluate(()=>document.body.style.overflow!=='hidden'&&document.activeElement?.getAttribute('aria-label')==='Masa 14 · QR göster'));
- await page.locator('.table-card').first().getByRole('button',{name:/Katılım istekleri/}).click();
- await page.getByLabel('Masa 14 katılım kodu').fill('12a');ok('non-numeric approval blocked',await page.getByRole('button',{name:'Müşteri masada · onayla'}).isDisabled());
- await page.getByLabel('Masa 14 katılım kodu').fill('4821');await page.getByRole('button',{name:'Müşteri masada · onayla'}).click();
- await page.getByText('Bekleyen katılım isteği yok.',{exact:false}).waitFor();ok('approval sends correct request and code',writes.some(x=>x.path.endsWith('table-decision')&&x.body.code==='4821'));
+ ok('default waiter panel has no guest-code work',await page.locator('.table-access-card').count()===0&&await page.getByLabel('Masa 14 katılım kodu').count()===0);
  await page.locator('.table-card').first().getByRole('button',{name:'Ziyaret QR’sini oluştur'}).click();
  await page.getByRole('button',{name:'Ziyaret QR’sini göster'}).click();await qr.waitFor();
  ok('visit QR has correct short-lived token',(await dialog.getByLabel('Masa katılım bağlantısı').inputValue()).endsWith('token='+'a'.repeat(64)));
