@@ -26,13 +26,13 @@ jobs:
           cache: npm
       - name: Import scoped reviewed source
         env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-433c-8246-986e-f23e6de67863/raw?se=2026-09-18T23%3A31%3A53Z&sp=r&sv=2026-02-06&sr=b&scid=a6ed362e-f355-5382-a4a6-f1d9032b8b6e&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T18%3A32%3A16Z&ske=2026-09-19T18%3A32%3A16Z&sks=b&skv=2026-02-06&sig=UfyFRrWs35isBwpyr68jHOiTv2o/jB4yP0BIM6uT7oc%3D'
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-b8a4-8246-a250-b48d88e2cfe8/raw?se=2026-09-18T23%3A36%3A57Z&sp=r&sv=2026-02-06&sr=b&scid=11a4e883-05f4-5440-83b5-f53358712283&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T19%3A08%3A37Z&ske=2026-09-19T19%3A08%3A37Z&sks=b&skv=2026-02-06&sig=4/u9Ahq7Y7K7Cpfy/Dg60QN599CsxdpRhHl6mxOBZww%3D'
         run: |
           node --input-type=module <<'NODE'
           import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
           const hash=b=>createHash('sha256').update(b).digest('hex');
           const response=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!response.ok)throw Error('Source unavailable '+response.status);
-          const bytes=Buffer.from(await response.arrayBuffer());if(hash(bytes)!=='a347e084d4e432c68289c27e8b6212dde011da9080825899df75ac222590bf45')throw Error('Source integrity mismatch');
+          const bytes=Buffer.from(await response.arrayBuffer());if(hash(bytes)!=='01c9600af67c831727b27c5fca75e18c99af4e01af89590ff9f7c5a449b950b9')throw Error('Source integrity mismatch');
           const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-ai-menu-studio-20260919-r15')throw Error('Wrong release');
           const allowed=new Set(['package.json','components/AiMenuStudio.tsx','components/Console.tsx','public/release.json','tests/ai-menu-ui.integration.mjs','tests/ai-menu.test.mjs','tests/sql.integration.mjs','app/layout.tsx','app/ai-menu.css','docs/ai-menu-studio.md','lib/config.ts','supabase/migrations/20260919001700_ops_ai_menu_import.sql','lib/ai-menu/contracts.ts','lib/ai-menu/review.ts','lib/ai-menu/provider.ts','lib/ai-menu/worker.ts','app/api/ai-menu/[action]/route.ts']);
           if(Object.keys(patch.files).length!==allowed.size)throw Error('Unexpected source scope');
@@ -44,6 +44,8 @@ jobs:
       - name: Pin provider and file parser dependencies
         run: npm install --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund @vercel/oidc@latest pdf-lib@1.17.1 sharp@0.34.5
       - run: npm ci --no-audit --no-fund
+      - name: Install test-only browser
+        run: node node_modules/playwright-core/cli.js install --with-deps chromium
       - run: npm test
       - name: SQL acceptance
         id: sql
