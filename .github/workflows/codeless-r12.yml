@@ -26,13 +26,13 @@ jobs:
           cache: npm
       - name: Import scoped source with concurrency protection
         env:
-          SOURCE_URL: 'https://sdmntprcentralus.oaiusercontent.com/files/00000000-caac-81f5-970b-1a1c28755c5c/raw?se=2026-09-18T10%3A21%3A44Z&sp=r&sv=2026-02-06&sr=b&scid=01276e60-3eb4-5206-af38-841cc19c0bfa&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T06%3A30%3A54Z&ske=2026-09-19T06%3A30%3A54Z&sks=b&skv=2026-02-06&sig=WOFQltw3TxIMBlXFOxwbOzwN3MMVOAKbbO83j564agc%3D'
+          SOURCE_URL: 'https://sdmntprdenmarkeast.oaiusercontent.com/files/00000000-e73c-8210-aa34-78c8a9001ff4/raw?se=2026-09-18T10%3A24%3A38Z&sp=r&sv=2026-02-06&sr=b&scid=e583fba4-9177-58e5-8ff1-7301fded2b28&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-18T08%3A32%3A47Z&ske=2026-09-19T08%3A32%3A47Z&sks=b&skv=2026-02-06&sig=uh1sCuWhXv2fVh5JT4yhJBsJ4ssZpB7GbMDUAU0MfCE%3D'
         run: |
           node --input-type=module <<'NODE'
           import{readFileSync,writeFileSync,mkdirSync,existsSync}from'node:fs';import{dirname}from'node:path';import{createHash}from'node:crypto';import{gunzipSync}from'node:zlib';
           const hash=x=>createHash('sha256').update(x).digest('hex');
           const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source unavailable '+r.status);
-          const bytes=Buffer.from(await r.arrayBuffer());if(hash(bytes)!=='de299ac7491010b93c07438a05571c6d6a529422de16e6327f6b72f8549c71aa')throw Error('Transfer checksum mismatch');
+          const bytes=Buffer.from(await r.arrayBuffer());if(hash(bytes)!=='42577e48700fc9b347a563c549b333616a758dda4444bb0dce52b86acc05dffa')throw Error('Transfer checksum mismatch');
           const patch=JSON.parse(gunzipSync(bytes));if(patch.version!=='menugo-codeless-ordering-20260918-r12')throw Error('Wrong release');
           const allowed=new Set(['lib/config.ts','tests/sql.integration.mjs','tests/codeless-e2e.integration.mjs','tests/handover-e2e.integration.mjs','tests/guest-e2e.integration.mjs','tests/mobile-qr.integration.mjs','tests/native-postgres.integration.mjs','components/TableQR.tsx','components/TableEntry.tsx','components/ServiceInsights.tsx','components/Console.tsx','components/ApprovedTableEntry.tsx','components/GuestTable.tsx','components/TableAccess.tsx','components/transport.ts','public/release.json','supabase/migrations/20260918001500_ops_codeless_table.sql','app/yardim/page.tsx','app/api/table/[tableId]/route.ts','app/api/merchant/[action]/route.ts']);
           if(Object.keys(patch.files).length!==allowed.size)throw Error('Unexpected scope');
