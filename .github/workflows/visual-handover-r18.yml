@@ -1,0 +1,50 @@
+name: Visual ordering handover acceptance
+on:
+  push:
+    branches: [release/visual-handover-r18]
+    paths: ['.github/workflows/visual-handover-r18.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Apply scoped source integration with baseline hashes
+        run: node scripts/apply-visual-handover-r18.mjs
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Real UI, responsive camera priority and dark-light surfaces
+        run: node tests/visual-handover.integration.mjs
+      - name: Existing merchant images and catalogue operations
+        run: node tests/editorial-ui.integration.mjs
+      - name: Four codeless guests and personal order scope
+        run: node tests/codeless-e2e.integration.mjs
+      - name: Original alpha and red GO geometry regression
+        run: node tests/branding-ui.integration.mjs
+      - name: Commit tested integration to the release branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add components/GuestTable.tsx lib/config.ts public/release.json
+          git commit -m 'feat: complete live menu artwork across guest ordering with canonical logo surfaces'
+          git push origin HEAD:release/visual-handover-r18
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-visual-handover-acceptance
+          path: |
+            public/qa/visual-handover
+            public/qa/editorial-r17
+            public/qa/codeless
+          retention-days: 3
+          if-no-files-found: ignore
