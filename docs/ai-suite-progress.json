@@ -3,17 +3,26 @@
   "complete": false,
   "state": "implementation_and_acceptance",
   "baseline": "b403537284c3164f90752dd334339223587fdf7e",
-  "activeBranch": "feat/multibranch-master-menu-r26",
-  "pullRequest": 13,
   "releaseCandidate": "menugo-multibranch-master-menu-20260920-r28",
-  "latestRuntimeCommit": "4ac4627e01f77c5ba43ce25f20f7cb9721c874a6",
-  "updatedAt": "2026-09-19T21:34:00Z",
+  "latestRuntimeCommit": "ee6e7e6ff2b3b7733e3ae5b10fb4470abe6abfff",
+  "updatedAt": "2026-09-19T21:45:00Z",
+  "production": {
+    "vercelProject": "prj_0t5CSJSdXuoVDsaejSm7DuctCCjL",
+    "deploymentId": "dpl_HEyvZ5wWXMC6tbDsFhtKqK8V9By6",
+    "deploymentUrl": "https://menugo-7aj8zxspp-info-64116029s-projects.vercel.app",
+    "domains": ["https://www.menugo.app", "https://sariyerborekcisi.menugo.app"],
+    "deploymentState": "READY",
+    "releaseJsonVerified": "menugo-multibranch-master-menu-20260920-r28",
+    "multiBranchRouteStatus": 200,
+    "unauthenticatedMultiBranchApiStatus": 401,
+    "tenantHomeStatus": 200
+  },
   "integratedProductionBase": {
     "commit": "b403537284c3164f90752dd334339223587fdf7e",
     "release": "menugo-platform-ai-access-20260920-r27",
     "verification": "docs/platform-ai-access-verification.json",
-    "migrationLedger": "20260919211846_ops_platform_ai_access_r27",
-    "note": "Multi-branch work is merged over the accepted company-only AI control-plane release without restoring restaurant-level provider controls."
+    "migrationLedger": ["20260919211846_ops_platform_ai_access_r27", "20260919214135_ops_platform_ai_free_overrides_r27"],
+    "note": "Multi-branch r28 was merged over the accepted company-only AI control plane; restaurant-level provider controls remain disabled and paid AI fallback remains disabled."
   },
   "modules": {
     "menuImport": "free_or_self_hosted_vision_runtime_in_production_real_provider_acceptance_and_pdf_rasterization_pending",
@@ -25,7 +34,7 @@
     "voiceOrder": "catalogue_grounded_review_draft_in_production_browser_speech_available_real_provider_and_physical_device_acceptance_pending",
     "customerAssistant": "grounded_published_catalogue_read_only_slice_in_production_real_provider_acceptance_pending",
     "demandWaste": "real_order_and_explicit_waste_evidence_pipeline_in_production_fail_closed_until_14_service_days_50_orders_and_10_waste_events_real_sufficient_data_acceptance_pending",
-    "multiBranch": "core_schema_rpc_api_and_ui_implemented_production_schema_applied_without_catalogue_writes_latest_base_ci_pending_real_two_branch_acceptance_pending_one_real_branch_only"
+    "multiBranch": "core_schema_rpc_api_ui_deployed_and_production_read_verified_no_catalogue_writes_real_two_branch_acceptance_pending_one_real_branch_only"
   },
   "acceptance": {
     "realProvider": "not_run",
@@ -36,7 +45,7 @@
       "policy": "free_only_platform_managed_credentials_no_paid_fallback_restaurant_staff_cannot_manage_provider_controls",
       "paidFallbackCalls": 0,
       "realProviderCalls": 0,
-      "scopeBoundary": "runtime and company control plane deployed; no live provider acceptance without an authorized platform configuration and free-provider credential"
+      "scopeBoundary": "runtime and company control plane deployed; representative live AI acceptance still requires an authorized free-provider credential"
     },
     "reviewedTextPublication": {
       "pullRequest": 7,
@@ -90,13 +99,16 @@
     },
     "multiBranch": {
       "pullRequest": 13,
-      "branch": "feat/multibranch-master-menu-r26",
-      "integratedHead": "4ac4627e01f77c5ba43ce25f20f7cb9721c874a6",
-      "integratedBase": "b403537284c3164f90752dd334339223587fdf7e",
-      "previousGreenHead": "f34b10bce5c84cbd5d57d8cf027e8e999e62e6ee",
-      "previousCustomWorkflowRun": 35469520737,
-      "previousMainChecksRun": 35469520709,
-      "latestBaseCi": "pending_after_accepted_platform_ai_r27_integration",
+      "mergeCommit": "ee6e7e6ff2b3b7733e3ae5b10fb4470abe6abfff",
+      "testedHead": "1034128f9d4aff4f45c6e5be47a11d268eeaac9b",
+      "ciRuns": {
+        "studioPublication": {"id": 35470988324, "result": "success"},
+        "campaignExport": {"id": 35470988346, "result": "success"},
+        "multiBranch": {"id": 35470988320, "result": "success"},
+        "menuGoChecks": {"id": 35470988332, "result": "success"},
+        "merchantRelease": {"id": 35470988331, "result": "success"}
+      },
+      "testTypes": ["unit", "PGlite SQL/RLS/idempotency", "PostgreSQL 17 row-lock and optimistic-concurrency", "Next production build", "existing browser UI regression", "multi-branch browser acceptance at 320/390/768/1440"],
       "supabaseProject": "lrfcqpmjgghodymhnvue",
       "migrations": ["20260919211305_ops_multi_branch_menu_r26", "20260919211319_ops_multi_branch_snapshot_r26"],
       "money": "bigint_minor_units",
@@ -109,13 +121,15 @@
       "approvedPricesAtCheck": 71,
       "catalogueFingerprintBefore": "63465d4de09a30a07e1f31f0d8cf7ac1",
       "catalogueFingerprintAfter": "63465d4de09a30a07e1f31f0d8cf7ac1",
-      "masterItemsAfterMigration": 0,
-      "bindingsAfterMigration": 0,
-      "overridesAfterMigration": 0,
-      "commandsAfterMigration": 0,
+      "masterItemsAfterDeployment": 0,
+      "bindingsAfterDeployment": 0,
+      "overridesAfterDeployment": 0,
+      "commandsAfterDeployment": 0,
       "productionPriceOrCatalogueWritesDuringAcceptance": false,
-      "realCrossBranchAcceptance": "pending_no_second_real_branch",
-      "productionAppDeployment": "pending_merge"
+      "productionDeployment": "verified",
+      "productionDeploymentId": "dpl_HEyvZ5wWXMC6tbDsFhtKqK8V9By6",
+      "productionUrl": "https://www.menugo.app/isletme/subeler",
+      "realCrossBranchAcceptance": "pending_no_second_real_branch"
     }
   },
   "blockers": [
@@ -126,7 +140,7 @@
     "Social publishing requires an authorized business social connection plus separate explicit publication permission for the exact creative and timing.",
     "Voice speech/LLM provider acceptance and physical-device microphone acceptance are not run.",
     "Demand/waste forecasting remains intentionally closed until sufficient real service evidence exists.",
-    "Production currently has one genuine branch, so multi-branch core can be deployed without writes but genuine cross-branch propagation/override acceptance must wait for a second real branch rather than synthetic production data."
+    "Production currently has one genuine branch, so genuine cross-branch propagation/override acceptance must wait for a second real branch rather than synthetic production data."
   ],
   "safety": {
     "customerOrderingUnchanged": true,
@@ -146,7 +160,6 @@
   },
   "next": [
     "Keep complete=false until every Issue #1 acceptance item has real-provider and production evidence.",
-    "Merge and deploy r28 only after CI on the accepted platform-AI r27 base is green; verify both production domains and preserve the 76-product/71-approved-price catalogue fingerprint.",
     "When an authorized platform free-provider credential is configured, run a no-business-data live probe and representative menu/copy/customer-assistant acceptance without paid fallback.",
     "Implement safe PDF rasterization and source-preserving reviewed product-image publication with audit and rollback.",
     "Complete approved purchasing/recipe ledger acceptance and authorized social adapter without sending a live post under development approval.",
