@@ -1,0 +1,49 @@
+name: Campaign export acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths: ['src/campaigns/**','components/CampaignStudio.tsx','app/api/campaigns/**','app/isletme/kampanya/**','supabase/migrations/**','tests/campaign*','.github/workflows/campaign-export.yml']
+  push:
+    branches: [feat/campaign-export-safe]
+permissions:
+  contents: read
+concurrency:
+  group: campaign-export-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_campaign_ci
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: node --test tests/campaigns.test.mjs
+      - run: node tests/campaigns.sql.integration.mjs
+      - run: node tests/campaigns.sql.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_campaign_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/campaigns-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: campaign-qa
+          path: |
+            public/qa/campaign
+            test-results/sql.json
+          if-no-files-found: ignore
