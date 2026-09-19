@@ -1,8 +1,8 @@
-import {openSourceWire,OPEN_MODELS} from './open-source.ts';
+import {openSourceWire,SELF_HOSTED_MODELS,OPENROUTER_MODELS} from './open-source.ts';
 import {COPY_SCHEMA,INVOICE_SCHEMA,STUDIO_PROMPT,parseCopy,parseInvoice} from './studio-contracts.ts';
 import {SYSTEM_PROMPT,extractionSchema,validateDraft} from './menu-contracts.ts';
 export class LlmError extends Error {constructor(public code:string,public status=400){super(code);}}
-export const MODELS:Record<string,readonly string[]>={self_hosted:OPEN_MODELS,openai:['gpt-4.1-mini','gpt-4.1'],gemini:['gemini-2.5-flash']};
+export const MODELS:Record<string,readonly string[]>={self_hosted:SELF_HOSTED_MODELS,openrouter_free:OPENROUTER_MODELS,openai:['gpt-4.1-mini','gpt-4.1'],gemini:['gemini-2.5-flash']};
 export const TASKS=['menu','description','translation','campaign','daily'] as const;
 export type Task=typeof TASKS[number];
 const uuid=(x:unknown):string=>{if(typeof x!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(x))throw new LlmError('INVALID_ID');return x;};
@@ -55,7 +55,7 @@ export function buildProviderRequest(d:Dispatch):{url:string;headers:Record<stri
   if(i.attachment)attachment={mime:i.attachment.mime,data:i.attachment.data};
   if(c.studioKind==='invoice'&&!attachment)throw new LlmError('INVALID_LLM_REQUEST');
  }else if(d.kind==='assistant'){grounding=assistantContext(d.context,d.request);text=JSON.stringify({task:d.request.task,question:d.request.question,...grounding});if(text.length>180000)throw new LlmError('LLM_CONTEXT_TOO_LARGE');}else throw new LlmError('INVALID_LLM_REQUEST');
- if(d.provider==='self_hosted'){try{return {...openSourceWire(d.model,d.key,prompt,text,schema,max,attachment),grounding};}catch(e){throw new LlmError(e instanceof Error?e.message:'INVALID_LLM_REQUEST');}}
+ if(d.provider==='self_hosted'||d.provider==='openrouter_free'){try{return {...openSourceWire(d.model,d.key,prompt,text,schema,max,attachment),grounding};}catch(e){throw new LlmError(e instanceof Error?e.message:'INVALID_LLM_REQUEST');}}
  if(d.provider==='openai'){
   const content:any[]=[{type:'input_text',text}];
   if(attachment)content.push(attachment.mime==='application/pdf'?{type:'input_file',filename:'menu.pdf',file_data:`data:${attachment.mime};base64,${attachment.data}`}:{type:'input_image',image_url:`data:${attachment.mime};base64,${attachment.data}`});
@@ -70,7 +70,7 @@ export async function generate(d:Dispatch,fetcher:typeof fetch=fetch){
  try{response=await fetcher(wire.url,{method:'POST',headers:wire.headers,body:JSON.stringify(wire.body),redirect:'error',signal:AbortSignal.timeout(45000)});try{value=await readLimited(response);}catch(e){if(response.ok)throw e;value={};}}catch(e){if(e instanceof LlmError)throw e;throw new LlmError('LLM_RESULT_UNKNOWN',503);}
  if(!response.ok){const quota=value?.error?.code==='insufficient_quota';throw new LlmError(quota||response.status===402?'LLM_CREDIT_REQUIRED':[401,403].includes(response.status)?'LLM_KEY_INVALID':response.status===429?'LLM_RATE_LIMIT':'LLM_PROVIDER_UNAVAILABLE',503);}
  let text:string,usage:{input:unknown;output:unknown};
- if(d.provider==='self_hosted'){const c=value?.choices?.[0];if(c?.message?.refusal)throw new LlmError('LLM_REFUSAL');if(c?.finish_reason!=='stop'||typeof c?.message?.content!=='string'||c.message.tool_calls?.length)throw new LlmError('LLM_OUTPUT_INCOMPLETE',502);text=c.message.content;usage={input:value.usage?.prompt_tokens,output:value.usage?.completion_tokens};}
+ if(d.provider==='self_hosted'||d.provider==='openrouter_free'){const c=value?.choices?.[0];if(c?.message?.refusal)throw new LlmError('LLM_REFUSAL');if(c?.finish_reason!=='stop'||typeof c?.message?.content!=='string'||c.message.tool_calls?.length)throw new LlmError('LLM_OUTPUT_INCOMPLETE',502);text=c.message.content;usage={input:value.usage?.prompt_tokens,output:value.usage?.completion_tokens};}
  else if(d.provider==='openai'){
   if(value.status!=='completed')throw new LlmError('LLM_OUTPUT_INCOMPLETE',502);
   const content=Array.isArray(value.output)?value.output.flatMap((x:any)=>x.type==='message'&&Array.isArray(x.content)?x.content:[]):[];

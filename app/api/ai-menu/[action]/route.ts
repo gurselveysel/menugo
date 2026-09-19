@@ -16,13 +16,13 @@ async function input(req:Request,limit:number){
 async function manager(){const {s}=await actor();await rpc(s,'ai_menu_job',{...scope,p_action:'list'});return s;}
 function error(e:unknown){if(e instanceof ImportError)return json({error:{code:e.code}},400);return failed(e);}
 async function backend(s:Awaited<ReturnType<typeof manager>>){
- const cfg=await requireOpenSource(s);return {provider:'direct' as const,token:'',model:cfg.model!};
+ const cfg=await requireOpenSource(s);return {provider:'direct' as const,token:'',model:cfg.model!,configuredProvider:cfg.provider!};
 }
 async function work(s:Awaited<ReturnType<typeof manager>>,id:string,retry=false){const selected=await backend(s);const claimed=await rpc(s,'ai_menu_job',{...scope,p_action:'claim',p_job_id:id,p_payload:{retry,model:selected.model}});if(claimed.claimed)after(async()=>{try{await processImport(s,id,claimed,selected.token,selected.provider);}catch{console.error('MENUGO_AI_IMPORT_WORK_UNFINISHED');}});return claimed.claimed===true;}
 
 export async function GET(req:Request,{params}:{params:Promise<{action:string}>}){try{
  origin(req);const s=await manager(),{action}=await params;const u=new URL(req.url);
- if(action==='list'){const data=await rpc(s,'ai_menu_job',{...scope,p_action:'list'});let reason:string|null=null;let model=MODEL;let provider='self_hosted';try{const b=await backend(s);model=b.model;provider='self_hosted';}catch(e){reason=e instanceof Error?e.message:'AI_UNAVAILABLE';}return json({...data,aiConfigured:reason===null,aiUnavailableReason:reason,model,provider});}
+ if(action==='list'){const data=await rpc(s,'ai_menu_job',{...scope,p_action:'list'});let reason:string|null=null;let model=MODEL;let provider='open_source';try{const b=await backend(s);model=b.model;provider=b.configuredProvider;}catch(e){reason=e instanceof Error?e.message:'AI_UNAVAILABLE';}return json({...data,aiConfigured:reason===null,aiUnavailableReason:reason,model,provider});}
  if(action==='source'){const v=await rpc(s,'ai_menu_job',{...scope,p_action:'source',p_job_id:uuid(u.searchParams.get('id'))});const b=Buffer.from(v.data,'base64');return new Response(b,{headers:{'Content-Type':v.mime,'Content-Disposition':v.mime==='application/pdf'?'attachment; filename="menu-source.pdf"':'inline','Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; sandbox"}});}
  if(action==='snapshot')return json(await rpc(s,'ai_menu_job',{...scope,p_action:'snapshot',p_job_id:uuid(u.searchParams.get('id'))}));
  throw new Failure('NOT_FOUND',404);

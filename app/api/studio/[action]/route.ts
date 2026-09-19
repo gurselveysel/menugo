@@ -38,7 +38,7 @@ async function start(s:Awaited<ReturnType<typeof manager>>,id:string){
 }
 export async function GET(req:Request,{params}:{params:Promise<{action:string}>}){
  try{origin(req);const s=await manager(),{action}=await params;
-  if(action==='list'){const data=await rpc(s,'studio_job',{...scope,p_action:'list'});let reason:string|null=null;let model:string|null=null;try{model=(await credential(s)).model;}catch(e){reason=e instanceof Error?e.message:'AI_UNAVAILABLE';}return json({...data,aiReady:reason===null,aiReason:reason,models:{text:model||TEXT_MODEL,image:IMAGE_MODEL},provider:'self_hosted',imageReady:false,pdfReady:false,limits:{daily:10,images:3},sourceRetentionDays:7});}
+  if(action==='list'){const data=await rpc(s,'studio_job',{...scope,p_action:'list'});let reason:string|null=null;let model:string|null=null;let provider:string|null=null;try{const ready=await credential(s);model=ready.model;provider=ready.provider;}catch(e){reason=e instanceof Error?e.message:'AI_UNAVAILABLE';}return json({...data,aiReady:reason===null,aiReason:reason,models:{text:model||TEXT_MODEL,image:IMAGE_MODEL},provider:provider||'open_source',imageReady:false,pdfReady:false,limits:{daily:10,images:3},sourceRetentionDays:7});}
   const id=uuid(new URL(req.url).searchParams.get('id'));
   if(action==='get'){const j=await rpc(s,'studio_job',{...scope,p_action:'get',p_job_id:id});if(j.result?.kind==='photo-enhance'){delete j.result.data;j.result.imageUrl=`/api/studio/image?id=${encodeURIComponent(id)}`;}return json(j);}
   if(action==='image'||action==='source'){
