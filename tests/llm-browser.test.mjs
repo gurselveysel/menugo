@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import ts from 'typescript';
+const out='test-results/llm-browser';fs.mkdirSync(out,{recursive:true});
+fs.writeFileSync(out+'/browser.mjs',ts.transpileModule(fs.readFileSync('lib/llm/browser.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const {llmApi,llmRequestPath}=await import('../'+out+'/browser.mjs');
+const id='77777777-7777-4777-8777-000000000001';
+const query=`?businessId=${id}&branchId=${id}`;
+for(const action of ['status','free-status','free-save','free-remove','test'])test('company helper accepts and preserves scoped '+action,()=>{const path='/api/platform/ai/'+action+query;const r=llmRequestPath(path);assert.equal(r.path,path);assert.equal(r.inference,action==='test');});
+test('company context does not require restaurant membership scope',()=>assert.equal(llmRequestPath('/api/platform/ai/context').path,'/api/platform/ai/context'));
+for(const path of ['/api/llm/status','/api/llm/ask','/api/llm/test'])test('legacy consumer helper unchanged '+path,()=>assert.equal(llmRequestPath(path).path,path));
+for(const path of ['https://evil.test/api/platform/ai/context','//evil.test/api/llm/status','/api/platform/ai/free-save','/api/platform/ai/status'+query+'&branchId='+id,'/api/platform/ai/status'+query+'&next=https://evil.test','/api/platform/ai/status?businessId=bad&branchId='+id,'/api/platform/ai/context'+query,'/api/platform/ai/status'+query+'#private','/api/llm/status?x=1','/api/platform/ai/../ai/context','/api/llm/status\n','/api/unknown'])test('AI transport rejects malformed destination '+path.slice(0,70),()=>assert.throws(()=>llmRequestPath(path),/INVALID_LLM_REQUEST/));
+test('company request reaches exactly the scoped API with same-origin credentials and no redirects',async()=>{const original=globalThis.fetch;try{let count=0;globalThis.fetch=async(url,init)=>{count++;assert.equal(url,'/api/platform/ai/free-status'+query);assert.equal(init.credentials,'same-origin');assert.equal(init.redirect,'error');assert.equal(init.cache,'no-store');return new Response('{"canManage":true}');};assert.equal((await llmApi('/api/platform/ai/free-status'+query)).canManage,true);assert.equal(count,1);}finally{globalThis.fetch=original;}});
