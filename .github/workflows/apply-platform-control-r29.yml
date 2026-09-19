@@ -2,9 +2,11 @@ name: Import and verify company control center
 on:
   push:
     branches: ['feat/platform-control-center-r29']
-    paths: ['.github/workflows/apply-platform-control-r29.yml']
 permissions:
   contents: write
+concurrency:
+  group: apply-platform-r29
+  cancel-in-progress: true
 jobs:
   import-and-verify:
     runs-on: ubuntu-latest
@@ -22,24 +24,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: feat/platform-control-center-r29
-      - name: Verify and import source-only bundle
-        env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-d24c-8246-9a61-63d0383972a0/raw?se=2026-09-19T22%3A27%3A07Z&sp=r&sv=2026-02-06&sr=b&scid=1c5e3f0f-2532-5c61-ba05-ee0e4fd7a94a&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-19T10%3A42%3A13Z&ske=2026-09-20T10%3A42%3A13Z&sks=b&skv=2026-02-06&sig=fgaWcmHvvfyty48OFh5Aevr8%2BWbY092Fd4HR/HjEdtA%3D'
+      - name: Apply hash-checked source edits from repository
         run: |
-          python - <<'PY'
-          import os, io, hashlib, urllib.request, zipfile, pathlib
-          raw=urllib.request.urlopen(os.environ['SOURCE_URL'], timeout=30).read(1000000)
-          assert hashlib.sha256(raw).hexdigest()=='6d12fdfbaabd408914a082da0c28383e5a28880aea73603097e64007c0ce386a'
-          allowed={'app/api/merchant/[action]/route.ts','app/api/platform/control/[action]/route.ts','app/auth/callback/route.ts','app/platform/ayarlar/page.tsx','app/platform/control.css','app/platform/page.tsx','components/Login.tsx','components/PlatformAi.tsx','components/PlatformControl.tsx','components/ServiceInsights.tsx','components/transport.ts','docs/platform-control-center-r29.md','lib/auth-destination.ts','lib/config.ts','public/release.json','src/platform/control.ts','supabase/migrations/20260920003000_ops_platform_control_center.sql','tests/native-postgres.integration.mjs','tests/platform-control-checks.mjs','tests/platform-control-concurrency.mjs','tests/platform-control-ui.integration.mjs','tests/platform-control.test.mjs','tests/sql.integration.mjs'}
-          with zipfile.ZipFile(io.BytesIO(raw)) as z:
-            assert set(z.namelist())==allowed and len(z.namelist())==len(allowed)
-            for name in sorted(allowed):
-              data=z.read(name); data.decode('utf-8'); p=pathlib.Path(name);p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
-          PY
+          python scripts/releases/apply-platform-r29.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app components lib src supabase tests docs public/release.json
-          git diff --cached --quiet || git commit -m 'feat: company control center with scoped permissions, runtime policies and audit'
+          git diff --cached --quiet || git commit -m 'feat: verified company control center wiring'
           git push origin HEAD:feat/platform-control-center-r29
       - uses: actions/setup-node@v4
         with:
