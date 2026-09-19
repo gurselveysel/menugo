@@ -35,7 +35,11 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - name: Unit tests
-        run: npm test
+        shell: bash
+        run: |
+          mkdir -p test-results
+          set -o pipefail
+          npm test 2>&1 | tee test-results/multi-branch-unit.log
       - name: PGlite SQL and RLS acceptance
         shell: bash
         run: |
