@@ -33,7 +33,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm run test:sql
+      - run: npm run test:sql && node tests/studio.sql.integration.mjs
       - name: Real PostgreSQL 17 constraints and row locks
         run: node tests/native-postgres.integration.mjs
         env:
@@ -42,7 +42,7 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      - run: npm run test:ui && node tests/pilot-ui.integration.mjs
+      - run: npm run test:ui && node tests/pilot-ui.integration.mjs && node tests/studio-ui.integration.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

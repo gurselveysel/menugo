@@ -1,0 +1,39 @@
+{
+  "scopeIssue": 1,
+  "complete": false,
+  "state": "implementation_and_acceptance",
+  "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
+  "activeBranch": "feat/ai-business-studio",
+  "modules": {
+    "menuImport": "existing_implementation_real_provider_acceptance_pending",
+    "photoStudio": "draft_pipeline_implemented_not_product_publishing",
+    "productCopyTranslation": "draft_pipeline_implemented_bulk_apply_pending",
+    "campaigns": "text_draft_only_graphics_and_social_pending",
+    "operatorAssistant": "existing_read_only_assistant_commands_pending",
+    "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_purchase_posting_pending",
+    "voiceOrder": "pending",
+    "customerAssistant": "pending",
+    "demandWaste": "pure_descriptive_estimator_only_data_pipeline_pending",
+    "multiBranch": "pending"
+  },
+  "acceptance": {
+    "unit": "pending_CI",
+    "postgres": "pending_CI",
+    "browser": "pending_CI",
+    "realProvider": "not_run",
+    "production": "not_deployed"
+  },
+  "blockers": [
+    "No verified direct LLM connection in Supabase on initial inspection. Gateway credit and model availability must be checked in real owner session; do not expose credentials.",
+    "No approved invoice/recipe purchasing data. Synthetic fixtures only; no fake live data.",
+    "Social publishing must bind authorized business account, exact creative, scheduling and send permission."
+  ],
+  "safety": {
+    "customerOrderingUnchanged": true,
+    "catalogueWrites": false,
+    "paymentsSent": false,
+    "messagesSent": false,
+    "providerCalls": 0
+  },
+  "next": "Finish tests, safely apply ops-only migration, deploy accepted slice, verify actual provider before marking any AI module complete. Keep issue current; proceed remaining modules without claiming draft equals done."
+}
