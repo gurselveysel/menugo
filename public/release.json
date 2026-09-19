@@ -2,14 +2,7 @@
   "version": "menugo-platform-ai-access-20260920-r27",
   "previous": "menugo-free-ai-policy-20260919-r25",
   "merchantMenu": true,
-  "roleInterfaces": [
-    "customer",
-    "owner",
-    "manager",
-    "waiter",
-    "kitchen",
-    "cashier"
-  ],
+  "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"],
   "whatsapp": "customer-confirmed-click-to-chat",
   "onlinePayments": false,
   "automatedCourier": false,
@@ -56,13 +49,8 @@
   "aiCampaigns": false,
   "aiModel": "task-and-privacy-gated-free-router",
   "llmAssistant": true,
-  "llmDirectProviders": [
-    "groq_free",
-    "gemini_free",
-    "openrouter_free",
-    "cloudflare_free"
-  ],
-  "llmConfiguration": "owner-managed-supabase-vault",
+  "llmDirectProviders": ["groq_free", "gemini_free", "openrouter_free", "cloudflare_free"],
+  "llmConfiguration": "platform-managed-supabase-vault",
   "llmAutomaticWrites": false,
   "llmRuntimeRequiresCredential": true,
   "adaptiveBrandLogos": true,
@@ -74,21 +62,11 @@
   "visualOrderingProductCards": true,
   "canonicalBrandSurfaces": true,
   "businessStudio": "private-drafts-and-reviewed-text-publication",
-  "studioProvider": "free-only-owner-managed-credentials",
-  "studioDraftKinds": [
-    "product-copy",
-    "translation",
-    "campaign",
-    "invoice",
-    "photo-enhance"
-  ],
+  "studioProvider": "free-only-platform-managed-credentials",
+  "studioDraftKinds": ["product-copy", "translation", "campaign", "invoice", "photo-enhance"],
   "studioCanPublishProducts": false,
   "studioReviewedTextPublication": true,
-  "studioTextFields": [
-    "tr.description",
-    "en.displayName",
-    "en.description"
-  ],
+  "studioTextFields": ["tr.description", "en.displayName", "en.description"],
   "studioPublicationBatchLimit": 20,
   "studioPublicationUndo": "source-and-version-guarded-append-only",
   "studioCanonicalCatalogueWrites": false,
@@ -96,10 +74,11 @@
   "studioPostsPurchases": false,
   "recipeCostCalculator": "bigint-rational",
   "aiSuiteComplete": false,
-  "studioRealProviderAcceptance": "pending-credentials",
+  "studioRealProviderAcceptance": "pending-company-credentials",
   "aiPaidFallback": false,
   "aiMaximumPaidSpendMinor": "0",
   "aiFreeAccountAttestation": "required-30-day-expiry-provider-plan-not-detectable-from-key",
   "platformAiConfigurationOnly": true,
-  "restaurantAiConfiguration": false
+  "restaurantAiConfiguration": false,
+  "platformAiConfigurationPath": "/platform/yapay-zeka"
 }

@@ -1,0 +1,21 @@
+{
+  "release": "menugo-platform-ai-access-20260920-r27",
+  "implementationTree": "0ec03a9c7742cb22e351b237a0579d20df1992ab",
+  "acceptanceRun": 35470267224,
+  "acceptanceConclusion": "success",
+  "nativePostgresql17": "passed",
+  "nextProductionBuild": "passed",
+  "companyConsoleBrowserChecks": 17,
+  "restaurantAssistantBrowserChecks": 24,
+  "studioBrowserChecks": 23,
+  "browserAuthAndRpc": "isolated test doubles with real Next routes; not a signed-in production user test",
+  "companyViewports": [320, 360, 390, 768, 1440],
+  "productionSql": "Applied with before/after function hash verification; rollback-only existing owner privilege-denial checks passed",
+  "platformOwnerProvisioned": "Explicitly assigned to verified company founder; no restaurant role auto-promotion",
+  "catalogueUnchanged": {"products": 76, "approvedPrices": 71},
+  "realProviderCalls": 0,
+  "providerCredentialsConfigured": 0,
+  "paidServicesEnabled": false,
+  "knownExternalWarning": "Supabase leaked-password protection remains disabled; unrelated service setting not changed in this release",
+  "note": "This metadata update adds no runtime change to the fully accepted implementation tree. The wider AI suite still requires real provider acceptance."
+}
