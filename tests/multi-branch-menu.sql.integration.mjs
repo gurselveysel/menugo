@@ -16,12 +16,15 @@ const extra=`
   const bind=(await q("select ops.multi_branch_manage($1,$2,$3,'bind-product',$4::jsonb) as j",[b,br,op(3601),JSON.stringify({masterItemId:created.masterItemId,targetBranchId:br2,productSourceId:'TIR-TEST-1'})]))[0].j;
   check('owner binds corresponding product without silently repricing it',bind.cataloguePriceMinor==='8888');
   const local=(await q("select ops.multi_branch_manage($1,$2,$3,'set-local-price',$4::jsonb) as j",[b,br,op(3602),JSON.stringify({masterItemId:created.masterItemId,targetBranchId:br2,priceMinor:'12345',expectedOverrideVersion:'-1'})]))[0].j;
-  check('local price uses exact bigint cents',local.overridePriceMinor==='12345'&&(await q('select approved_price::text p from public.menu_items where id=$1',[p4]))[0].p==='123.45');
+  const localSnap=(await q('select ops.multi_branch_snapshot($1,$2) as j',[b,br]))[0].j;const localBinding=localSnap.masters.find(x=>x.id===created.masterItemId).bindings.find(x=>x.branchId===br2);
+  check('local price uses exact bigint cents',local.overridePriceMinor==='12345'&&localBinding.cataloguePriceMinor==='12345'&&localBinding.effectivePriceMinor==='12345');
   const master=(await q("select ops.multi_branch_manage($1,$2,$3,'set-master-price',$4::jsonb) as j",[b,br,op(3603),JSON.stringify({masterItemId:created.masterItemId,priceMinor:'17001',expectedVersion:'0'})]))[0].j;
   check('master price version advances',master.version==='1'&&master.basePriceMinor==='17001');
-  check('local override survives master price propagation',(await q('select approved_price::text p from public.menu_items where id=$1',[p4]))[0].p==='123.45');
+  const masterSnap=(await q('select ops.multi_branch_snapshot($1,$2) as j',[b,br]))[0].j;const masterBinding=masterSnap.masters.find(x=>x.id===created.masterItemId).bindings.find(x=>x.branchId===br2);
+  check('local override survives master price propagation',masterBinding.cataloguePriceMinor==='12345'&&masterBinding.overridePriceMinor==='12345'&&masterBinding.effectivePriceMinor==='12345');
   const cleared=(await q("select ops.multi_branch_manage($1,$2,$3,'clear-local-price',$4::jsonb) as j",[b,br,op(3604),JSON.stringify({masterItemId:created.masterItemId,targetBranchId:br2,expectedOverrideVersion:'0'})]))[0].j;
-  check('clearing local price restores current master price',cleared.basePriceMinor==='17001'&&(await q('select approved_price::text p from public.menu_items where id=$1',[p4]))[0].p==='170.01');
+  const clearedSnap=(await q('select ops.multi_branch_snapshot($1,$2) as j',[b,br]))[0].j;const clearedBinding=clearedSnap.masters.find(x=>x.id===created.masterItemId).bindings.find(x=>x.branchId===br2);
+  check('clearing local price restores current master price',cleared.basePriceMinor==='17001'&&clearedBinding.cataloguePriceMinor==='17001'&&clearedBinding.overridePriceMinor===null&&clearedBinding.effectivePriceMinor==='17001');
   const snap=(await q('select ops.multi_branch_snapshot($1,$2) as j',[b,br]))[0].j;
   check('owner snapshot is business-scoped and reports branch bindings',snap.branches.length===2&&snap.masters.some(x=>x.id===created.masterItemId&&x.bindings.length===2));
   await rejects('authenticated clients cannot directly read master menu tables',()=>q('select * from ops.master_menu_items'),'42501');
