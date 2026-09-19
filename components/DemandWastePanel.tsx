@@ -1,0 +1,24 @@
+'use client';
+import{useEffect,useState,type FormEvent}from'react';
+import{Card,Empty}from'./Shell';import{api,explain}from'./transport';import{decimalUnitsToMilli,milliToUnits,WASTE_REASONS}from'@/lib/demand-waste';
+type Pending={operationId:string;productId:string;quantityMilli:number;reason:string};
+export function DemandWastePanel(){
+ const[data,setData]=useState<any>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[product,setProduct]=useState(''),[quantity,setQuantity]=useState('1'),[reason,setReason]=useState('prep'),[pending,setPending]=useState<Pending|null>(null);
+ async function reload(){try{const next=await api('/api/merchant/demand-waste');setData(next);setProduct((p:string)=>p||next.products?.[0]?.id||'');}catch(e){setError(explain(e));}}
+ useEffect(()=>{void reload();},[]);
+ async function finish(p:Pending){await api('/api/merchant/record-waste',{...p});setPending(null);setQuantity('1');await reload();}
+ async function submit(e:FormEvent){e.preventDefault();if(pending)return;setBusy(true);setError('');try{const p={operationId:crypto.randomUUID(),productId:product,quantityMilli:decimalUnitsToMilli(quantity),reason};setPending(p);await finish(p);}catch(e){setError(explain(e));}finally{setBusy(false);}}
+ async function retry(){if(!pending)return;setBusy(true);setError('');try{await finish(pending);}catch(e){setError(explain(e));}finally{setBusy(false);}}
+ const top=(data?.products||[]).filter((p:any)=>p.baselineNextDayMilli!==null&&Number(p.baselineNextDayMilli)>0).slice(0,8);
+ return <section className="business-studio" aria-labelledby="demand-waste-title"><div className="studio-heading"><div><p className="eyebrow">OPERASYON VERİSİ</p><h2 id="demand-waste-title">Talep & fire kanıtı</h2><p>Yalnız gerçek tamamlanmış siparişler ve personelin kaydettiği gerçek fire gözlemleri kullanılır.</p></div><span className="tag">Tahmin kapısı: gerçek veri</span></div>
+ {error&&<div className="notice" role="alert">{error}</div>}
+ {pending&&<div className="notice" role="status"><strong>Önceki fire kaydının sonucu kesinleşmedi.</strong><p>Yeni kayıt açmadan aynı işlem kimliğiyle kontrol edin.</p><button className="btn" disabled={busy} onClick={()=>void retry()}>Aynı işlemi güvenle yeniden dene</button></div>}
+ <div className="studio-grid"><Card><h3>Fire gözlemi</h3><p className="helper">1,000 = bir tam satış birimi/porsiyon. Kayıt sipariş, stok veya fiyat değiştirmez.</p><form onSubmit={submit}>
+ <label>Ürün<select value={product} required disabled={!!pending} onChange={e=>setProduct(e.target.value)}>{(data?.products||[]).map((p:any)=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+ <label>Miktar (ürün birimi)<input inputMode="decimal" value={quantity} disabled={!!pending} onChange={e=>setQuantity(e.target.value)} placeholder="1 veya 0,5"/></label>
+ <label>Neden<select value={reason} disabled={!!pending} onChange={e=>setReason(e.target.value)}>{WASTE_REASONS.map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
+ <button className="btn primary full" disabled={busy||!!pending||!product}>{busy?'Kaydediliyor…':'Gerçek fireyi kaydet'}</button></form></Card>
+ <Card><h3>Veri yeterliliği</h3>{!data?<p>Gerçek veriler okunuyor…</p>:<><p><strong>{data.serviceDays}</strong> servis günü · <strong>{data.completedOrders}</strong> tamamlanmış/servis edilmiş sipariş · <strong>{data.wasteEvents}</strong> fire kaydı</p><p className="helper">Pencere: son {data.lookbackDays} gün. Yöntem: servis günü başına kayan baz çizgisi.</p><p className="notice">Talep baz çizgisi: <strong>{data.demandReady?'Hazır':'Henüz açılmadı'}</strong><br/>Fire oranı: <strong>{data.wasteReady?'Hazır':'Henüz açılmadı'}</strong></p>{data.reasons?.length>0&&<ul>{data.reasons.map((x:string)=><li key={x}>{x}</li>)}</ul>}</>}</Card></div>
+ {data?.demandReady?<Card><h3>Ürün baz çizgisi</h3><p className="helper">Bu değer sipariş emri değildir; son gerçek servis günlerinin basit, denetlenebilir ortalamasıdır. AI veya işletme otomatik üretim yapmaz.</p>{top.length?<div className="studio-table"><table><thead><tr><th>Ürün</th><th>Sonraki servis günü baz çizgisi</th><th>Gözlenen fire</th><th>Fire oranı</th></tr></thead><tbody>{top.map((p:any)=><tr key={p.id}><td>{p.name}</td><td>{milliToUnits(p.baselineNextDayMilli)} birim</td><td>{milliToUnits(p.wasteMilli)} birim</td><td>{p.wasteRateBps===null?'Yeterli fire verisi yok':(Number(p.wasteRateBps)/100).toLocaleString('tr-TR',{maximumFractionDigits:2})+'%'}</td></tr>)}</tbody></table></div>:<Empty title="Satış baz çizgisi oluşmadı" description="Yeterlilik kapısı açılsa da ürün bazında satış gözlemi bulunmuyor."/>}</Card>:<Card><Empty title="Tahmin üretmiyoruz" description="Minimum gerçek veri oluşana kadar sistem sayı uydurmaz; kayıt toplamaya devam eder."/></Card>}
+ </section>;
+}
