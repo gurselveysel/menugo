@@ -1,0 +1,74 @@
+name: Free router r23
+on:
+  push:
+    branches: ['feat/free-router-openrouter-r23']
+permissions:
+  contents: write
+concurrency:
+  group: free-router-r23
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.repository == 'gurselveysel/menugo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/free-router-openrouter-r23
+      - name: Apply deterministic free-router transition
+        run: |
+          if [ ! -f supabase/migrations/20260919213500_ops_free_router.sql ]; then
+            python3 scripts/free-router-transition.py
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add app/api components lib/llm scripts supabase/functions/menugo-llm supabase/migrations/20260919213500_ops_free_router.sql tests/open-source-llm.test.mjs
+            git commit -m 'feat: managed free-model router with fail-closed privacy policy'
+            git push origin HEAD:feat/free-router-openrouter-r23
+          fi
+          git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Edge types
+        run: deno check supabase/functions/menugo-llm/index.ts
+      - name: Unit and protocol tests
+        run: npm test
+      - name: SQL integration tests
+        run: npm run test:sql && node tests/studio.sql.integration.mjs
+      - name: Native PostgreSQL 17
+        run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: UI regression
+        run: npm run test:ui && node tests/studio-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: free-router-r23-qa
+          path: |
+            test-results
+            public/qa
+          if-no-files-found: ignore
