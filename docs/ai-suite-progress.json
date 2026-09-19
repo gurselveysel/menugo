@@ -2,16 +2,18 @@
   "scopeIssue": 1,
   "complete": false,
   "state": "implementation_and_acceptance",
-  "baseline": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
+  "baseline": "b403537284c3164f90752dd334339223587fdf7e",
   "activeBranch": "feat/multibranch-master-menu-r26",
   "pullRequest": 13,
   "releaseCandidate": "menugo-multibranch-master-menu-20260920-r28",
-  "latestRuntimeCommit": "566fa86a82044cc3ca27c2514f6e9505b2a4db77",
-  "updatedAt": "2026-09-19T21:31:00Z",
+  "latestRuntimeCommit": "4ac4627e01f77c5ba43ce25f20f7cb9721c874a6",
+  "updatedAt": "2026-09-19T21:34:00Z",
   "integratedProductionBase": {
-    "commit": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
+    "commit": "b403537284c3164f90752dd334339223587fdf7e",
     "release": "menugo-platform-ai-access-20260920-r27",
-    "note": "Multi-branch work was manually merged over the newer platform-AI control-plane release without reverting its restaurant/platform permission separation."
+    "verification": "docs/platform-ai-access-verification.json",
+    "migrationLedger": "20260919211846_ops_platform_ai_access_r27",
+    "note": "Multi-branch work is merged over the accepted company-only AI control-plane release without restoring restaurant-level provider controls."
   },
   "modules": {
     "menuImport": "free_or_self_hosted_vision_runtime_in_production_real_provider_acceptance_and_pdf_rasterization_pending",
@@ -29,12 +31,12 @@
     "realProvider": "not_run",
     "freeAiPolicy": {
       "release": "menugo-platform-ai-access-20260920-r27",
-      "productionCommit": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
+      "productionCommit": "b403537284c3164f90752dd334339223587fdf7e",
       "providers": ["groq_free", "gemini_free", "openrouter_free", "cloudflare_free"],
       "policy": "free_only_platform_managed_credentials_no_paid_fallback_restaurant_staff_cannot_manage_provider_controls",
       "paidFallbackCalls": 0,
       "realProviderCalls": 0,
-      "scopeBoundary": "runtime and platform control plane deployed; no live provider acceptance without an authorized platform configuration and free-provider credential"
+      "scopeBoundary": "runtime and company control plane deployed; no live provider acceptance without an authorized platform configuration and free-provider credential"
     },
     "reviewedTextPublication": {
       "pullRequest": 7,
@@ -89,12 +91,12 @@
     "multiBranch": {
       "pullRequest": 13,
       "branch": "feat/multibranch-master-menu-r26",
-      "integratedHead": "566fa86a82044cc3ca27c2514f6e9505b2a4db77",
-      "integratedBase": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
+      "integratedHead": "4ac4627e01f77c5ba43ce25f20f7cb9721c874a6",
+      "integratedBase": "b403537284c3164f90752dd334339223587fdf7e",
       "previousGreenHead": "f34b10bce5c84cbd5d57d8cf027e8e999e62e6ee",
       "previousCustomWorkflowRun": 35469520737,
       "previousMainChecksRun": 35469520709,
-      "latestBaseCi": "pending_after_platform_ai_r27_integration",
+      "latestBaseCi": "pending_after_accepted_platform_ai_r27_integration",
       "supabaseProject": "lrfcqpmjgghodymhnvue",
       "migrations": ["20260919211305_ops_multi_branch_menu_r26", "20260919211319_ops_multi_branch_snapshot_r26"],
       "money": "bigint_minor_units",
@@ -144,7 +146,7 @@
   },
   "next": [
     "Keep complete=false until every Issue #1 acceptance item has real-provider and production evidence.",
-    "Merge and deploy r28 only after CI on the platform-AI r27 base is green; verify both production domains and preserve the 76-product/71-approved-price catalogue fingerprint.",
+    "Merge and deploy r28 only after CI on the accepted platform-AI r27 base is green; verify both production domains and preserve the 76-product/71-approved-price catalogue fingerprint.",
     "When an authorized platform free-provider credential is configured, run a no-business-data live probe and representative menu/copy/customer-assistant acceptance without paid fallback.",
     "Implement safe PDF rasterization and source-preserving reviewed product-image publication with audit and rollback.",
     "Complete approved purchasing/recipe ledger acceptance and authorized social adapter without sending a live post under development approval.",
