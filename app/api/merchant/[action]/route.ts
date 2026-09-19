@@ -21,6 +21,7 @@ export async function GET(req:Request,ctx:Context){try{origin(req);const{action}
  if(action==='snapshot')return json(await rpc(s,'merchant_manage',{...scope,p_action:'snapshot',p_payload:{}}));
  if(action==='visits')return json(await rpc(s,'my_visits',scope));
  if(action==='orders')return json(await rpc(s,'customer_orders',{...scope,p_check_id:uuid(new URL(req.url).searchParams.get('check'))}));
+ if(action==='demand-waste')return json(await rpc(s,'demand_waste_snapshot',{...scope,p_lookback_days:28}));
  throw new Failure('NOT_FOUND',404);
  }catch(e){return failed(e);}}
 export async function POST(req:Request,ctx:Context){try{origin(req);const{action}=await ctx.params;
@@ -47,6 +48,10 @@ export async function POST(req:Request,ctx:Context){try{origin(req);const{action
  if(action==='service-control')return json(await rpc(s,'service_control',{...scope,p_value:b}));
  if(action==='decide-cancellation'){if(typeof b.approve!=='boolean'||typeof b.note!=='string'||!b.note.trim()||b.note.length>300)throw new Failure('INVALID_INPUT');return json(await rpc(s,'decide_cancellation',{...scope,p_id:uuid(b.id),p_approve:b.approve,p_note:b.note}));}
  if(action==='request-service'){if(!['waiter','bill'].includes(String(b.kind)))throw new Failure('INVALID_SERVICE_REQUEST');return json(await rpc(s,'request_service',{...scope,p_check_id:uuid(b.checkId),p_kind:b.kind}));}
+ if(action==='record-waste'){
+  if(typeof b.productId!=='string'||!/^[A-Za-z0-9._:-]{1,100}$/.test(b.productId)||!Number.isInteger(b.quantityMilli)||Number(b.quantityMilli)<1||Number(b.quantityMilli)>999000||!['prep','spoilage','return','other'].includes(String(b.reason)))throw new Failure('INVALID_WASTE_EVENT');
+  return json(await rpc(s,'record_waste_event',{...scope,p_product_source_id:b.productId,p_quantity_milli:b.quantityMilli,p_reason:b.reason,p_client_request_id:uuid(b.operationId)}));
+ }
  if(!['save-profile','invite-staff','revoke-invite','revoke-staff','resolve-request'].includes(action))throw new Failure('NOT_FOUND',404);
  if(action==='invite-staff'){text(b.email,254);text(b.name,80);if(!['manager','waiter','kitchen','cashier'].includes(String(b.role)))throw new Failure('INVALID_ROLE');}
  if(['revoke-invite','revoke-staff','resolve-request'].includes(action))uuid(b.id);
