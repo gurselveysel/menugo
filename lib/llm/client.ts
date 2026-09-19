@@ -12,11 +12,11 @@ export async function invokeLlm(s:Awaited<ReturnType<typeof client>>,operationId
  try{for(;;){const r=await reader.read();if(r.done)break;length+=r.value.length;if(length>350000){await reader.cancel();throw new Failure('LLM_INVALID_OUTPUT',502);}parts.push(r.value);}const value=JSON.parse(Buffer.concat(parts).toString('utf8'));if(!response.ok)throw new Failure(/^[A-Z0-9_]{1,80}$/.test(value?.error?.code)?value.error.code:'LLM_CONNECTION_UNAVAILABLE',response.status);return value;}catch(e){if(e instanceof Failure)throw e;throw new Failure('LLM_RESULT_UNKNOWN',503);}
 }
 
-/** Explicit self-host policy. Status reads do not call any model or credit endpoint. */
+/** Explicit free/open-model policy. Status reads do not call any model or credit endpoint. */
 export async function requireOpenSource(s:Awaited<ReturnType<typeof client>>,kind?:string){
  const status=await llmStatus(s);
  if(!status.configured)throw new Failure('LLM_SERVER_REQUIRED',503);
- if(status.provider!=='self_hosted')throw new Failure('LLM_OPEN_SOURCE_REQUIRED',409);
+ if(!['self_hosted','openrouter_free'].includes(status.provider||''))throw new Failure('LLM_OPEN_SOURCE_REQUIRED',409);
  if(!status.enabled)throw new Failure('LLM_DISABLED',409);
  if(kind==='photo-enhance')throw new Failure('LLM_IMAGE_ENGINE_REQUIRED',409);
  if(kind!=='test'&&!status.verified)throw new Failure('LLM_TEST_REQUIRED',409);
