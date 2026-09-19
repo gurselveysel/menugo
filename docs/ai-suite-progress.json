@@ -5,9 +5,9 @@
   "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
   "activeBranch": null,
   "pullRequest": null,
-  "releaseCandidate": "menugo-free-router-20260919-r23",
-  "latestRuntimeCommit": "413a9bd3d84649b57872981aac17cb981ac4664f",
-  "updatedAt": "2026-09-19T18:53:30Z",
+  "releaseCandidate": "menugo-demand-waste-20260919-r24",
+  "latestRuntimeCommit": "dd7c2d48d41912cd61d6bfd3400263715667352d",
+  "updatedAt": "2026-09-19T19:07:30Z",
   "modules": {
     "menuImport": "free_or_self_hosted_vision_runtime_in_production_real_provider_acceptance_and_pdf_rasterization_pending",
     "photoStudio": "draft_pipeline_implemented_image_engine_and_reviewed_product_publication_pending",
@@ -17,7 +17,7 @@
     "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_free_or_self_hosted_runtime_path_deployed_real_provider_and_purchase_posting_pending",
     "voiceOrder": "catalogue_grounded_review_draft_in_production_browser_speech_available_real_provider_and_physical_device_acceptance_pending",
     "customerAssistant": "grounded_published_catalogue_read_only_slice_in_production_real_provider_acceptance_pending",
-    "demandWaste": "pure_descriptive_estimator_only_data_pipeline_pending",
+    "demandWaste": "real_order_and_explicit_waste_evidence_pipeline_in_production_fail_closed_until_14_service_days_50_orders_and_10_waste_events_real_sufficient_data_acceptance_pending",
     "multiBranch": "pending"
   },
   "acceptance": {
@@ -130,6 +130,31 @@
       "allergenSafety": "fail_closed_staff_handoff_no_allergen_safe_claim",
       "productionDeployment": "dpl_7osMT6a3jNut4Mj8Xq7wxQZY516M",
       "productionState": "READY"
+    },
+    "demandWastePipeline": {
+      "pullRequest": 12,
+      "testedHead": "f6bfbd7f35db0777ac94a8adfb3f46bc257980be",
+      "mergeCommit": "dd7c2d48d41912cd61d6bfd3400263715667352d",
+      "migration": "ops_demand_waste",
+      "appliedMigrationVersion": "20260919190641",
+      "workflowRun": 35463155672,
+      "ci": "green: unit, PGlite SQL/RLS, native PostgreSQL 17 row-lock/idempotency concurrency, Next production build, existing UI regression, demand/waste browser acceptance",
+      "vercelDeployment": "dpl_2D5bptUerR8ooYdb25tMqYxb3MMV",
+      "vercelState": "READY",
+      "productionCommit": "dd7c2d48d41912cd61d6bfd3400263715667352d",
+      "productionDomains": ["https://www.menugo.app","https://sariyerborekcisi.menugo.app"],
+      "productsAtCheck": 76,
+      "approvedPricesAtCheck": 71,
+      "catalogueGuardBefore": "d66cf8b8359d23d57d822ec6f1815f32",
+      "catalogueGuardAfter": "d66cf8b8359d23d57d822ec6f1815f32",
+      "productionCompletedOrServedOrdersAtCheck": 0,
+      "productionWasteEventsAtCheck": 0,
+      "readinessThresholds": {"serviceDays":14,"completedOrServedOrders":50,"wasteEventsForWasteRate":10},
+      "forecastGeneratedInProduction": false,
+      "syntheticProductionEvidenceWritten": false,
+      "catalogueOrPriceWritesDuringAcceptance": false,
+      "paymentOrOrderWritesDuringAcceptance": false,
+      "scopeBoundary": "real evidence collection/readiness pipeline is deployed and fail-closed; sufficient-real-data demand and waste forecasting acceptance remains pending"
     }
   },
   "blockers": [
@@ -139,18 +164,21 @@
     "No approved invoice/recipe purchasing data exists for live purchase-ledger acceptance; synthetic fixtures must not be promoted as live business data.",
     "Social publishing requires an authorized business social connection plus separate explicit publication permission for the exact creative/timing; no live social publish is authorized by the general development approval.",
     "Voice speech/LLM provider acceptance and physical-device microphone acceptance are not run.",
-    "Historical production/waste data pipeline and multi-branch master-menu/local-price implementation remain incomplete; customer assistant real-provider acceptance remains pending."
+    "Demand/waste evidence pipeline is deployed, but production currently has 0 completed/served orders and 0 waste events, so sufficient-data forecast acceptance is intentionally closed. Multi-branch master-menu/local-price implementation and customer-assistant real-provider acceptance also remain incomplete."
   ],
   "safety": {
     "customerOrderingUnchanged": true,
     "catalogueWritesDuringR23Acceptance": false,
+    "catalogueWritesDuringR24Acceptance": false,
     "productsAtCheck": 76,
     "approvedPricesAtCheck": 71,
+    "catalogueGuardAtR24Check": "d66cf8b8359d23d57d822ec6f1815f32",
     "paymentsSent": false,
     "messagesSent": false,
     "socialPublishes": false,
     "providerCalls": 0,
     "liveTestOrdersCreated": false,
+    "syntheticWasteEventsCreatedInProduction": false,
     "secretsExposed": false
   },
   "next": [
@@ -158,7 +186,7 @@
     "When an owner supplies an OpenRouter credential, register openrouter/free through the owner-only Vault-backed flow and run a no-business-data live connection probe before representative menu/copy/invoice acceptance; never fall through to openrouter/auto or a paid model.",
     "Implement safe PDF page rasterization without sending document bytes to an unapproved third party, then run real menu-photo/PDF extraction acceptance with human review and no automatic catalogue mutation.",
     "Add source-preserving product image storage, reviewed image publication with audit/rollback and an accepted image edit/generation engine.",
-    "Complete purchasing/recipe ledger, authorized social adapter, sufficient-data demand/waste pipeline and multi-branch master-menu/local-price slices; connect customer assistant to accepted real provider only after provider acceptance.",
+    "Complete purchasing/recipe ledger, authorized social adapter and multi-branch master-menu/local-price slices. Demand/waste forecast acceptance must wait for at least 14 real service days, 50 completed/served orders and 10 real waste observations for waste-rate output; do not seed synthetic production evidence.",
     "For voice ordering, preserve reviewed catalogue grounding and add accepted speech/model plus physical-device coverage without live-order side effects."
   ]
 }
