@@ -1,15 +1,8 @@
 {
-  "version": "menugo-platform-control-center-20260920-r29",
-  "previous": "menugo-multibranch-master-menu-20260920-r28",
+  "version": "menugo-local-pdf-menu-20260920-r30",
+  "previous": "menugo-platform-control-center-20260920-r29",
   "merchantMenu": true,
-  "roleInterfaces": [
-    "customer",
-    "owner",
-    "manager",
-    "waiter",
-    "kitchen",
-    "cashier"
-  ],
+  "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"],
   "whatsapp": "customer-confirmed-click-to-chat",
   "onlinePayments": false,
   "automatedCourier": false,
@@ -17,7 +10,7 @@
   "liveData": "Supabase",
   "transparentMerchantBrand": true,
   "whiteMerchantFooter": true,
-  "dataAndPermissionsUnchanged": false,
+  "dataAndPermissionsUnchanged": true,
   "existingOrderDataAndPermissionsUnchanged": true,
   "guestSessions": true,
   "personalDrafts": true,
@@ -57,12 +50,7 @@
   "aiCampaigns": false,
   "aiModel": "task-and-privacy-gated-free-router",
   "llmAssistant": true,
-  "llmDirectProviders": [
-    "groq_free",
-    "gemini_free",
-    "openrouter_free",
-    "cloudflare_free"
-  ],
+  "llmDirectProviders": ["groq_free", "gemini_free", "openrouter_free", "cloudflare_free"],
   "llmConfiguration": "platform-managed-supabase-vault",
   "llmAutomaticWrites": false,
   "llmRuntimeRequiresCredential": true,
@@ -76,20 +64,10 @@
   "canonicalBrandSurfaces": true,
   "businessStudio": "private-drafts-and-reviewed-text-publication",
   "studioProvider": "free-only-platform-managed-credentials",
-  "studioDraftKinds": [
-    "product-copy",
-    "translation",
-    "campaign",
-    "invoice",
-    "photo-enhance"
-  ],
+  "studioDraftKinds": ["product-copy", "translation", "campaign", "invoice", "photo-enhance"],
   "studioCanPublishProducts": false,
   "studioReviewedTextPublication": true,
-  "studioTextFields": [
-    "tr.description",
-    "en.displayName",
-    "en.description"
-  ],
+  "studioTextFields": ["tr.description", "en.displayName", "en.description"],
   "studioPublicationBatchLimit": 20,
   "studioPublicationUndo": "source-and-version-guarded-append-only",
   "studioCanonicalCatalogueWrites": false,
@@ -118,5 +96,13 @@
   "centralRuntimeGates": true,
   "platformAuditedSettings": true,
   "restaurantTechnicalSettings": false,
-  "platformInfrastructureSettings": "links-and-readiness-only-no-unverified-actions"
+  "platformInfrastructureSettings": "links-and-readiness-only-no-unverified-actions",
+  "localPdfPreparation": true,
+  "pdfRenderer": "pdfjs-6.3.289-first-party-worker",
+  "pdfSourceUpload": false,
+  "pdfPageSelection": "explicit-review-before-selected-jpeg-transfer",
+  "pdfDraftMode": "separate-source-preserving-page-jobs",
+  "pdfLimits": {"inputBytes":10485760,"pages":8,"pagePixels":3000000,"pageBytes":2097152,"totalBytes":12582912},
+  "pdfModelAcceptance": "not-run",
+  "pdfPhysicalDeviceAcceptance": "pending"
 }
