@@ -1,0 +1,69 @@
+name: Import and verify company control center
+on:
+  push:
+    branches: ['feat/platform-control-center-r29']
+    paths: ['.github/workflows/apply-platform-control-r29.yml']
+permissions:
+  contents: write
+jobs:
+  import-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/platform-control-center-r29
+      - name: Verify and import source-only bundle
+        env:
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-4354-8246-85a7-bcf01acfe85c/raw?se=2026-09-19T22%3A23%3A30Z&sp=r&sv=2026-02-06&sr=b&scid=77a73e4d-bb67-53df-88f3-3070d5f14395&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-19T09%3A51%3A49Z&ske=2026-09-20T09%3A51%3A49Z&sks=b&skv=2026-02-06&sig=ABsqz7gdhHAmqlIr8lYXa778B9/1pkjOmrnMSdZxXe0%3D'
+        run: |
+          python - <<'PY'
+          import os, io, hashlib, urllib.request, zipfile, pathlib
+          raw=urllib.request.urlopen(os.environ['SOURCE_URL'], timeout=30).read(1000000)
+          assert hashlib.sha256(raw).hexdigest()=='6d12fdfbaabd408914a082da0c28383e5a28880aea73603097e64007c0ce386a'
+          allowed={'app/api/merchant/[action]/route.ts','app/api/platform/control/[action]/route.ts','app/auth/callback/route.ts','app/platform/ayarlar/page.tsx','app/platform/control.css','app/platform/page.tsx','components/Login.tsx','components/PlatformAi.tsx','components/PlatformControl.tsx','components/ServiceInsights.tsx','components/transport.ts','docs/platform-control-center-r29.md','lib/auth-destination.ts','lib/config.ts','public/release.json','src/platform/control.ts','supabase/migrations/20260920003000_ops_platform_control_center.sql','tests/native-postgres.integration.mjs','tests/platform-control-checks.mjs','tests/platform-control-concurrency.mjs','tests/platform-control-ui.integration.mjs','tests/platform-control.test.mjs','tests/sql.integration.mjs'}
+          with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            assert set(z.namelist())==allowed and len(z.namelist())==len(allowed)
+            for name in sorted(allowed):
+              data=z.read(name); data.decode('utf-8'); p=pathlib.Path(name);p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(data)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app components lib src supabase tests docs public/release.json
+          git commit -m 'feat: company control center with scoped permissions, runtime policies and audit'
+          git push origin HEAD:feat/platform-control-center-r29
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:sql && node tests/studio.sql.integration.mjs
+      - run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/platform-control-ui.integration.mjs && node tests/platform-ai-ui.integration.mjs
+      - run: node tests/llm-ui.integration.mjs && node tests/studio-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: company-control-acceptance
+          path: |
+            public/qa/platform-control
+            public/qa/platform-ai
+            public/qa/llm
+            public/qa/studio
+            test-results
+          retention-days: 3
