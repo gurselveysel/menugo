@@ -1,0 +1,61 @@
+name: Platform AI access acceptance
+on:
+  push:
+    branches: ['fix/platform-ai-access-r27']
+permissions:
+  contents: write
+concurrency:
+  group: platform-ai-r27
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply reviewed control-plane source patch
+        run: |
+          python3 scripts/apply-platform-ai-r27.py
+          if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add app components lib supabase tests public/release.json
+            git commit -m 'fix: isolate AI provider controls from restaurant ownership'
+            git push origin HEAD:fix/platform-ai-access-r27
+          fi
+          git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run test:sql && node tests/studio.sql.integration.mjs
+      - run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/llm-ui.integration.mjs && node tests/studio-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-ai-r27-qa
+          path: |
+            public/qa
+            test-results
+          retention-days: 3
