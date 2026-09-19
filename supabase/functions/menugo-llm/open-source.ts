@@ -32,7 +32,7 @@ export function openSourceWire(model: string, key: string, prompt: string, text:
  if(model==='openrouter/free') return {
   url:OPENROUTER_ENDPOINT,
   headers:{Authorization:`Bearer ${key}`,'Content-Type':'application/json','HTTP-Referer':'https://www.menugo.app','X-Title':'MenuGO'},
-  body:{...common,provider:{zdr:true,data_collection:'deny',require_parameters:true}}
+  body:{...common,provider:{zdr:true,data_collection:'deny',require_parameters:true,max_price:{prompt:0,completion:0,request:0,image:0}}}
  };
  return {
   url:OPEN_ENDPOINT,

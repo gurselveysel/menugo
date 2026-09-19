@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import {actor,rpc,scope,json,failed,origin,uuid,revision,Failure} from '@/lib/api';
 import {requireOpenSource,invokeLlm} from '@/lib/llm/client';
 import {fileKind,ImportError} from '@/lib/ai-menu/contracts';
-const TEXT_MODEL='qwen3.5:4b';const IMAGE_MODEL='Bağlı değil · ayrı görsel modeli gerekli';
+const TEXT_MODEL='Ücretsiz görev yönlendiricisi';const IMAGE_MODEL='Cloudflare · FLUX.2 Klein 4B';
 import {STUDIO_KINDS,parseCopy,parseInvoice,type StudioKind} from '@/src/studio/contracts';
 import {StudioError} from '@/src/studio/operations';
 export const runtime='nodejs';
@@ -26,7 +26,12 @@ async function start(s:Awaited<ReturnType<typeof manager>>,id:string){
    const raw=answer.result?.draft;
    // Revalidate in Next before storing, independent of Edge model parsing.
    const keys=raw&&typeof raw==='object'?Object.fromEntries(Object.entries(raw).filter(([key])=>!['kind','draftOnly'].includes(key))):raw;
-   const draft=claim.kind==='invoice'?parseInvoice(keys,claim.input.attachment?.pages??1):parseCopy(claim.kind,keys,claim.sources);
+   let draft:any;
+   if(claim.kind==='photo-enhance'){
+    if(raw?.kind!=='photo-enhance'||typeof raw.data!=='string'||raw.data.length>5500000)throw new Failure('LLM_INVALID_OUTPUT');
+    const image=await sharp(Buffer.from(raw.data,'base64'),{limitInputPixels:4000000}).rotate().webp({quality:90}).toBuffer();
+    draft={kind:'photo-enhance',mime:'image/webp',data:image.toString('base64'),draftOnly:true};
+   }else draft=claim.kind==='invoice'?parseInvoice(keys,claim.input.attachment?.pages??1):parseCopy(claim.kind,keys,claim.sources);
    const result={draft,model:answer.model,inputTokens:answer.inputTokens??'0',outputTokens:answer.outputTokens??'0'};
    await rpc(s,'studio_job',{...scope,p_action:'finish',p_job_id:id,p_payload:{lease:claim.lease,...result}});
   }catch(e){
@@ -38,7 +43,7 @@ async function start(s:Awaited<ReturnType<typeof manager>>,id:string){
 }
 export async function GET(req:Request,{params}:{params:Promise<{action:string}>}){
  try{origin(req);const s=await manager(),{action}=await params;
-  if(action==='list'){const data=await rpc(s,'studio_job',{...scope,p_action:'list'});let reason:string|null=null;let model:string|null=null;let provider:string|null=null;try{const ready=await credential(s);model=ready.model;provider=ready.provider;}catch(e){reason=e instanceof Error?e.message:'AI_UNAVAILABLE';}return json({...data,aiReady:reason===null,aiReason:reason,models:{text:model||TEXT_MODEL,image:IMAGE_MODEL},provider:provider||'open_source',imageReady:false,pdfReady:false,limits:{daily:10,images:3},sourceRetentionDays:7});}
+  if(action==='list'){const data=await rpc(s,'studio_job',{...scope,p_action:'list'});let reason:string|null=null;let model:string|null=null;let provider:string|null=null;let imageReady=false;try{const ready=await credential(s);model=ready.model;provider=ready.provider;imageReady=ready.imageConfigured===true;}catch(e){reason=e instanceof Error?e.message:'AI_UNAVAILABLE';}return json({...data,aiReady:reason===null,aiReason:reason,models:{text:model||TEXT_MODEL,image:IMAGE_MODEL},provider:provider||'open_source',imageReady,pdfReady:false,limits:{daily:10,images:3},sourceRetentionDays:7});}
   const id=uuid(new URL(req.url).searchParams.get('id'));
   if(action==='get'){const j=await rpc(s,'studio_job',{...scope,p_action:'get',p_job_id:id});if(j.result?.kind==='photo-enhance'){delete j.result.data;j.result.imageUrl=`/api/studio/image?id=${encodeURIComponent(id)}`;}return json(j);}
   if(action==='image'||action==='source'){
@@ -62,6 +67,7 @@ export async function POST(req:Request,{params}:{params:Promise<{action:string}>
     if(mime==='application/pdf')throw new Failure('LLM_PDF_PAGES_REQUIRED',415);
     const m=await sharp(bytes,{limitInputPixels:40000000}).metadata();if(!m.width||!m.height||m.width*m.height>40000000)throw new Failure('INVALID_IMAGE');
     request.attachment={mime,data:v.data,pages};
+    if(kind==='photo-enhance'){const modelInput=await sharp(bytes,{limitInputPixels:40000000}).rotate().resize(511,511,{fit:'inside',withoutEnlargement:true}).webp({quality:94}).toBuffer();request.modelAttachment={mime:'image/webp',data:modelInput.toString('base64'),pages:1};}
    }else if(v.data!==undefined)throw new Failure('UNEXPECTED_ATTACHMENT');
    const result=await rpc(s,'studio_job',{...scope,p_action:'create',p_payload:{operationId,kind,input:request}});
    if(!result.duplicate)await start(s,result.id);return json(result,202);

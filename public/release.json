@@ -1,8 +1,15 @@
 {
-  "version": "menugo-reviewed-text-publication-20260919-r20",
-  "previous": "menugo-business-studio-drafts-20260919-r19",
+  "version": "menugo-free-ai-policy-20260919-r25",
+  "previous": "menugo-reviewed-text-publication-20260919-r20",
   "merchantMenu": true,
-  "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"],
+  "roleInterfaces": [
+    "customer",
+    "owner",
+    "manager",
+    "waiter",
+    "kitchen",
+    "cashier"
+  ],
   "whatsapp": "customer-confirmed-click-to-chat",
   "onlinePayments": false,
   "automatedCourier": false,
@@ -45,11 +52,16 @@
   "photoFallback": true,
   "menuUnchanged": true,
   "aiMenuImport": true,
-  "aiPhotoStudio": false,
+  "aiPhotoStudio": "cloudflare-free-adapter-requires-live-acceptance",
   "aiCampaigns": false,
-  "aiModel": "google/gemini-2.5-flash",
+  "aiModel": "task-and-privacy-gated-free-router",
   "llmAssistant": true,
-  "llmDirectProviders": ["openai", "gemini"],
+  "llmDirectProviders": [
+    "groq_free",
+    "gemini_free",
+    "openrouter_free",
+    "cloudflare_free"
+  ],
   "llmConfiguration": "owner-managed-supabase-vault",
   "llmAutomaticWrites": false,
   "llmRuntimeRequiresCredential": true,
@@ -62,11 +74,21 @@
   "visualOrderingProductCards": true,
   "canonicalBrandSurfaces": true,
   "businessStudio": "private-drafts-and-reviewed-text-publication",
-  "studioProvider": "vercel-ai-gateway-access-and-credit-required",
-  "studioDraftKinds": ["product-copy", "translation", "campaign", "invoice", "photo-enhance"],
+  "studioProvider": "free-only-owner-managed-credentials",
+  "studioDraftKinds": [
+    "product-copy",
+    "translation",
+    "campaign",
+    "invoice",
+    "photo-enhance"
+  ],
   "studioCanPublishProducts": false,
   "studioReviewedTextPublication": true,
-  "studioTextFields": ["tr.description", "en.displayName", "en.description"],
+  "studioTextFields": [
+    "tr.description",
+    "en.displayName",
+    "en.description"
+  ],
   "studioPublicationBatchLimit": 20,
   "studioPublicationUndo": "source-and-version-guarded-append-only",
   "studioCanonicalCatalogueWrites": false,
@@ -74,5 +96,8 @@
   "studioPostsPurchases": false,
   "recipeCostCalculator": "bigint-rational",
   "aiSuiteComplete": false,
-  "studioRealProviderAcceptance": "pending"
+  "studioRealProviderAcceptance": "pending-credentials",
+  "aiPaidFallback": false,
+  "aiMaximumPaidSpendMinor": "0",
+  "aiFreeAccountAttestation": "required-30-day-expiry-provider-plan-not-detectable-from-key"
 }

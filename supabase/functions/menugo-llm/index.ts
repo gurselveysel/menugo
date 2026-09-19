@@ -1,3 +1,4 @@
+import {generateFree} from './free-router.ts';
 import {generate,validateRequest,readLimited,LlmError} from './core.ts';
 const out=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const code=(e:unknown)=>e instanceof LlmError?e.code:'LLM_RESULT_UNKNOWN';
@@ -8,7 +9,7 @@ Deno.serve(async req=>{
  let lease:{id:string;lease:string}|null=null;let generated=false;
  const db=async(name:string,args:unknown,token:string,admin=false)=>{
   const r=await fetch(url+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:admin?service:anon,Authorization:'Bearer '+token,'Content-Type':'application/json','Content-Profile':'ops','Accept-Profile':'ops'},body:JSON.stringify(args),signal:AbortSignal.timeout(8000)});
-  const v=await readLimited(r,3200000);if(!r.ok)throw new LlmError(typeof v.message==='string'&&/^[A-Z0-9_]{1,80}$/.test(v.message)?v.message:'LLM_DATABASE_UNAVAILABLE',/^PT\d{3}$/.test(v.code)?Number(v.code.slice(2)):503);return v;
+  const v=await readLimited(r,6500000);if(!r.ok)throw new LlmError(typeof v.message==='string'&&/^[A-Z0-9_]{1,80}$/.test(v.message)?v.message:'LLM_DATABASE_UNAVAILABLE',/^PT\d{3}$/.test(v.code)?Number(v.code.slice(2)):503);return v;
  };
  try{
   // Explicit custom authentication, including valid user lookup. The public anon
@@ -22,8 +23,12 @@ Deno.serve(async req=>{
   if(!claimed.claimed){if(claimed.state==='succeeded'&&claimed.result)return out({...claimed,replayed:true});throw new LlmError(claimed.error||(['reserved','sending'].includes(claimed.state)?'LLM_IN_PROGRESS':'LLM_RESULT_UNKNOWN'),409);}
   lease={id:claimed.id,lease:claimed.lease};
   const d=await db('llm_dispatch',{p_run_id:lease.id,p_lease:lease.lease},service,true);
-  if(!['self_hosted','openrouter_free'].includes(d.provider))throw new LlmError('LLM_OPEN_SOURCE_REQUIRED',409);
-  const result=await generate(d);generated=true;
+  if(d.provider!=='free_router')throw new LlmError('LLM_PAID_PROVIDER_BLOCKED',409);
+  const held=lease;
+  const result=await generateFree(d,{
+   before:async r=>{const v=await db('free_ai_attempt',{p_run_id:held.id,p_lease:held.lease,p_provider:r.provider,p_version:r.version,p_action:'start'},service,true);return v.allowed===true;},
+   after:async(r,state,error,model)=>{await db('free_ai_attempt',{p_run_id:held.id,p_lease:held.lease,p_provider:r.provider,p_version:r.version,p_action:state,p_error:error,p_model:model},service,true);}
+  });generated=true;
   // No key or request prompt is returned or logged.
   const saved=await db('llm_finish',{p_run_id:lease.id,p_lease:lease.lease,p_result:result.result,p_input:result.inputTokens,p_output:result.outputTokens},service,true);
   lease=null;return out({...saved,replayed:false});

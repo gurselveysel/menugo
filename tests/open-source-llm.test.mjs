@@ -1,7 +1,7 @@
 // Protocol and fail-closed tests, NOT real model quality tests.
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
 const root='supabase/functions/menugo-llm/',dir='test-results/open-source-unit';fs.mkdirSync(dir,{recursive:true});
-for(const name of ['core','open-source','menu-contracts','studio-contracts','studio-operations']){const source=fs.readFileSync(root+name+'.ts','utf8').replaceAll(".ts'",".mjs'");fs.writeFileSync(dir+'/'+name+'.mjs',ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
+for(const name of ['free-policy','core','open-source','menu-contracts','studio-contracts','studio-operations']){const source=fs.readFileSync(root+name+'.ts','utf8').replaceAll(".ts'",".mjs'");fs.writeFileSync(dir+'/'+name+'.mjs',ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
 const c=await import('../'+dir+'/core.mjs'),w=await import('../'+dir+'/open-source.mjs');
 const id='33333333-3333-4333-8333-333333333333',key='SYNTHETIC_LOCAL_PROXY_KEY_12345';
 const base={provider:'self_hosted',model:'qwen3.5:4b',key,kind:'test',request:{},context:{}};
@@ -25,7 +25,7 @@ test('network uncertainty does not retry or fail over to paid provider',async()=
 for(const [status,code] of [[401,'LLM_KEY_INVALID'],[429,'LLM_RATE_LIMIT'],[503,'LLM_PROVIDER_UNAVAILABLE']])test('private gateway error '+status,async()=>assert.rejects(()=>c.generate(base,async()=>new Response('{}',{status})),new RegExp(code)));
 test('response redirects never forwarded with key',async()=>{await c.generate(base,async(_url,init)=>{assert.equal(init.redirect,'error');return response({status:'MENUGO_OK'});});});
 test('edge and Next contracts are identical',()=>{assert.equal(fs.readFileSync(root+'studio-contracts.ts','utf8'),fs.readFileSync('src/studio/contracts.ts','utf8').replace("'./operations'","'./studio-operations.ts'"));assert.equal(fs.readFileSync(root+'studio-operations.ts','utf8'),fs.readFileSync('src/studio/operations.ts','utf8'));assert.equal(fs.readFileSync(root+'menu-contracts.ts','utf8'),fs.readFileSync('lib/ai-menu/contracts.ts','utf8'));});
-test('production routes have explicit self-host policy, no gateway credential path',()=>{for(const path of ['app/api/studio/[action]/route.ts','app/api/ai-menu/[action]/route.ts']){const text=fs.readFileSync(path,'utf8');assert.ok(text.includes('requireOpenSource'));assert.ok(!text.includes('gatewayCredential'));assert.ok(!text.includes('invokeStudio('));}assert.ok(fs.readFileSync(root+'index.ts','utf8').includes("['self_hosted','openrouter_free'].includes"));});
+test('production routes have explicit free-only production policy, no gateway credential path',()=>{for(const path of ['app/api/studio/[action]/route.ts','app/api/ai-menu/[action]/route.ts']){const text=fs.readFileSync(path,'utf8');assert.ok(text.includes('requireOpenSource'));assert.ok(!text.includes('gatewayCredential'));assert.ok(!text.includes('invokeStudio('));}assert.ok(fs.readFileSync(root+'index.ts','utf8').includes("d.provider!=='free_router'"));});
 
 
 test('managed free router is pinned to zero-price model and privacy filters',()=>{

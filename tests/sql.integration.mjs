@@ -448,47 +448,59 @@ try{
  const listUsage=await imp('list');check('daily attempts meter counts failed or lost calls',listUsage.usedToday===3&&listUsage.dailyLimit===5);
  }
 
- // r16 direct LLM: local synthetic key only; no provider/network call.
+
+ // Free-only routing: synthetic fixture credentials, no inference or billable calls.
  {
  await auth(users[0]);
  const settings=async(action='status',payload={})=>(await q('select ops.llm_settings($1,$2,$3,$4::jsonb) as j',[b,br,action,JSON.stringify(payload)]))[0].j;
- const initial=await settings();check('LLM has no fabricated configured credential',!initial.configured&&initial.canManage);
- const syntheticKey='TEST_ONLY_NOT_A_REAL_PROVIDER_KEY_123456';
- const config={version:'0',provider:'self_hosted',model:'qwen3.5:4b',apiKey:syntheticKey,dailyLimit:30,enabled:true,consent:true};
- const saved=await settings('save',config);check('key saved but model not marked tested',saved.configured&&!saved.verified);
- check('key and secret reference never returned',!JSON.stringify(saved).includes(syntheticKey)&&!JSON.stringify(saved).includes('secret_id'));
- await rejects('direct connection table read denied',()=>q('select * from ops.llm_connections'),'42501');
- await rejects('owner cannot invoke decrypted dispatch RPC',()=>q('select ops.llm_dispatch($1,$2)',[op(1000),op(1001)]),'42501');
- await rejects('stale settings overwrite denied',()=>settings('save',config),'LLM_CONFIG_CHANGED');
+ const free=async(action='status',payload={})=>(await q('select ops.free_ai_settings($1,$2,$3,$4::jsonb) as j',[b,br,action,JSON.stringify(payload)]))[0].j;
+ check('LLM not configured without supplied keys',!(await settings()).configured);
+ const key='TEST_ONLY_NOT_A_REAL_PROVIDER_KEY_123456';
+ const config={version:'0',provider:'openrouter_free',model:'openrouter/free',apiKey:key,dailyLimit:20,priority:10,accountId:'',enabled:true,publicContentAllowed:true,privateContentAllowed:true,freePlanConfirmed:true,consent:true};
+ await rejects('legacy paid API save is unreachable',()=>settings('save',config),'LLM_FREE_SETTINGS_REQUIRED');
+ await rejects('payment provider explicitly blocked',()=>free('save',{...config,provider:'openai'}),'LLM_PAID_PROVIDER_BLOCKED');
+ await rejects('billing attestation required',()=>free('save',{...config,freePlanConfirmed:false}),'LLM_FREE_PLAN_RECONFIRM');
+ const saved=await free('save',config);
+ check('free route stored but untested',saved.routes.length===1&&!(await settings()).verified);
+ check('secret and fingerprint absent in management status',![key,'secret_id','credential_fingerprint'].some(x=>JSON.stringify(saved).includes(x)));
+ await rejects('owner cannot read route secrets directly',()=>q('select * from ops.ai_free_routes'),'42501');
+ await rejects('owner cannot call privileged attempt RPC',()=>q("select ops.free_ai_attempt($1,$2,'openrouter_free',1,'start')",[op(1000),op(1001)]),'42501');
+ await rejects('stale settings cannot overwrite',()=>free('save',config),'LLM_CONFIG_CHANGED');
  const claim=async(n,kind,input={})=>(await q('select ops.llm_claim($1,$2,$3,$4,$5::jsonb) as j',[b,br,op(n),kind,JSON.stringify(input)]))[0].j;
- await rejects('inference blocked until test succeeds',()=>claim(1002,'assistant',{task:'menu',question:'Q'}),'LLM_TEST_REQUIRED');
- const first=await claim(1003,'test');check('test call reserves a fenced run',first.claimed&&first.lease);
- const dup=await claim(1003,'test');check('same test operation cannot repeat provider call',!dup.claimed&&dup.state==='reserved');
- await rejects('different payload same operation rejected',()=>claim(1003,'test',{different:true}),'IDEMPOTENCY_CONFLICT');
+ await rejects('inference blocked until a real connection test',()=>claim(1002,'assistant',{task:'menu',question:'Q'}),'LLM_TEST_REQUIRED');
+ const first=await claim(1003,'test');check('test reserves fenced run',first.claimed&&first.lease);
+ check('same operation not sent twice',!(await claim(1003,'test')).claimed);
+ await rejects('operation different body rejected',()=>claim(1003,'test',{different:true}),'IDEMPOTENCY_CONFLICT');
  await db.exec('reset role');await db.exec('set role service_role');
  const dispatched=(await q('select ops.llm_dispatch($1,$2) as j',[first.id,first.lease]))[0].j;
- check('only backend obtains bound credential',dispatched.key===syntheticKey&&dispatched.kind==='test');
- await rejects('fence cannot dispatch twice',()=>q('select ops.llm_dispatch($1,$2)',[first.id,first.lease]),'LLM_ALREADY_DISPATCHED');
- await q('select ops.llm_finish($1,$2,$3::jsonb,null,12,3)',[first.id,first.lease,JSON.stringify({verified:true})]);
- await auth(users[0]);check('successful provider test validates only that config version',(await settings()).verified);
- check('completed replay reuses saved response',(await claim(1003,'test')).result.verified);
+ check('only service dispatch receives route credential',dispatched.provider==='free_router'&&dispatched.routes[0].key===key);
+ await rejects('same fenced dispatch cannot run twice',()=>q('select ops.llm_dispatch($1,$2)',[first.id,first.lease]),'LLM_ALREADY_DISPATCHED');
+ const attempt=async(run,action,code=null)=>(await q('select ops.free_ai_attempt($1,$2,$3,1,$4,$5,$6) as j',[run.id,run.lease,'openrouter_free',action,code,action==='success'?'test/model:free':null]))[0].j;
+ check('attempt reserves quota before external call',(await attempt(first,'start')).allowed);
+ await rejects('duplicate network attempt is forbidden',()=>attempt(first,'start'),'LLM_ALREADY_DISPATCHED');
+ await attempt(first,'success');
+ const finished=(await q('select ops.llm_finish($1,$2,$3::jsonb,null,12,3) as j',[first.id,first.lease,JSON.stringify({verified:true})]))[0].j;
+ check('actual routed model attributed',finished.model==='test/model:free'&&finished.provider==='openrouter_free');
+ await auth(users[0]);check('successful fixture marks config version',(await settings()).verified);
+ check('completed replay reuses response',(await claim(1003,'test')).result.verified);
  const assistant=await claim(1004,'assistant',{task:'daily',question:'Daily',day:new Date().toISOString().slice(0,10)});
  await db.exec('reset role');await db.exec('set role service_role');
  const ctx=(await q('select ops.llm_dispatch($1,$2) as j',[assistant.id,assistant.lease]))[0].j;
- check('assistant context contains fixed menu and aggregate report',Array.isArray(ctx.context.menu)&&ctx.context.daily.timezone==='Europe/Istanbul');
- check('assistant context excludes customer records and secrets',!('customers'in ctx.context)&&!('staff'in ctx.context)&&!JSON.stringify(ctx.context).includes(syntheticKey));
+ check('daily context is scoped fixed report',ctx.context.daily.timezone==='Europe/Istanbul'&&!('customers' in ctx.context));
+ check('second job consumes its own quota',(await attempt(assistant,'start')).allowed);
+ await attempt(assistant,'unknown','LLM_RESULT_UNKNOWN');
  await q('select ops.llm_finish($1,$2,null,$3,0,0)',[assistant.id,assistant.lease,'LLM_RESULT_UNKNOWN']);
- await auth(users[0]);check('uncertain call is not automatically retried',(await claim(1004,'assistant',{task:'daily',question:'Daily',day:new Date().toISOString().slice(0,10)})).state==='unknown');
+ await auth(users[0]);check('unknown operation cannot replay network',(await claim(1004,'assistant',{task:'daily',question:'Daily',day:new Date().toISOString().slice(0,10)})).state==='unknown');
  const old=await claim(1005,'test');
- await settings('disconnect',{version:saved.version});
- const next=await settings('save',{...config,version:'0',apiKey:syntheticKey+'NEW'});
- check('disconnect/reconnect never reuses old connection generation',BigInt(next.version)>BigInt(saved.version));
+ const removed=await free('remove',{version:saved.version,provider:'openrouter_free'});
+ check('removal means not configured',!(await settings()).configured);
+ const next=await free('save',{...config,version:removed.version,apiKey:key+'NEW'});
+ check('remove/reconnect advances generation',BigInt(next.version)>BigInt(saved.version));
  await db.exec('reset role');await db.exec('set role service_role');
- await rejects('old run cannot use new key after reconnect',()=>q('select ops.llm_dispatch($1,$2)',[old.id,old.lease]),'LLM_CONFIG_CHANGED');
- await auth(users[2]);await rejects('customer cannot configure LLM',()=>settings(),'MANAGER_REQUIRED');
- await auth(users[0]);await settings('disconnect',{version:next.version});
- check('disconnect removes connection',(await settings()).configured===false);
- await db.exec('reset role');check('old vault secrets deleted',(await q('select count(*)::integer n from vault.secrets'))[0].n===0);
+ await rejects('old lease cannot use replacement credential',()=>q('select ops.llm_dispatch($1,$2)',[old.id,old.lease]),'LLM_CONFIG_CHANGED');
+ await auth(users[2]);await rejects('customer cannot manage routes',()=>free(),'MANAGER_REQUIRED');
+ await auth(users[0]);await free('remove',{version:next.version,provider:'openrouter_free'});
+ await db.exec('reset role');check('removed credentials purged',(await q('select count(*)::integer n from vault.secrets'))[0].n===0);
  }
  await (await import('./studio-publication-checks.mjs')).runPublicationChecks({q,db,auth,check,b,br,users,op,p1,p2});
  fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);

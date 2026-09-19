@@ -1,6 +1,6 @@
 /** Explicitly initiated, bounded LLM requests. Never auto-retry paid calls. */
 export async function llmApi<T=any>(path:string,data?:unknown):Promise<T>{
- if(!/^\/api\/llm\/(status|settings|disconnect|test|ask)$/.test(path))throw new Error('INVALID_LLM_REQUEST');
+ if(!/^\/api\/llm\/(status|settings|disconnect|test|ask|free-status|free-save|free-remove)$/.test(path))throw new Error('INVALID_LLM_REQUEST');
  const inference=path.endsWith('/test')||path.endsWith('/ask');
  let response:Response;
  try{response=await fetch(path,{method:data===undefined?'GET':'POST',headers:data===undefined?{}:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:data===undefined?undefined:JSON.stringify(data),signal:AbortSignal.timeout(inference?75000:15000)});}catch{throw new Error(inference?'LLM_RESULT_UNKNOWN':'LLM_CONNECTION_UNAVAILABLE');}
