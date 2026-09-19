@@ -454,7 +454,7 @@ try{
  const settings=async(action='status',payload={})=>(await q('select ops.llm_settings($1,$2,$3,$4::jsonb) as j',[b,br,action,JSON.stringify(payload)]))[0].j;
  const initial=await settings();check('LLM has no fabricated configured credential',!initial.configured&&initial.canManage);
  const syntheticKey='TEST_ONLY_NOT_A_REAL_PROVIDER_KEY_123456';
- const config={version:'0',provider:'openai',model:'gpt-4.1-mini',apiKey:syntheticKey,dailyLimit:30,enabled:true,consent:true};
+ const config={version:'0',provider:'self_hosted',model:'qwen3.5:4b',apiKey:syntheticKey,dailyLimit:30,enabled:true,consent:true};
  const saved=await settings('save',config);check('key saved but model not marked tested',saved.configured&&!saved.verified);
  check('key and secret reference never returned',!JSON.stringify(saved).includes(syntheticKey)&&!JSON.stringify(saved).includes('secret_id'));
  await rejects('direct connection table read denied',()=>q('select * from ops.llm_connections'),'42501');

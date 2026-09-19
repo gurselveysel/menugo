@@ -22,6 +22,7 @@ Deno.serve(async req=>{
   if(!claimed.claimed){if(claimed.state==='succeeded'&&claimed.result)return out({...claimed,replayed:true});throw new LlmError(claimed.error||(['reserved','sending'].includes(claimed.state)?'LLM_IN_PROGRESS':'LLM_RESULT_UNKNOWN'),409);}
   lease={id:claimed.id,lease:claimed.lease};
   const d=await db('llm_dispatch',{p_run_id:lease.id,p_lease:lease.lease},service,true);
+  if(d.provider!=='self_hosted')throw new LlmError('LLM_OPEN_SOURCE_REQUIRED',409);
   const result=await generate(d);generated=true;
   // No key or request prompt is returned or logged.
   const saved=await db('llm_finish',{p_run_id:lease.id,p_lease:lease.lease,p_result:result.result,p_input:result.inputTokens,p_output:result.outputTokens},service,true);

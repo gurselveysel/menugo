@@ -1,7 +1,7 @@
 // Provider contract tests use synthetic keys/responses; no external inference.
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
 const dir='test-results/llm-unit';fs.mkdirSync(dir,{recursive:true});
-for(const file of ['core','menu-contracts']){const source=fs.readFileSync('supabase/functions/menugo-llm/'+file+'.ts','utf8').replace("'./menu-contracts.ts'","'./menu-contracts.mjs'");fs.writeFileSync(dir+'/'+file+'.mjs',ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
+for(const file of ['core','menu-contracts','open-source','studio-contracts','studio-operations']){const source=fs.readFileSync('supabase/functions/menugo-llm/'+file+'.ts','utf8').replaceAll(".ts'",".mjs'");fs.writeFileSync(dir+'/'+file+'.mjs',ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
 const c=await import('../'+dir+'/core.mjs');const id='33333333-3333-4333-8333-333333333333',key='SYNTHETIC_NOT_REAL_KEY_12345';
 const source={id,name:'Çay',categoryKey:'sicak',description:'Demli çay',serving:'Bardak',options:[],priceMinor:'2550',available:true};
 const request={task:'menu',question:'Menüyü değerlendir',productId:null,day:'2026-09-19'};

@@ -1,4 +1,5 @@
 'use client';
+import {llmMessages} from '@/lib/llm/messages';
 import {useEffect,useRef,useState,type FormEvent} from 'react';
 import {Card,Empty} from './Shell';
 import {api} from './transport';
@@ -10,7 +11,7 @@ const ERRORS:Record<string,string>={AI_ACCESS_REQUIRED:'Görsel ve belge üretim
 const errorText=(e:unknown)=>ERRORS[e instanceof Error?e.message:'']||'İşlem tamamlanamadı. Kaynak verileriniz ve menünüz değiştirilmedi.';
 type PendingCreate={operationId:string;payload:Record<string,unknown>};
 export function BusinessStudio({demo=false}:{demo?:boolean}){
- const [data,setData]=useState<any>(null),[kind,setKind]=useState<StudioKind>('photo-enhance'),[product,setProduct]=useState(''),[file,setFile]=useState<File|null>(null),[selected,setSelected]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[compared,setCompared]=useState(false),[tab,setTab]=useState<'ai'|'cost'>('ai'),[pendingCreate,setPendingCreate]=useState<PendingCreate|null>(null);
+ const [data,setData]=useState<any>(null),[kind,setKind]=useState<StudioKind>('product-copy'),[product,setProduct]=useState(''),[file,setFile]=useState<File|null>(null),[selected,setSelected]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[compared,setCompared]=useState(false),[tab,setTab]=useState<'ai'|'cost'>('ai'),[pendingCreate,setPendingCreate]=useState<PendingCreate|null>(null);
  const listRequest=useRef(0),jobRequest=useRef(0);
  async function reload(){if(demo)return;const request=++listRequest.current;try{const next=await api('/api/studio/list');if(request!==listRequest.current)return;setData(next);setProduct(p=>p||next.catalogue[0]?.id||'');}catch(e){if(request===listRequest.current)setError(errorText(e));}}
  async function load(id:string){const request=++jobRequest.current;try{const next=await api('/api/studio/get?id='+encodeURIComponent(id));if(request!==jobRequest.current)return;setSelected(next);setCompared(false);}catch(e){if(request===jobRequest.current)setError(errorText(e));}}
@@ -34,14 +35,15 @@ export function BusinessStudio({demo=false}:{demo?:boolean}){
  {tab==='cost'?<RecipeCalculator/>:demo?<Card><Empty title="Gerçek işletme oturumu gerekli" description="AI çalıştırma, özel belgeler ve ürün kaynakları demo hesabında bulunmaz."/></Card>:<>
  {error&&<div className="notice" role="alert">{error}</div>}
  {pendingCreate&&<div className="notice" role="status"><strong>Önceki taslak isteğinin sonucu kesinleşmedi.</strong><p>Aynı işlem kimliğiyle yeniden kontrol edilir; sunucuda iş oluştuysa ikinci bir stüdyo işi oluşturulmaz. Dosya yalnız bu açık sayfanın belleğinde tutulur.</p><button type="button" className="btn" disabled={busy} onClick={()=>void retryPending()}>Bekleyen işlemi güvenle kontrol et</button></div>}
- {data&&!data.aiReady&&<div className="notice">{ERRORS[data.aiReason]||'AI Gateway erişimi doğrulanmadı. Üretim düğmesi kapalı; mevcut menü ve siparişler etkilenmez.'}</div>}
+ {data&&!data.aiReady&&<div className="notice">{llmMessages[data.aiReason]||ERRORS[data.aiReason]||'Açık kaynak model bağlantısı doğrulanmadı. LLM Asistanı bölümünde kendi model sunucunuzu bağlayın; mevcut menü ve siparişler etkilenmez.'}</div>}
  <div className="studio-grid"><Card><h3>Yeni taslak</h3><form onSubmit={submit}>
  <label>Ne hazırlayalım?<select disabled={!!pendingCreate} value={kind} onChange={e=>{setKind(e.target.value as StudioKind);setFile(null);}}>{Object.entries(TITLES).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
  {kind!=='invoice'&&<label>Kaynak ürün<select disabled={!!pendingCreate} required value={product} onChange={e=>setProduct(e.target.value)}>{(data?.catalogue||[]).map((p:any)=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
+ {kind==='photo-enhance'&&data?.imageReady===false&&<p className="notice">Ürün fotoğrafını üretmek veya düzenlemek ayrı bir görsel model sunucusu gerektirir. Qwen metin/görsel-okuma modeli yeni fotoğraf üretmez. Ücretli modele geçilmez.</p>}
  {kind==='photo-enhance'?<label>Sunum stili<select name="style" disabled={!!pendingCreate}><option value="white">Beyaz katalog zemini</option><option value="cafe">Sıcak kafe ışığı</option><option value="dark-gold">Siyah–altın ambiyans</option></select></label>:<label>Dil<select name="language" disabled={!!pendingCreate} defaultValue={kind==='translation'?'en':'tr'}><option value="tr">Türkçe</option><option value="en">İngilizce</option></select></label>}
- {needsFile&&<label key={kind}>{kind==='invoice'?'Fatura fotoğrafı / PDF':'Gerçek ürün fotoğrafı'}<input disabled={!!pendingCreate} type="file" accept={kind==='invoice'?'image/png,image/jpeg,image/webp,application/pdf':'image/png,image/jpeg,image/webp'} onChange={e=>setFile(e.target.files?.[0]||null)}/><small>En fazla 2 MB. PDF en fazla 8 sayfa. Dosya özel tutulur ve 7 gün sonra kaldırılır.</small></label>}
+ {needsFile&&<label key={kind}>{kind==='invoice'?'Fatura fotoğrafı':'Gerçek ürün fotoğrafı'}<input disabled={!!pendingCreate} type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setFile(e.target.files?.[0]||null)}/><small>En fazla 2 MB. PDF sayfalarını önce görüntüye dönüştürün; doğrudan PDF desteği henüz bağlı değil. Dosya özel tutulur ve 7 gün sonra kaldırılır.</small></label>}
  <p className="helper">{kind==='photo-enhance'?'Malzeme ve porsiyon gerçekliği için sonucu orijinal fotoğrafla karşılaştırın. Logo ve fiyat görsele AI ile yazılmaz.':kind==='invoice'?'Okunan tutarlar taslaktır. Bu işlem satın alma, muhasebe veya stok kaydı oluşturmaz.':'Kaynak ürünün içeriği dışında malzeme, alerjen veya indirim eklenmez. Sonucu yayımlamadan önce inceleyin.'}</p>
- <button className="btn primary full" disabled={busy||!!pendingCreate||!data?.aiReady||needsFile&&!file||kind!=='invoice'&&!product}>{busy?'İşlem kaydediliyor…':'Taslak üret'}</button><p className="helper">Üretim sağlayıcınızın kullanım kotasına dahildir. Günde en fazla 10 işlem, bunun en fazla 3’ü görsel.</p>
+ <button className="btn primary full" disabled={busy||!!pendingCreate||!data?.aiReady||(kind==='photo-enhance'&&data?.imageReady===false)||needsFile&&!file||kind!=='invoice'&&!product}>{busy?'İşlem kaydediliyor…':'Taslak üret'}</button><p className="helper">Üretim kendi model sunucunuzun kaynaklarını kullanır. Günde en fazla 10 işlem. Harici ücretli API’ye otomatik geçilmez.</p>
  </form></Card><Card><h3>Son çalışmalar</h3>{data?.jobs?.length?<div className="studio-job-list">{data.jobs.map((j:any)=><button key={j.id} className={selected?.id===j.id?'studio-job selected':'studio-job'} onClick={()=>void load(j.id)}><span><strong>{TITLES[j.kind as StudioKind]}</strong><small>{j.sourceName||'Özel belge'}</small></span><span>{STATES[j.state]||j.state}</span></button>)}</div>:<Empty title="Henüz çalışma yok" description="Taslaklar burada saklanır. Ürünleriniz ve fiyatlarınız kendiliğinden değişmez."/>}<button className="btn" onClick={()=>void reload()}>Listeyi yenile</button></Card></div>
  {selected&&<Card><div className="section-heading"><h3>{TITLES[selected.kind as StudioKind]}</h3><span className="tag">{STATES[selected.state]}</span></div>
  {selected.state==='unknown'&&<p className="notice">Sonuç belirsiz. Tekrar ücretli model çağrısı yapılmadı. Bu işi kontrol etmek yalnız kayıtlı durumu okur.</p>}
@@ -51,7 +53,7 @@ export function BusinessStudio({demo=false}:{demo?:boolean}){
  {selected.result&&<DraftResult job={selected}/>}
  <p className="helper">İncelenmiş taslağı kaydetmek, ürüne uygulamaz veya sosyal medyada paylaşmaz. Ürüne uygulama ve yayın bağlantıları ayrı kabul aşamasındadır.</p>
  {selected.state==='review'&&<><label className="studio-checkbox"><input type="checkbox" checked={compared} onChange={e=>setCompared(e.target.checked)}/>Kaynakla karşılaştırdım; içeriği incelenmiş taslak olarak sakla.</label><button className="btn primary" disabled={busy||!compared} onClick={()=>void command('approve')}>İncelenmiş taslağı kaydet</button></>}
- {selected.state==='queued'&&<button className="btn" disabled={busy||!data?.aiReady} onClick={()=>void command('process')}>Sıradaki işi çalıştır</button>}
+ {selected.state==='queued'&&<button className="btn" disabled={busy||!data?.aiReady||(selected.kind==='photo-enhance'&&data?.imageReady===false)} onClick={()=>void command('process')}>Sıradaki işi çalıştır</button>}
  <button className="btn" disabled={busy} onClick={()=>void load(selected.id)}>Durumu kontrol et</button><button className="btn" disabled={busy} onClick={()=>void command('discard')}>Taslağı ve dosyayı kaldır</button>
  </Card>}
  </>}
