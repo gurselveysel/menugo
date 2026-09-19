@@ -87,7 +87,7 @@ END$$;
 CREATE FUNCTION ops.multi_branch_manage(p_business_id uuid,p_branch_id uuid,p_operation_id uuid,p_action text,p_payload jsonb) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE r text;req jsonb;cmd ops.multi_branch_commands%ROWTYPE;m ops.master_menu_items%ROWTYPE;mi public.menu_items%ROWTYPE;
- target_branch uuid;master_id uuid;source_id text;price_minor bigint;expected bigint;ov ops.branch_price_overrides%ROWTYPE;res jsonb;BEGIN
+ target_branch uuid;master_id uuid;v_source_id text;price_minor bigint;expected bigint;ov ops.branch_price_overrides%ROWTYPE;res jsonb;BEGIN
  r:=ops.multi_branch_role(p_business_id,p_branch_id);
  IF p_operation_id IS NULL OR p_action NOT IN('create-master','bind-product','set-master-price','set-local-price','clear-local-price') OR jsonb_typeof(p_payload) IS DISTINCT FROM 'object' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_MULTI_BRANCH_COMMAND';END IF;
  req:=jsonb_build_object('action',p_action,'payload',p_payload);
@@ -97,12 +97,12 @@ DECLARE r text;req jsonb;cmd ops.multi_branch_commands%ROWTYPE;m ops.master_menu
  IF cmd.result IS NOT NULL THEN RETURN cmd.result||jsonb_build_object('replayed',true);END IF;
 
  IF p_action='create-master' THEN
-  source_id:=p_payload->>'productSourceId';IF source_id IS NULL OR source_id!~'^[A-Za-z0-9._:-]{1,100}$' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRODUCT';END IF;
-  SELECT * INTO mi FROM public.menu_items WHERE business_id=p_business_id AND branch_id=p_branch_id AND source_id=source_id FOR UPDATE;
+  v_source_id:=p_payload->>'productSourceId';IF v_source_id IS NULL OR v_source_id!~'^[A-Za-z0-9._:-]{1,100}$' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRODUCT';END IF;
+  SELECT * INTO mi FROM public.menu_items WHERE business_id=p_business_id AND branch_id=p_branch_id AND source_id=v_source_id FOR UPDATE;
   IF NOT FOUND OR NOT mi.price_approved THEN RAISE SQLSTATE 'PT409' USING MESSAGE='PRODUCT_PRICE_NOT_APPROVED';END IF;
-  INSERT INTO ops.master_menu_items(business_id,master_key,name,base_price_minor) VALUES(p_business_id,source_id,mi.name,ops.catalog_minor(mi.approved_price::text))
+  INSERT INTO ops.master_menu_items(business_id,master_key,name,base_price_minor) VALUES(p_business_id,v_source_id,mi.name,ops.catalog_minor(mi.approved_price::text))
    RETURNING * INTO m;
-  INSERT INTO ops.master_menu_bindings(business_id,master_item_id,branch_id,product_source_id) VALUES(p_business_id,m.id,p_branch_id,source_id);
+  INSERT INTO ops.master_menu_bindings(business_id,master_item_id,branch_id,product_source_id) VALUES(p_business_id,m.id,p_branch_id,v_source_id);
   res:=jsonb_build_object('masterItemId',m.id,'version',m.version::text,'basePriceMinor',m.base_price_minor::text,'replayed',false);
  ELSE
   BEGIN master_id:=(p_payload->>'masterItemId')::uuid;EXCEPTION WHEN others THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_MASTER_ITEM';END;
@@ -111,11 +111,11 @@ DECLARE r text;req jsonb;cmd ops.multi_branch_commands%ROWTYPE;m ops.master_menu
   IF p_action='bind-product' THEN
    IF r<>'owner' THEN RAISE SQLSTATE 'PT403' USING MESSAGE='OWNER_REQUIRED';END IF;
    BEGIN target_branch:=(p_payload->>'targetBranchId')::uuid;EXCEPTION WHEN others THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_BRANCH';END;
-   source_id:=p_payload->>'productSourceId';IF source_id IS NULL OR source_id!~'^[A-Za-z0-9._:-]{1,100}$' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRODUCT';END IF;
+   v_source_id:=p_payload->>'productSourceId';IF v_source_id IS NULL OR v_source_id!~'^[A-Za-z0-9._:-]{1,100}$' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRODUCT';END IF;
    IF NOT EXISTS(SELECT 1 FROM public.branches WHERE id=target_branch AND business_id=p_business_id) THEN RAISE SQLSTATE 'PT404' USING MESSAGE='BRANCH_NOT_FOUND';END IF;
-   SELECT * INTO mi FROM public.menu_items WHERE business_id=p_business_id AND branch_id=target_branch AND source_id=source_id FOR UPDATE;
+   SELECT * INTO mi FROM public.menu_items WHERE business_id=p_business_id AND branch_id=target_branch AND source_id=v_source_id FOR UPDATE;
    IF NOT FOUND OR NOT mi.price_approved THEN RAISE SQLSTATE 'PT409' USING MESSAGE='PRODUCT_PRICE_NOT_APPROVED';END IF;
-   INSERT INTO ops.master_menu_bindings(business_id,master_item_id,branch_id,product_source_id) VALUES(p_business_id,m.id,target_branch,source_id);
+   INSERT INTO ops.master_menu_bindings(business_id,master_item_id,branch_id,product_source_id) VALUES(p_business_id,m.id,target_branch,v_source_id);
    res:=jsonb_build_object('masterItemId',m.id,'targetBranchId',target_branch,'cataloguePriceMinor',ops.catalog_minor(mi.approved_price::text)::text,'basePriceMinor',m.base_price_minor::text,'replayed',false);
   ELSIF p_action='set-master-price' THEN
    IF r<>'owner' THEN RAISE SQLSTATE 'PT403' USING MESSAGE='OWNER_REQUIRED';END IF;
