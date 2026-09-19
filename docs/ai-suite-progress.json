@@ -2,12 +2,17 @@
   "scopeIssue": 1,
   "complete": false,
   "state": "implementation_and_acceptance",
-  "baseline": "e7d6899f5328c1869a9e6bdc1932de3ec0c9a48c",
+  "baseline": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
   "activeBranch": "feat/multibranch-master-menu-r26",
   "pullRequest": 13,
-  "releaseCandidate": "menugo-multibranch-master-menu-20260919-r26",
-  "latestRuntimeCommit": "f34b10bce5c84cbd5d57d8cf027e8e999e62e6ee",
-  "updatedAt": "2026-09-19T21:12:00Z",
+  "releaseCandidate": "menugo-multibranch-master-menu-20260920-r28",
+  "latestRuntimeCommit": "566fa86a82044cc3ca27c2514f6e9505b2a4db77",
+  "updatedAt": "2026-09-19T21:31:00Z",
+  "integratedProductionBase": {
+    "commit": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
+    "release": "menugo-platform-ai-access-20260920-r27",
+    "note": "Multi-branch work was manually merged over the newer platform-AI control-plane release without reverting its restaurant/platform permission separation."
+  },
   "modules": {
     "menuImport": "free_or_self_hosted_vision_runtime_in_production_real_provider_acceptance_and_pdf_rasterization_pending",
     "photoStudio": "draft_pipeline_and_free_cloudflare_adapter_implemented_real_image_engine_acceptance_and_reviewed_product_publication_pending",
@@ -18,18 +23,18 @@
     "voiceOrder": "catalogue_grounded_review_draft_in_production_browser_speech_available_real_provider_and_physical_device_acceptance_pending",
     "customerAssistant": "grounded_published_catalogue_read_only_slice_in_production_real_provider_acceptance_pending",
     "demandWaste": "real_order_and_explicit_waste_evidence_pipeline_in_production_fail_closed_until_14_service_days_50_orders_and_10_waste_events_real_sufficient_data_acceptance_pending",
-    "multiBranch": "core_schema_rpc_api_and_ui_implemented_ci_green_production_schema_applied_without_catalogue_writes_real_two_branch_acceptance_pending_one_real_branch_only"
+    "multiBranch": "core_schema_rpc_api_and_ui_implemented_production_schema_applied_without_catalogue_writes_latest_base_ci_pending_real_two_branch_acceptance_pending_one_real_branch_only"
   },
   "acceptance": {
     "realProvider": "not_run",
     "freeAiPolicy": {
-      "release": "menugo-free-ai-policy-20260919-r25",
-      "productionCommit": "e7d6899f5328c1869a9e6bdc1932de3ec0c9a48c",
+      "release": "menugo-platform-ai-access-20260920-r27",
+      "productionCommit": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
       "providers": ["groq_free", "gemini_free", "openrouter_free", "cloudflare_free"],
-      "policy": "free_only_owner_managed_credentials_no_paid_fallback",
+      "policy": "free_only_platform_managed_credentials_no_paid_fallback_restaurant_staff_cannot_manage_provider_controls",
       "paidFallbackCalls": 0,
       "realProviderCalls": 0,
-      "scopeBoundary": "runtime and policy deployed; no live provider acceptance without an owner-supplied free credential"
+      "scopeBoundary": "runtime and platform control plane deployed; no live provider acceptance without an authorized platform configuration and free-provider credential"
     },
     "reviewedTextPublication": {
       "pullRequest": 7,
@@ -84,12 +89,14 @@
     "multiBranch": {
       "pullRequest": 13,
       "branch": "feat/multibranch-master-menu-r26",
-      "testedHead": "f34b10bce5c84cbd5d57d8cf027e8e999e62e6ee",
-      "customWorkflowRun": 35469520737,
-      "mainChecksRun": 35469520709,
-      "ci": "green: unit; PGlite SQL/RLS/idempotency; native PostgreSQL 17 row-lock optimistic concurrency; Next production build; existing UI regression; multi-branch browser acceptance",
+      "integratedHead": "566fa86a82044cc3ca27c2514f6e9505b2a4db77",
+      "integratedBase": "118de70ad1dd3b05005c9bd831422bc94d1fdff9",
+      "previousGreenHead": "f34b10bce5c84cbd5d57d8cf027e8e999e62e6ee",
+      "previousCustomWorkflowRun": 35469520737,
+      "previousMainChecksRun": 35469520709,
+      "latestBaseCi": "pending_after_platform_ai_r27_integration",
       "supabaseProject": "lrfcqpmjgghodymhnvue",
-      "migrations": ["ops_multi_branch_menu_r26", "ops_multi_branch_snapshot_r26"],
+      "migrations": ["20260919211305_ops_multi_branch_menu_r26", "20260919211319_ops_multi_branch_snapshot_r26"],
       "money": "bigint_minor_units",
       "idempotency": true,
       "rowLocks": true,
@@ -110,7 +117,7 @@
     }
   },
   "blockers": [
-    "No owner-supplied free-provider credential is configured for representative live AI acceptance. Real inference must not be claimed until a free provider probe and representative tasks pass.",
+    "No authorized platform free-provider credential is configured for representative live AI acceptance. Real inference must not be claimed until a free provider probe and representative tasks pass.",
     "AI product-photo generation/editing has no accepted live provider execution yet.",
     "Direct PDF upload still requires safe local/client rasterization into supported image pages before vision inference.",
     "No approved invoice/recipe purchasing data exists for live purchase-ledger acceptance; synthetic fixtures must not be promoted as live business data.",
@@ -123,9 +130,9 @@
     "customerOrderingUnchanged": true,
     "productsAtCheck": 76,
     "approvedPricesAtCheck": 71,
-    "catalogueFingerprintAtR26Check": "63465d4de09a30a07e1f31f0d8cf7ac1",
-    "catalogueWritesDuringR26Acceptance": false,
-    "priceWritesDuringR26Acceptance": false,
+    "catalogueFingerprintAtR28Check": "63465d4de09a30a07e1f31f0d8cf7ac1",
+    "catalogueWritesDuringR28Acceptance": false,
+    "priceWritesDuringR28Acceptance": false,
     "paymentsSent": false,
     "messagesSent": false,
     "socialPublishes": false,
@@ -137,8 +144,8 @@
   },
   "next": [
     "Keep complete=false until every Issue #1 acceptance item has real-provider and production evidence.",
-    "Merge and deploy r26 only after the latest-head CI remains green; verify both production domains and preserve the 76-product/71-approved-price catalogue fingerprint.",
-    "When an owner supplies a free-provider credential, run a no-business-data live probe and representative menu/copy/customer-assistant acceptance without paid fallback.",
+    "Merge and deploy r28 only after CI on the platform-AI r27 base is green; verify both production domains and preserve the 76-product/71-approved-price catalogue fingerprint.",
+    "When an authorized platform free-provider credential is configured, run a no-business-data live probe and representative menu/copy/customer-assistant acceptance without paid fallback.",
     "Implement safe PDF rasterization and source-preserving reviewed product-image publication with audit and rollback.",
     "Complete approved purchasing/recipe ledger acceptance and authorized social adapter without sending a live post under development approval.",
     "Run genuine cross-branch acceptance only when a second real production branch exists; do not create synthetic production branch evidence.",
