@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
+fs.mkdirSync('test-results/publication',{recursive:true});fs.writeFileSync('test-results/publication/input.mjs',ts.transpileModule(fs.readFileSync('src/studio/publication.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const {readPublicationInput,applyCommand}=await import('../test-results/publication/input.mjs');
+const id='11111111-1111-4111-8111-111111111111',row={jobId:id,jobRevision:'9223372036854775807',sourceHash:'a'.repeat(64),overlayVersion:'9007199254740993',ready:true};
+test('publication preserves big integer revisions as strings',()=>assert.deepEqual(readPublicationInput(applyCommand([row],id)).payload.items[0],{jobId:id,jobRevision:row.jobRevision,sourceHash:row.sourceHash,overlayVersion:row.overlayVersion}));
+for(const change of [{confirmed:false},{priceMinor:'1'},{amount:0},{items:[{...row,body:'client injection'}]},{operationId:'no'},{confirmed:'true'}])test('publication rejects fields '+JSON.stringify(change),()=>assert.throws(()=>readPublicationInput({...applyCommand([row],id),...change})));
+for(const rev of [1,'01','-1','1.1','9223372036854775808'])test('revision validation '+rev,()=>assert.throws(()=>readPublicationInput({action:'apply',operationId:id,confirmed:true,items:[{jobId:id,jobRevision:rev,sourceHash:'a'.repeat(64),overlayVersion:'0'}]})));
+test('unready preview cannot produce write command',()=>assert.throws(()=>applyCommand([{...row,ready:false}],id)));
+test('duplicate jobs rejected',()=>assert.throws(()=>readPublicationInput({action:'preview',items:[{jobId:id},{jobId:id}]})));
+test('empty selection rejected',()=>assert.throws(()=>readPublicationInput({action:'preview',items:[]})));
+test('bounded selection prevents huge batch',()=>assert.throws(()=>readPublicationInput({action:'preview',items:Array.from({length:21},()=>({jobId:id}))})));
+test('undo contract carries no product content',()=>assert.equal(readPublicationInput({action:'undo',operationId:id,batchId:id,confirmed:true}).action,'undo'));

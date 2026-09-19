@@ -3,3 +3,14 @@
 
 /* Operator pilot controls */
 .menu-editor-list{max-height:70vh;overflow:auto;margin-top:20px}.menu-editor-list .list-row{gap:12px}.menu-editor-list .list-row>div:first-child{flex:1;min-width:0}.menu-editor-list small{display:block;margin-top:5px;color:#677582}.pilot-modal-backdrop{position:fixed;inset:0;background:#12283c88;display:grid;place-items:center;z-index:1000;padding:20px}.pilot-modal{background:#fff;border-radius:20px;padding:28px;width:min(480px,100%);max-height:90dvh;overflow:auto}.pilot-modal label{display:block;margin:20px 0}.pilot-modal input{width:100%}.check-label{display:flex!important;gap:10px;align-items:flex-start;margin:20px 0!important;line-height:1.6}.check-label input{width:20px!important;min-height:20px!important;flex-shrink:0;margin:3px 0}.inline-actions{display:flex;gap:12px;justify-content:flex-end}.table-qr{display:flex;gap:26px;align-items:center}.table-qr img{width:260px;max-width:100%;height:auto;flex-shrink:0}.table-qr>div{min-width:0;display:grid;gap:12px}.table-qr input{width:100%}@media(max-width:700px){.table-qr{flex-direction:column}.menu-editor-list .list-row{flex-wrap:wrap}.menu-editor-list .list-row>div:first-child{flex-basis:100%}.pilot-modal{padding:22px}}
+
+/* Studio publication uses real text nodes, not generated poster assets. */
+.studio-publication { margin-block: 28px; min-width: 0; }
+.studio-publication article { padding-block: 18px; border-bottom: 1px solid #e2e8f0; min-width: 0; }
+.studio-publication p,.studio-publication h3 { overflow-wrap: anywhere; }
+.studio-publication .studio-compare { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.studio-publication .studio-compare section { min-width: 0; padding: 14px; border-radius: 12px; background: #f7f9fc; }
+.studio-publication-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 14px; }
+.studio-publication-jobs { max-height: 320px; overflow-y: auto; }
+.studio-publication-history { max-height: 500px; overflow-y: auto; }
+@media(max-width:600px){.studio-publication .studio-compare{grid-template-columns: minmax(0,1fr)}.studio-publication .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}}

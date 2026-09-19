@@ -45,5 +45,6 @@ try{
  assert.equal(entries[0].rows[0].j.checkId,entries[1].rows[0].j.checkId);
  assert.notEqual(entries[0].rows[0].j.viewerUserId,entries[1].rows[0].j.viewerUserId);
  console.log('NATIVE CODELESS CONCURRENCY PASS: parallel table QR opens exactly one check and distinct private visitors.');
+ await (await import('./studio-publication-concurrency.mjs')).publicationConcurrency(a,b);
  console.log('NATIVE POSTGRES PASS: real row-lock exclusion and release, isolated Auth/Realtime fixtures');
 }finally{await a.query('ROLLBACK').catch(()=>{});await a.end().catch(()=>{});await b.end().catch(()=>{});}
