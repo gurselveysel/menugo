@@ -4,14 +4,14 @@
   "state": "implementation_and_acceptance",
   "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
   "activeBranch": null,
-  "pullRequest": 7,
+  "pullRequest": 8,
   "releaseCandidate": "menugo-reviewed-text-publication-20260919-r20",
-  "latestRuntimeCommit": "7568cea9a90c7791c77ff0a01ba977a29fb30225",
+  "latestRuntimeCommit": "96cf1fc51be38024ab3b48b63fe342e21d75446f",
   "modules": {
     "menuImport": "existing_implementation_real_provider_acceptance_pending",
     "photoStudio": "draft_pipeline_implemented_not_product_publishing",
     "productCopyTranslation": "reviewed_TR_description_and_EN_display_name_description_batch_apply_and_undo_in_production_real_provider_acceptance_pending",
-    "campaigns": "text_draft_only_graphics_and_social_pending",
+    "campaigns": "source_validated_post_story_graphics_in_production_ai_photo_and_authorized_social_publish_pending",
     "operatorAssistant": "existing_read_only_assistant_commands_pending",
     "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_purchase_posting_pending",
     "voiceOrder": "catalogue_grounded_review_draft_in_production_browser_speech_available_real_provider_and_physical_device_acceptance_pending",
@@ -25,18 +25,40 @@
     "postgres": "PGlite core 267 checks and Studio suite 280 total checks passed; native PostgreSQL17 core 267 plus real two-client publication same-key/different-key/undo concurrency passed",
     "browser": "PR7 publication 15/15 controlled HTTP browser checks including before-after confirmation, exact retry on lost response, undo and 320/360/390/768/1440 layouts; existing Studio, merchant, UI and pilot gates passed",
     "productionBuild": "Next.js production build and TypeScript passed in all three PR7 workflows; Git-linked Vercel production runtime 7568cea9 is READY",
-    "workflowRuns": [35446994353, 35446994357, 35447044402, 35447237391, 35447549301, 35447549271, 35448372846, 35448372874, 35448541539, 35448541475, 35449893891, 35449893889, 35449893907],
+    "workflowRuns": [
+      35446994353,
+      35446994357,
+      35447044402,
+      35447237391,
+      35447549301,
+      35447549271,
+      35448372846,
+      35448372874,
+      35448541539,
+      35448541475,
+      35449893891,
+      35449893889,
+      35449893907
+    ],
     "screenshots": "Publication 320/360/390/768/1440 screenshots generated; 320 and 390 visually inspected. Controlled fixtures, not production content edits.",
     "realProvider": "not_run",
-    "production": "Runtime merge 7568cea9 deployed as dpl_4kXP27xKBvTSbnHKJkWc7iic1yUM. www.menugo.app/release.json reports r20; merchant /api/catalogue returns 200 with orderingEnabled true; /isletme/studyo returns protected shell 200; unauthenticated publication API returns 401/private no-store.",
+    "production": "Runtime merge 96cf1fc51be38024ab3b48b63fe342e21d75446f deployed as dpl_GJsDct5UZXxr1EQoEMVHha66hGSY. www.menugo.app/campaign-release.json reports 20260919-c1 with completeAiSuite=false; /isletme/kampanya returns 200 private no-store shell; unauthenticated /api/campaigns/catalogue returns 401/private no-store; sariyerborekcisi /api/catalogue returns 200 and orderingEnabled true.",
     "reviewedTextPublication": {
       "pullRequest": 7,
       "testedHead": "5a084dee87198e1a329bd664bcb4b7cebab7d64e",
       "mergeCommit": "7568cea9a90c7791c77ff0a01ba977a29fb30225",
-      "workflowRuns": [35449893891, 35449893889, 35449893907],
+      "workflowRuns": [
+        35449893891,
+        35449893889,
+        35449893907
+      ],
       "vercelDeployment": "dpl_4kXP27xKBvTSbnHKJkWc7iic1yUM",
       "batchLimit": 20,
-      "allowedFields": ["tr.description", "en.displayName", "en.description"],
+      "allowedFields": [
+        "tr.description",
+        "en.displayName",
+        "en.description"
+      ],
       "canonicalPublicCatalogueWrites": false,
       "atomicApplyAndUndo": true,
       "sourceVersionGuard": true,
@@ -53,7 +75,12 @@
       "pullRequest": 6,
       "implementationCommit": "dbdd073ee5ce9cafc08b9d1b6dfff113bd8c8ab9",
       "mergeCommit": "cf5e1967c5de9611508a2043413d5af4da707c18",
-      "workflowRuns": [35448372846, 35448372874, 35448541539, 35448541475],
+      "workflowRuns": [
+        35448372846,
+        35448372874,
+        35448541539,
+        35448541475
+      ],
       "qaArtifact": "10586227204",
       "browserChecks": 23,
       "operationIdReused": true,
@@ -64,7 +91,10 @@
       "socialPublishes": false,
       "realProviderCalls": 0,
       "vercelDeployment": "dpl_GYwHoVWPHE7su1sUADoJHmG8Xzxj",
-      "productionDomains": ["https://www.menugo.app", "https://sariyerborekcisi.menugo.app"],
+      "productionDomains": [
+        "https://www.menugo.app",
+        "https://sariyerborekcisi.menugo.app"
+      ],
       "productionSafeReads": [
         "https://www.menugo.app/release.json -> 200, aiSuiteComplete=false, studioRealProviderAcceptance=pending",
         "https://sariyerborekcisi.menugo.app/siparis -> 200 with Permissions-Policy camera=(self), microphone=(self), X-Frame-Options DENY",
@@ -73,17 +103,69 @@
       "production": "verified_ready_and_preserved_in_r20"
     },
     "voiceOrder": {
-      "pullRequests": [3, 4],
+      "pullRequests": [
+        3,
+        4
+      ],
       "voiceCoreMerge": "c45142503cf2a17cd0eafe779f5f51d84745d6aa",
       "microphonePolicyMerge": "1484231e63a34f6762565ff7c151cf52b99430a4",
-      "workflowRuns": [35447044402, 35447237391, 35447549301, 35447549271],
+      "workflowRuns": [
+        35447044402,
+        35447237391,
+        35447549301,
+        35447549271
+      ],
       "vercelDeployment": "dpl_2xF8sBzKoye3r2PcKFkmK7FYBbzB",
-      "productionDomains": ["https://www.menugo.app", "https://sariyerborekcisi.menugo.app"],
+      "productionDomains": [
+        "https://www.menugo.app",
+        "https://sariyerborekcisi.menugo.app"
+      ],
       "productionSafeRead": "https://sariyerborekcisi.menugo.app/siparis returned 200 with Permissions-Policy camera=(self), microphone=(self) and X-Frame-Options DENY",
       "behaviour": "live catalogue product and approved price grounding; BigInt minor-unit totals; ambiguity and option failures stay review-only; explicit customer add to existing idempotent cart mutation; no auto-order/payment/message",
       "realSpeechOrLLMProvider": "not_run",
       "physicalDeviceMicrophoneAcceptance": "not_run",
       "liveOrderCreatedForTest": false
+    },
+    "campaignExport": {
+      "pullRequest": 8,
+      "testedHead": "49e9060407392ce68616578216264c4a2071745c",
+      "mergeCommit": "96cf1fc51be38024ab3b48b63fe342e21d75446f",
+      "workflowRuns": [
+        35450490917,
+        35450490920,
+        35450490885,
+        35450490892
+      ],
+      "dedicatedCampaignGate": "unit, PGlite, native PostgreSQL17, full Next/TypeScript build, browser PNG generation and real QR decode all passed",
+      "existingRegressionGates": "source/checks, browser and merchant release acceptance passed on rebased r20 head",
+      "vercelDeployment": "dpl_GJsDct5UZXxr1EQoEMVHha66hGSY",
+      "migration": "20260919150410_ops_campaign_export",
+      "migrationFunctionExists": true,
+      "anonExecute": false,
+      "authenticatedExecute": true,
+      "campaignWriteTables": 0,
+      "products": 76,
+      "approvedPrices": 71,
+      "formats": [
+        "1080x1350",
+        "1080x1920"
+      ],
+      "canonicalLogos": true,
+      "publicProductQr": true,
+      "sourceVersionGuard": true,
+      "explicitOperatorReview": true,
+      "aiPhotoGeneration": false,
+      "socialPublishing": false,
+      "catalogueWrites": false,
+      "modelCalls": 0,
+      "liveTestOrdersCreated": false,
+      "productionSafeReads": [
+        "https://www.menugo.app/campaign-release.json -> 200, version 20260919-c1, completeAiSuite=false",
+        "https://www.menugo.app/isletme/kampanya -> 200, private no-store shell",
+        "https://www.menugo.app/api/campaigns/catalogue -> 401 UNAUTHENTICATED, private no-store",
+        "https://sariyerborekcisi.menugo.app/api/catalogue -> 200, orderingEnabled=true"
+      ],
+      "scopeBoundary": "graphics export complete for reviewed product data; AI-generated product photography and authorized social adapter remain pending"
     }
   },
   "migration": {
@@ -103,7 +185,20 @@
       "approvedPrices": 71
     },
     "previousStudioMigration": "supabase/migrations/20260919001900_ops_business_studio.sql",
-    "catalogueSha256BeforeAndAfter": "1a50578b3f415d81ed65a4c42b57df21aeb452a1d1be019c86affb16120b0ac3"
+    "catalogueSha256BeforeAndAfter": "1a50578b3f415d81ed65a4c42b57df21aeb452a1d1be019c86affb16120b0ac3",
+    "campaignExport": {
+      "file": "supabase/migrations/20260919002100_ops_campaign_export.sql",
+      "appliedVersion": "20260919150410",
+      "appliedTo": "lrfcqpmjgghodymhnvue",
+      "verified": {
+        "functionExists": true,
+        "anonExecute": false,
+        "authenticatedExecute": true,
+        "campaignWriteTables": 0,
+        "products": 76,
+        "approvedPrices": 71
+      }
+    }
   },
   "blockers": [
     "No direct LLM connection registered as of r20 verification. Gateway credit/model must be verified through authorized runtime; never expose credentials or buy credits automatically.",
@@ -111,12 +206,20 @@
     "Social publishing needs authorized business connection, exact creative, timing and separate publication permission.",
     "Voice speech/LLM provider acceptance and physical-device microphone acceptance are not run; browser SpeechRecognition capability and production first-party microphone policy alone do not complete the voice AI acceptance item."
   ],
-  "safety": {"customerOrderingUnchanged": true, "canonicalCatalogueWrites": false, "liveTextPublicationsDuringAcceptance": 0, "paymentsSent": false, "messagesSent": false, "providerCalls": 0, "liveTestOrdersCreated": false},
+  "safety": {
+    "customerOrderingUnchanged": true,
+    "canonicalCatalogueWrites": false,
+    "liveTextPublicationsDuringAcceptance": 0,
+    "paymentsSent": false,
+    "messagesSent": false,
+    "providerCalls": 0,
+    "liveTestOrdersCreated": false
+  },
   "next": [
     "Run authorized real Gateway/model acceptance without extracting credentials or buying credits; do not mark draft modules complete before provider evidence passes.",
     "Exercise the reviewed text publication lifecycle with provider-grounded reviewed output in staging; preserve existing r20 source/version/idempotency/undo guards. No need to reimplement text batch apply.",
     "Add source-preserving image storage and reviewed image publication with audit/rollback, and reviewed option translations.",
-    "Complete purchasing/recipe ledger, campaign graphics and authorized social adapter, customer assistant, historical demand/waste data pipeline, and multi-branch master-menu/local-price slices.",
+    "Complete purchasing/recipe ledger, AI product-photo publication and authorized social adapter, customer assistant, historical demand/waste data pipeline, and multi-branch master-menu/local-price slices.",
     "For voice ordering, preserve reviewed catalogue grounding and add accepted provider plus physical-device coverage without live-order side effects.",
     "Keep complete=false until every Issue #1 acceptance item has real provider and production evidence."
   ]
