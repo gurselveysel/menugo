@@ -490,5 +490,6 @@ try{
  check('disconnect removes connection',(await settings()).configured===false);
  await db.exec('reset role');check('old vault secrets deleted',(await q('select count(*)::integer n from vault.secrets'))[0].n===0);
  }
+ await (await import('./studio-publication-checks.mjs')).runPublicationChecks({q,db,auth,check,b,br,users,op,p1,p2});
  fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);
 }catch(e){console.error('SQL TEST FAILED',e.message,e.detail,e.where);process.exitCode=1;}finally{await db.close();}

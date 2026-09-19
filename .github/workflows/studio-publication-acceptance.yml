@@ -1,0 +1,33 @@
+name: Studio publication browser acceptance
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: studio-publication-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/studio-publication-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-publication-qa
+          path: public/qa/studio-publication
+          retention-days: 3
+          if-no-files-found: ignore
