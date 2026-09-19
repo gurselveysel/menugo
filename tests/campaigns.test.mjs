@@ -1,0 +1,17 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
+const root='test-results/campaign-unit';fs.mkdirSync(root,{recursive:true});fs.writeFileSync(root+'/contracts.mjs',ts.transpileModule(fs.readFileSync('src/campaigns/contracts.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const c=await import('../'+root+'/contracts.mjs');
+const id='11111111-1111-4111-8111-111111111111';
+const fixture={productId:id,name:'Peynirli börek',description:'Peynirli.',quantityLabel:'Porsiyon',options:[],priceMinor:'3334',businessName:'İşletme',branchName:'Şube',caption:'Güncel menü',version:'a'.repeat(64),checkedAt:'2026-09-19T10:00:00Z'};
+test('format price without float',()=>{assert.equal(c.formatMinor('3334'),'33,34 TL');assert.equal(c.formatMinor('0'),'0,00 TL');assert.equal(c.formatMinor('9223372036854775807'),'92.233.720.368.547.758,07 TL');});
+for(const value of ['-1','NaN','1.2','1e5','9223372036854775808',100,1n])test('reject invalid price '+String(value),()=>assert.throws(()=>c.formatMinor(value)));
+test('post/story exact independent outputs',()=>{assert.deepEqual(c.FORMATS.post,{width:1080,height:1350});assert.deepEqual(c.FORMATS.story,{width:1080,height:1920});});
+test('client cannot supply price or caption at export',()=>assert.throws(()=>c.campaignRequest({productId:id,expectedVersion:'a'.repeat(64),format:'post',priceMinor:'1'})));
+test('valid export does not modify expected fingerprint',()=>assert.equal(c.campaignRequest({productId:id,expectedVersion:'a'.repeat(64),format:'story'}).expectedVersion,fixture.version));
+test('unknown image format rejected',()=>assert.throws(()=>c.campaignRequest({productId:id,expectedVersion:fixture.version,format:'html'})));
+test('no untrusted URL or actor from API copied to output',()=>{const s=c.readCampaign({...fixture,productUrl:'javascript:alert(1)',token:'private'});assert.equal(s.productUrl,c.productUrl(id));assert.ok(!('token'in s));});
+test('share URL does not contain visit/session',()=>{const u=new URL(c.productUrl(id));assert.equal(u.host,'sariyerborekcisi.menugo.app');assert.deepEqual([...u.searchParams.keys()],['urun']);});
+test('caption derives price from server and does not claim discount',()=>{const caption=c.campaignCaption(c.readCampaign(fixture));assert.ok(caption.includes('33,34 TL'));assert.ok(!caption.includes('indirim'));});
+for(const delta of [{version:'not-a-hash'},{productId:'../../secret'},{name:''},{options:['a'.repeat(251)]},{checkedAt:'not-date'}])test('reject malformed server snapshot '+Object.keys(delta)[0],()=>assert.throws(()=>c.readCampaign({...fixture,...delta})));
+test('campaign handlers have no model or social transport',()=>{const source=fs.readFileSync('app/api/campaigns/[action]/route.ts','utf8');assert.ok(!/runStudio|gatewayCredential|fetch\(/.test(source));assert.ok(source.includes('await actor()'));});
+test('original logos used rather than synthesized marks',()=>{const render=fs.readFileSync('src/campaigns/render.ts','utf8');assert.ok(render.includes('sariyer-brand-transparent-r8.webp'));assert.ok(render.includes('menugo-transparent-r8.png'));assert.ok(!render.includes('http'));});
