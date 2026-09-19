@@ -1,0 +1,16 @@
+{
+  "version": "menugo-open-models-20260919-r21",
+  "policy": "self_hosted_only",
+  "connectionEndpoint": "https://ai.menugo.app/v1/chat/completions",
+  "models": [
+    "qwen3.5:4b",
+    "qwen3.5:9b",
+    "Qwen/Qwen3.5-4B",
+    "Qwen/Qwen3.5-9B"
+  ],
+  "modelLicense": "Apache-2.0",
+  "imageGenerationReady": false,
+  "directPdfReady": false,
+  "realInferenceAcceptance": "not_run",
+  "completeAiSuite": false
+}
