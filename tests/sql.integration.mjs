@@ -9,6 +9,11 @@ const auth=async(id)=>{await db.exec('reset role');await q("select set_config('r
 try{
  await db.exec(`CREATE ROLE anon NOLOGIN;CREATE ROLE authenticated NOLOGIN;CREATE ROLE service_role NOLOGIN BYPASSRLS;
  CREATE SCHEMA auth;CREATE SCHEMA extensions;CREATE SCHEMA realtime;
+ -- Isolated test-only Vault contract double. This is NOT encryption testing.
+ CREATE SCHEMA vault;
+ CREATE TABLE vault.secrets(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),secret text,name text,description text);
+ CREATE VIEW vault.decrypted_secrets AS SELECT id,secret AS decrypted_secret FROM vault.secrets;
+ CREATE FUNCTION vault.create_secret(k text,n text,d text) RETURNS uuid LANGUAGE plpgsql AS $$DECLARE i uuid;BEGIN INSERT INTO vault.secrets(secret,name,description) VALUES(k,n,d) RETURNING id INTO i;RETURN i;END;$$;
  CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,email_confirmed_at timestamptz);
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$select(nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid$$;
  GRANT USAGE ON SCHEMA auth TO anon,authenticated,service_role;
@@ -441,6 +446,49 @@ try{
  await imp('finish',retryJob.id,{lease:lease2.lease,error:'AI_CREDIT_REQUIRED'});check('provider failure is preserved, not fake menu',(await imp('snapshot',retryJob.id)).error_code==='AI_CREDIT_REQUIRED');
  await db.exec('reset role');await q("update ops.menu_import_jobs set source_expires_at=now()-interval '1 day' where id=$1",[retryJob.id]);await q('select ops.purge_import_sources()');await auth(users[0]);check('retention purge removes private source',(await imp('snapshot',retryJob.id)).sourceAvailable===false);
  const listUsage=await imp('list');check('daily attempts meter counts failed or lost calls',listUsage.usedToday===3&&listUsage.dailyLimit===5);
+ }
+
+ // r16 direct LLM: local synthetic key only; no provider/network call.
+ {
+ await auth(users[0]);
+ const settings=async(action='status',payload={})=>(await q('select ops.llm_settings($1,$2,$3,$4::jsonb) as j',[b,br,action,JSON.stringify(payload)]))[0].j;
+ const initial=await settings();check('LLM has no fabricated configured credential',!initial.configured&&initial.canManage);
+ const syntheticKey='TEST_ONLY_NOT_A_REAL_PROVIDER_KEY_123456';
+ const config={version:'0',provider:'openai',model:'gpt-4.1-mini',apiKey:syntheticKey,dailyLimit:30,enabled:true,consent:true};
+ const saved=await settings('save',config);check('key saved but model not marked tested',saved.configured&&!saved.verified);
+ check('key and secret reference never returned',!JSON.stringify(saved).includes(syntheticKey)&&!JSON.stringify(saved).includes('secret_id'));
+ await rejects('direct connection table read denied',()=>q('select * from ops.llm_connections'),'42501');
+ await rejects('owner cannot invoke decrypted dispatch RPC',()=>q('select ops.llm_dispatch($1,$2)',[op(1000),op(1001)]),'42501');
+ await rejects('stale settings overwrite denied',()=>settings('save',config),'LLM_CONFIG_CHANGED');
+ const claim=async(n,kind,input={})=>(await q('select ops.llm_claim($1,$2,$3,$4,$5::jsonb) as j',[b,br,op(n),kind,JSON.stringify(input)]))[0].j;
+ await rejects('inference blocked until test succeeds',()=>claim(1002,'assistant',{task:'menu',question:'Q'}),'LLM_TEST_REQUIRED');
+ const first=await claim(1003,'test');check('test call reserves a fenced run',first.claimed&&first.lease);
+ const dup=await claim(1003,'test');check('same test operation cannot repeat provider call',!dup.claimed&&dup.state==='reserved');
+ await rejects('different payload same operation rejected',()=>claim(1003,'test',{different:true}),'IDEMPOTENCY_CONFLICT');
+ await db.exec('reset role');await db.exec('set role service_role');
+ const dispatched=(await q('select ops.llm_dispatch($1,$2) as j',[first.id,first.lease]))[0].j;
+ check('only backend obtains bound credential',dispatched.key===syntheticKey&&dispatched.kind==='test');
+ await rejects('fence cannot dispatch twice',()=>q('select ops.llm_dispatch($1,$2)',[first.id,first.lease]),'LLM_ALREADY_DISPATCHED');
+ await q('select ops.llm_finish($1,$2,$3::jsonb,null,12,3)',[first.id,first.lease,JSON.stringify({verified:true})]);
+ await auth(users[0]);check('successful provider test validates only that config version',(await settings()).verified);
+ check('completed replay reuses saved response',(await claim(1003,'test')).result.verified);
+ const assistant=await claim(1004,'assistant',{task:'daily',question:'Daily',day:new Date().toISOString().slice(0,10)});
+ await db.exec('reset role');await db.exec('set role service_role');
+ const ctx=(await q('select ops.llm_dispatch($1,$2) as j',[assistant.id,assistant.lease]))[0].j;
+ check('assistant context contains fixed menu and aggregate report',Array.isArray(ctx.context.menu)&&ctx.context.daily.timezone==='Europe/Istanbul');
+ check('assistant context excludes customer records and secrets',!('customers'in ctx.context)&&!('staff'in ctx.context)&&!JSON.stringify(ctx.context).includes(syntheticKey));
+ await q('select ops.llm_finish($1,$2,null,$3,0,0)',[assistant.id,assistant.lease,'LLM_RESULT_UNKNOWN']);
+ await auth(users[0]);check('uncertain call is not automatically retried',(await claim(1004,'assistant',{task:'daily',question:'Daily',day:new Date().toISOString().slice(0,10)})).state==='unknown');
+ const old=await claim(1005,'test');
+ await settings('disconnect',{version:saved.version});
+ const next=await settings('save',{...config,version:'0',apiKey:syntheticKey+'NEW'});
+ check('disconnect/reconnect never reuses old connection generation',BigInt(next.version)>BigInt(saved.version));
+ await db.exec('reset role');await db.exec('set role service_role');
+ await rejects('old run cannot use new key after reconnect',()=>q('select ops.llm_dispatch($1,$2)',[old.id,old.lease]),'LLM_CONFIG_CHANGED');
+ await auth(users[2]);await rejects('customer cannot configure LLM',()=>settings(),'MANAGER_REQUIRED');
+ await auth(users[0]);await settings('disconnect',{version:next.version});
+ check('disconnect removes connection',(await settings()).configured===false);
+ await db.exec('reset role');check('old vault secrets deleted',(await q('select count(*)::integer n from vault.secrets'))[0].n===0);
  }
  fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);
 }catch(e){console.error('SQL TEST FAILED',e.message,e.detail,e.where);process.exitCode=1;}finally{await db.close();}

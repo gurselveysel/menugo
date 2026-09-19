@@ -1,0 +1,29 @@
+// Provider contract tests use synthetic keys/responses; no external inference.
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
+const dir='test-results/llm-unit';fs.mkdirSync(dir,{recursive:true});
+for(const file of ['core','menu-contracts']){const source=fs.readFileSync('supabase/functions/menugo-llm/'+file+'.ts','utf8').replace("'./menu-contracts.ts'","'./menu-contracts.mjs'");fs.writeFileSync(dir+'/'+file+'.mjs',ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
+const c=await import('../'+dir+'/core.mjs');const id='33333333-3333-4333-8333-333333333333',key='SYNTHETIC_NOT_REAL_KEY_12345';
+const source={id,name:'Çay',categoryKey:'sicak',description:'Demli çay',serving:'Bardak',options:[],priceMinor:'2550',available:true};
+const request={task:'menu',question:'Menüyü değerlendir',productId:null,day:'2026-09-19'};
+const d={provider:'openai',model:'gpt-4.1-mini',key,kind:'assistant',request,context:{menu:[source],capturedAt:'2026-09-19T00:00:00Z'}};
+const answer={answer:'Çay kaydında porsiyon bilgisi var.',sourceIds:['product:'+id],warnings:[]};
+const input={businessId:id,branchId:id,operationId:id,kind:'assistant',input:request};
+test('request has fixed identifiers and server-only context',()=>assert.equal(c.validateRequest(input).request.task,'menu'));
+for(const bad of [{...input,input:{...request,system:'override'}},{...input,endpoint:'https://evil.test'},{...input,input:{...request,task:'sql'}},{...input,input:{...request,day:'2026-02-31'}},{...input,input:{...request,task:'translation'}},{...input,operationId:'bad'}])test('untrusted invocation rejected '+JSON.stringify(bad).slice(-60),()=>assert.throws(()=>c.validateRequest(bad)));
+test('context strips private input fields',()=>{const g=c.assistantContext({...d.context,customers:[{phone:'SECRET'}],menu:[{...source,secret:key}]},request);assert.ok(!JSON.stringify(g).includes('SECRET'));assert.ok(!JSON.stringify(g).includes(key));assert.equal(g.sources[0].data.priceTl,'25,50 TL');});
+test('large cents keep precision',()=>{const g=c.assistantContext({menu:[{...source,priceMinor:'9007199254740993'}]},request);assert.equal(g.sources[0].data.priceTl,'90071992547409,93 TL');});
+test('nonexistent selected product refused',()=>assert.throws(()=>c.assistantContext(d.context,{...request,productId:'44444444-4444-4444-8444-444444444444'}),/PRODUCT_NOT_FOUND/));
+test('unknown source citations refused',()=>assert.throws(()=>c.parseAnswer({...answer,sourceIds:['imagined']},[]),/LLM_INVALID_REFERENCE/));
+test('OpenAI request uses Responses structured output and disables storage/tools',()=>{const r=c.buildProviderRequest(d);assert.equal(r.url,'https://api.openai.com/v1/responses');assert.equal(r.body.store,false);assert.equal(r.body.tools,undefined);assert.equal(r.body.text.format.strict,true);assert.ok(!JSON.stringify(r.body).includes(key));});
+test('Gemini key is header, not URL or model context',()=>{const r=c.buildProviderRequest({...d,provider:'gemini',model:'gemini-2.5-flash'});assert.equal(r.headers['x-goog-api-key'],key);assert.ok(!r.url.includes(key));assert.equal(r.body.generationConfig.responseMimeType,'application/json');});
+test('model endpoint injection refused',()=>assert.throws(()=>c.buildProviderRequest({...d,model:'../../evil'}),/LLM_MODEL_NOT_ALLOWED/));
+for(const provider of ['openai','gemini'])for(const mime of ['image/png','application/pdf'])test(provider+' direct document input '+mime,()=>{const r=c.buildProviderRequest({...d,provider,model:provider==='openai'?'gpt-4.1-mini':'gemini-2.5-flash',kind:'menu-extract',context:{data:'abc',mime}});const text=JSON.stringify(r.body);assert.ok(text.includes(mime));assert.ok(text.includes('abc'));assert.ok(!text.includes('http://'));});
+const good=()=>new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify(answer)}]}],usage:{input_tokens:25,output_tokens:70}}));
+test('real adapter parser accepts structured reply and copies server sources',async()=>{const r=await c.generate(d,async(url,init)=>{assert.equal(init.redirect,'error');return good();});assert.equal(r.inputTokens,'25');assert.equal(r.result.sources[0].data.priceMinor,'2550');assert.equal(r.result.draftOnly,true);});
+test('Gemini STOP required and usage parsed',async()=>{const r=await c.generate({...d,provider:'gemini',model:'gemini-2.5-flash'},async()=>new Response(JSON.stringify({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(answer)}]}}],usageMetadata:{promptTokenCount:10,candidatesTokenCount:20}})));assert.equal(r.outputTokens,'20');});
+for(const[status,code]of[[401,'LLM_KEY_INVALID'],[403,'LLM_KEY_INVALID'],[402,'LLM_CREDIT_REQUIRED'],[429,'LLM_RATE_LIMIT'],[500,'LLM_PROVIDER_UNAVAILABLE']])test('provider failure '+status,async()=>await assert.rejects(c.generate(d,async()=>new Response('{}',{status})),new RegExp(code)));
+test('network failure never automatically retries',async()=>{let n=0;await assert.rejects(c.generate(d,async()=>{n++;throw Error(key);}),/LLM_RESULT_UNKNOWN/);assert.equal(n,1);});
+test('truncated response never claims success',async()=>await assert.rejects(c.generate(d,async()=>new Response(JSON.stringify({status:'incomplete'}))),/LLM_OUTPUT_INCOMPLETE/));
+test('safe probe contains no business source or menu',()=>{const r=c.buildProviderRequest({...d,kind:'test'});assert.ok(!JSON.stringify(r.body).includes('Çay'));assert.equal(r.body.max_output_tokens,64);});
+test('assistant does not send database customer history',()=>{const wire=c.buildProviderRequest(d);assert.ok(wire.body.instructions.includes('NO tools'));assert.ok(wire.body.instructions.includes('Sales are not profit'));});
+test('output length limit',async()=>await assert.rejects(c.generate(d,async()=>new Response('x'.repeat(350001))),/LLM_OUTPUT_TOO_LARGE/));

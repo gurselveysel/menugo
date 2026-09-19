@@ -1,7 +1,8 @@
 // Pure extraction/review/adapter contracts. No live AI call and no user menu.
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
 const out='test-results/ai-menu-unit';fs.mkdirSync(out,{recursive:true});
-for(const name of ['contracts','review','provider']){let s=fs.readFileSync('lib/ai-menu/'+name+'.ts','utf8').replace("import 'server-only';",'').replace("import {getVercelOidcToken} from '@vercel/oidc';","const getVercelOidcToken=()=>{throw Error('No test secret');};").replaceAll("from './contracts'","from './contracts.mjs'");fs.writeFileSync(out+'/'+name+'.mjs',ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
+fs.writeFileSync(out+'/llm-messages.mjs',ts.transpileModule(fs.readFileSync('lib/llm/messages.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+for(const name of ['contracts','review','provider']){let s=fs.readFileSync('lib/ai-menu/'+name+'.ts','utf8').replace("import 'server-only';",'').replace("import {getVercelOidcToken} from '@vercel/oidc';","const getVercelOidcToken=()=>{throw Error('No test secret');};").replaceAll("from './contracts'","from './contracts.mjs'").replaceAll("from '../llm/messages'","from './llm-messages.mjs'");fs.writeFileSync(out+'/'+name+'.mjs',ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
 const c=await import('../'+out+'/contracts.mjs'),r=await import('../'+out+'/review.mjs'),p=await import('../'+out+'/provider.mjs');
 const id='55555555-5555-4555-8555-555555555555';
 const item={name:'Peynirli Börek',category:'Kahvaltı',description:'Peynirli',serving:'Porsiyon',priceMinor:'15000',options:[],sourcePage:1,sourceText:'Peynirli Börek 150 TL',warnings:[]};
