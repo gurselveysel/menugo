@@ -1,5 +1,5 @@
 {
-  "version": "menugo-llm-assistant-20260919-r16",
+  "version": "menugo-editorial-branding-20260919-r17",
   "merchantMenu": true,
   "roleInterfaces": [
     "customer",
@@ -14,10 +14,10 @@
   "automatedCourier": false,
   "marketingSms": false,
   "liveData": "Supabase",
-  "previous": "menugo-ai-menu-studio-20260919-r15",
+  "previous": "menugo-llm-assistant-20260919-r16",
   "transparentMerchantBrand": true,
   "whiteMerchantFooter": true,
-  "dataAndPermissionsUnchanged": false,
+  "dataAndPermissionsUnchanged": true,
   "guestSessions": true,
   "personalDrafts": true,
   "customerAccountRequired": false,
@@ -61,5 +61,10 @@
   ],
   "llmConfiguration": "owner-managed-supabase-vault",
   "llmAutomaticWrites": false,
-  "llmRuntimeRequiresCredential": true
+  "llmRuntimeRequiresCredential": true,
+  "adaptiveBrandLogos": true,
+  "editorialMenuArtwork": true,
+  "editorialLivePriceCards": true,
+  "illustrativeMedia": true,
+  "mediaNative8k": false
 }

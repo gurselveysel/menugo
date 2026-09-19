@@ -1,4 +1,5 @@
 'use client';
+import MenuGoLogo from '@/components/MenuGoLogo';
 import {useEffect,useRef,useState} from 'react';
 import Link from 'next/link';
 import {api,explain} from './transport';
@@ -35,5 +36,5 @@ export function ApprovedTableEntry(){
  {state==='pending'?<><h2>Personelimize bu kodu gösterin</h2><div className="entry-code" aria-label={'Katılım kodunuz '+data.request.code}>{data.request.code}</div><p>Kodunuz masanızda doğrulandığında sipariş ekranı otomatik açılır. E-posta veya parola gerekmez.</p><p className="helper">Katılım onayı bekleniyor…</p></>:['approved','claimed'].includes(state)?<p>Masanız onaylandı. Sipariş ekranı açılıyor…</p>:<><p>Menüyü hemen inceleyebilirsiniz. Masadan sipariş için aşağıdaki düğmeye dokunun ve oluşan kodu personelimize gösterin.</p>{state==='expired'&&<p className="notice">Önceki talebin süresi doldu. Yeni bir katılım talebi oluşturabilirsiniz.</p>}{state==='declined'&&<p className="notice">Katılım onaylanmadı. Lütfen personelimizle görüşün.</p>}{state==='finished'&&<p className="notice">Önceki ziyaretiniz sona erdi. Yeni ziyaretiniz için tekrar katılın.</p>}
  {data?.table?.enabled?<button className="guest-primary full" disabled={busy||offline} onClick={()=>void start()}>{busy?'İstek kaydediliyor…':'Bu masadan sipariş vermek istiyorum'}</button>:data&&<p className="notice">Şu anda siparişinizi personelimiz alıyor. Menüyü incelemeye devam edebilirsiniz.</p>}</>}
  {error&&<p role="alert" className="notice">{error}</p>}<div className="guest-welcome-actions"><Link className="btn" href="/bahcesehir">Menüyü incele</Link><a className="btn" href="tel:+905394830031">İşletmeyi ara</a></div><Link className="text-button" href="/yardim">Nasıl kullanılır?</Link></main>
- <footer className="guest-footer"><a href="https://www.menugo.app/"><img src="/media/menugo-transparent-r8.png" alt="MenüGO — Yeni Nesil Dijital Menü" width={560} height={147}/></a></footer></div>;
+ <footer className="guest-footer"><a href="https://www.menugo.app/"><MenuGoLogo  alt="MenüGO — Yeni Nesil Dijital Menü" width={560} height={147}/></a></footer></div>;
 }

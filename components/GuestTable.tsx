@@ -1,4 +1,5 @@
  'use client';
+import MenuGoLogo from '@/components/MenuGoLogo';
 import {useEffect,useState,useRef} from 'react';import Link from 'next/link';
 import {TableScanner} from './TableScanner';
 import {ServiceAvailability,VisitFeedback} from './ServiceExperience';
@@ -21,7 +22,7 @@ export function GuestTable(){const[session,setSession]=useState<any>(null),[cata
  }catch(e){if(alive)setError(explain(e));}finally{if(alive)setLoading(false);}})();return()=>{alive=false;};},[retry]);
  return <div className="guest-site"><header className="guest-header"><Link href="/bahcesehir"><img src="/media/sariyer-brand-transparent-r8.webp" width="600" height="200" alt="Meşhur Sarıyer Börekçisi Sandviç"/></Link><Link href="/hesabim">Siparişlerim</Link></header>
  {session&&catalogue?<Dining scope={{businessId:session.businessId,branchId:session.branchId,checkId:session.checkId,userId:session.viewerUserId}} catalogue={catalogue}/>:<main className="guest-welcome"><span className="guest-kicker">BAHÇEŞEHİR · ÜYELİKSİZ MENÜ</span><h1>{loading?'Masanız hazırlanıyor…':'Hoş geldiniz.'}</h1><p>{loading?'Masa bağlantınız güvenle doğrulanıyor.':'Masanızın QR kodunu kameranızla tarayın; ürünlerinizi seçip siparişinizi gönderin. Üyelik gerekmez.'}</p>{error&&<p role="alert" className="notice">{error}</p>}{error&&<button className="btn" onClick={()=>setRetry(v=>v+1)}>Yeniden dene</button>}{!loading&&<TableScanner/>}<div className="guest-welcome-actions"><Link className="btn" href="/bahcesehir">Menüyü incele</Link><a className="btn" href="tel:+905394830031">İşletmeyi ara</a></div><p className="helper">QR’yi göremiyorsanız garsonunuzdan “QR göster” ekranını açmasını isteyin. Kısa süreli ziyaret QR’siyle de katılabilirsiniz.</p></main>}
- <footer className="guest-footer"><a href="https://www.menugo.app/"><img src="/media/menugo-transparent-r8.png" width="560" height="147" alt="menügo — Yeni Nesil Dijital Menü"/></a><Link href="/yardim">Yardım</Link><Link href="/giris?role=waiter">Personel girişi</Link></footer></div>;
+ <footer className="guest-footer"><a href="https://www.menugo.app/"><MenuGoLogo  width="560" height="147" alt="menügo — Yeni Nesil Dijital Menü"/></a><Link href="/yardim">Yardım</Link><Link href="/giris?role=waiter">Personel girişi</Link></footer></div>;
 }
 function Dining({scope,catalogue}:{scope:Scope;catalogue:any}){
  const live=useGuestCart(scope);const[tab,setTab]=useState<'menu'|'cart'|'orders'|'bill'>('menu'),[category,setCategory]=useState(catalogue.items.some((x:any)=>x.category==='sandvic')?'sandvic':'all'),[search,setSearch]=useState(''),[choices,setChoices]=useState<Record<string,string>>({}),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[orders,setOrders]=useState<any[]>([]),[reason,setReason]=useState(''),[cancelOrder,setCancelOrder]=useState<string|null>(null),[pendingOrder,setPendingOrder]=useState<{operationId:string;expectedRevision:string}|null>(null),[recommendations,setRecommendations]=useState<any[]>([]);

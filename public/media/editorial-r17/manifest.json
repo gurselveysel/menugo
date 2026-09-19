@@ -1,0 +1,130 @@
+[
+  {
+    "file": "sandwich.webp",
+    "width": 463,
+    "height": 266,
+    "source": "meşhur_sarıyer_börekçisi_sandviç_festivali.png",
+    "sourceSha256": "6cdcbecdb0a0d5a0212b55cd338787cc73e7e804afff0464c0ed580fc3537e6e",
+    "crop": {
+      "x": 192,
+      "y": 726,
+      "width": 463,
+      "height": 266
+    },
+    "aiGenerated": true,
+    "usage": "representative editorial artwork; not verified product photographs",
+    "versions": [],
+    "bytes": 49734
+  },
+  {
+    "file": "waffle.webp",
+    "width": 362,
+    "height": 297,
+    "source": "meşhur_sarıyer_börekçisi_sandviç_festivali.png",
+    "sourceSha256": "6cdcbecdb0a0d5a0212b55cd338787cc73e7e804afff0464c0ed580fc3537e6e",
+    "crop": {
+      "x": 836,
+      "y": 472,
+      "width": 362,
+      "height": 297
+    },
+    "aiGenerated": true,
+    "usage": "representative editorial artwork; not verified product photographs",
+    "versions": [],
+    "bytes": 29466
+  },
+  {
+    "file": "breakfast.webp",
+    "width": 249,
+    "height": 236,
+    "source": "premium_sandviç_menü_tasarımı.png",
+    "sourceSha256": "9aaa7b301102fa3ef4a8e9a8c65c30f9cdc6f0e8f558931cfd4f2fb34c01c147",
+    "crop": {
+      "x": 298,
+      "y": 811,
+      "width": 249,
+      "height": 236
+    },
+    "aiGenerated": true,
+    "usage": "representative editorial artwork; not verified product photographs",
+    "versions": [],
+    "bytes": 16374
+  },
+  {
+    "file": "hot-drinks.webp",
+    "width": 252,
+    "height": 175,
+    "source": "premium_sandviç_menü_tasarımı.png",
+    "sourceSha256": "9aaa7b301102fa3ef4a8e9a8c65c30f9cdc6f0e8f558931cfd4f2fb34c01c147",
+    "crop": {
+      "x": 574,
+      "y": 805,
+      "width": 252,
+      "height": 175
+    },
+    "aiGenerated": true,
+    "usage": "representative editorial artwork; not verified product photographs",
+    "versions": [],
+    "bytes": 10082
+  },
+  {
+    "file": "cold-drinks.webp",
+    "width": 244,
+    "height": 237,
+    "source": "premium_sandviç_menü_tasarımı.png",
+    "sourceSha256": "9aaa7b301102fa3ef4a8e9a8c65c30f9cdc6f0e8f558931cfd4f2fb34c01c147",
+    "crop": {
+      "x": 852,
+      "y": 808,
+      "width": 244,
+      "height": 237
+    },
+    "aiGenerated": true,
+    "usage": "representative editorial artwork; not verified product photographs",
+    "versions": [],
+    "bytes": 19016
+  },
+  {
+    "file": "croissant.webp",
+    "width": 254,
+    "height": 258,
+    "source": "premium_sandviç_menü_tasarımı.png",
+    "sourceSha256": "9aaa7b301102fa3ef4a8e9a8c65c30f9cdc6f0e8f558931cfd4f2fb34c01c147",
+    "crop": {
+      "x": 295,
+      "y": 356,
+      "width": 254,
+      "height": 258
+    },
+    "aiGenerated": true,
+    "usage": "representative editorial artwork; not verified product photographs",
+    "versions": [],
+    "bytes": 26006
+  },
+  {
+    "file": "food-banner.webp",
+    "width": 1154,
+    "height": 244,
+    "source": "sarıyer_börekçisi_lezzet_şöleni.png",
+    "sourceSha256": "a74180e3a08b58521ceeb044733601fee56f416dc667658bbc3eae9a3abf1950",
+    "crop": {
+      "x": 25,
+      "y": 556,
+      "width": 1154,
+      "height": 244
+    },
+    "aiGenerated": true,
+    "usage": "representative editorial artwork; not verified product photographs",
+    "versions": [
+      {
+        "width": 480,
+        "file": "food-banner-480.webp"
+      },
+      {
+        "width": 800,
+        "file": "food-banner-800.webp"
+      }
+    ],
+    "bytes": 101056
+  }
+]

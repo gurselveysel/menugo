@@ -1,4 +1,5 @@
 'use client';
+import MenuGoLogo from '@/components/MenuGoLogo';
 import {useEffect,useState} from 'react';
 import Link from 'next/link';
 import {api,explain} from './transport';
@@ -54,5 +55,5 @@ export function TableEntry(){
  {error&&<p className="notice" role="alert">{error}</p>}
  {(error||offline)&&id&&<button className="btn primary" disabled={busy||offline} onClick={()=>setAttempt(v=>v+1)}>Yeniden dene</button>}
  {!busy&&!id&&<TableScanner/>}<div className="guest-welcome-actions"><Link className="btn" href="/bahcesehir">Menüyü incele</Link><a className="btn" href="tel:+905394830031">İşletmeyi ara</a></div></main>
- <footer className="guest-footer"><img src="/media/menugo-transparent-r8.png" width={560} height={147} alt="MenüGO — Yeni Nesil Dijital Menü"/></footer></div>;
+ <footer className="guest-footer"><MenuGoLogo  width={560} height={147} alt="MenüGO — Yeni Nesil Dijital Menü"/></footer></div>;
 }
