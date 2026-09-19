@@ -1,6 +1,6 @@
 {
-  "version": "menugo-free-ai-policy-20260919-r25",
-  "previous": "menugo-reviewed-text-publication-20260919-r20",
+  "version": "menugo-platform-ai-access-20260920-r27",
+  "previous": "menugo-free-ai-policy-20260919-r25",
   "merchantMenu": true,
   "roleInterfaces": [
     "customer",
@@ -99,5 +99,7 @@
   "studioRealProviderAcceptance": "pending-credentials",
   "aiPaidFallback": false,
   "aiMaximumPaidSpendMinor": "0",
-  "aiFreeAccountAttestation": "required-30-day-expiry-provider-plan-not-detectable-from-key"
+  "aiFreeAccountAttestation": "required-30-day-expiry-provider-plan-not-detectable-from-key",
+  "platformAiConfigurationOnly": true,
+  "restaurantAiConfiguration": false
 }

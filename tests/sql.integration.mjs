@@ -449,6 +449,8 @@ try{
  }
 
 
+ await (await import('./platform-ai-checks.mjs')).platformAiChecks({q,db,auth,check,rejects,b,br,users,op});
+
  // Free-only routing: synthetic fixture credentials, no inference or billable calls.
  {
  await auth(users[0]);
@@ -498,7 +500,7 @@ try{
  check('remove/reconnect advances generation',BigInt(next.version)>BigInt(saved.version));
  await db.exec('reset role');await db.exec('set role service_role');
  await rejects('old lease cannot use replacement credential',()=>q('select ops.llm_dispatch($1,$2)',[old.id,old.lease]),'LLM_CONFIG_CHANGED');
- await auth(users[2]);await rejects('customer cannot manage routes',()=>free(),'MANAGER_REQUIRED');
+ await auth(users[2]);await rejects('customer cannot manage routes',()=>free(),'PLATFORM_ADMIN_REQUIRED');
  await auth(users[0]);await free('remove',{version:next.version,provider:'openrouter_free'});
  await db.exec('reset role');check('removed credentials purged',(await q('select count(*)::integer n from vault.secrets'))[0].n===0);
  }
