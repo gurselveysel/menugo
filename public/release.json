@@ -1,6 +1,6 @@
 {
-  "version": "menugo-platform-ai-access-20260920-r27",
-  "previous": "menugo-free-ai-policy-20260919-r25",
+  "version": "menugo-multibranch-master-menu-20260920-r28",
+  "previous": "menugo-platform-ai-access-20260920-r27",
   "merchantMenu": true,
   "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"],
   "whatsapp": "customer-confirmed-click-to-chat",
@@ -32,6 +32,7 @@
   "staffOrderAcceptance": true,
   "optional_staff_verified_table_admission": true,
   "cataloguePricesUnchanged": true,
+  "cataloguePricesUnchangedDuringReleaseAcceptance": true,
   "menuDiscovery": true,
   "productDeepLinks": true,
   "printMenu": true,
@@ -80,5 +81,14 @@
   "aiFreeAccountAttestation": "required-30-day-expiry-provider-plan-not-detectable-from-key",
   "platformAiConfigurationOnly": true,
   "restaurantAiConfiguration": false,
-  "platformAiConfigurationPath": "/platform/yapay-zeka"
+  "platformAiConfigurationPath": "/platform/yapay-zeka",
+  "multiBranchMenu": true,
+  "multiBranchMenuRoute": "/isletme/subeler",
+  "multiBranchMoney": "bigint-minor-units",
+  "multiBranchIdempotency": true,
+  "multiBranchRowLocks": true,
+  "multiBranchOptimisticVersioning": true,
+  "multiBranchOwnerCrossBranchControl": true,
+  "multiBranchManagerScope": "current-branch-local-price-only",
+  "multiBranchRealCrossBranchAcceptance": "pending-second-genuine-production-branch"
 }

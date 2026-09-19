@@ -22,6 +22,7 @@ export async function GET(req:Request,ctx:Context){try{origin(req);const{action}
  if(action==='visits')return json(await rpc(s,'my_visits',scope));
  if(action==='orders')return json(await rpc(s,'customer_orders',{...scope,p_check_id:uuid(new URL(req.url).searchParams.get('check'))}));
  if(action==='demand-waste')return json(await rpc(s,'demand_waste_snapshot',{...scope,p_lookback_days:28}));
+ if(action==='multi-branch-menu')return json(await rpc(s,'multi_branch_snapshot',scope));
  throw new Failure('NOT_FOUND',404);
  }catch(e){return failed(e);}}
 export async function POST(req:Request,ctx:Context){try{origin(req);const{action}=await ctx.params;
@@ -37,6 +38,10 @@ export async function POST(req:Request,ctx:Context){try{origin(req);const{action
  const{s}=await actor();
  if(action==='claim')return json(await rpc(s,'staff_bootstrap',scope));
  const b=await body(req);
+ if(action==='multi-branch-menu'){
+  const command=String(b.command??'');if(!['create-master','bind-product','set-master-price','set-local-price','clear-local-price'].includes(command)||!b.payload||typeof b.payload!=='object'||Array.isArray(b.payload))throw new Failure('INVALID_INPUT');
+  return json(await rpc(s,'multi_branch_manage',{...scope,p_operation_id:uuid(b.operationId),p_action:command,p_payload:b.payload}));
+ }
  if(action==='pause'){if(!Number.isInteger(b.minutes)||![0,15,30,60].includes(Number(b.minutes))||typeof b.version!=='string'||!/^\d{1,18}$/.test(b.version))throw new Failure('INVALID_INPUT');return json(await rpc(s,'service_pause',{...scope,p_minutes:b.minutes,p_version:b.version}));}
  if(action==='feedback')return json(await rpc(s,'feedback_inbox',{...scope,p_review_id:uuid(b.id)}));
  if(action==='table-policy'){if(!['direct','staff_approved'].includes(String(b.mode)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_ordering_policy',{...scope,p_mode:b.mode}));}
