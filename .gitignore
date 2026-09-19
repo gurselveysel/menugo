@@ -10,3 +10,5 @@ public/qa/
 *.log
 
 *.tsbuildinfo
+
+public/vendor/pdfjs/
