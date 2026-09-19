@@ -63,14 +63,13 @@ export async function runPublicationChecks({q,db,auth,check,b,br,users,op,p1,p2}
   await db.exec('ROLLBACK TO SAVEPOINT changed_source; RELEASE SAVEPOINT changed_source');await auth(users[0]);
   await db.exec('SAVEPOINT changed_metadata; reset role');
   await q('update ops.product_information set version=version+1 where product_source_id=(select source_id from public.menu_items where id=$1)',[p2]);
-  // If the fixture has no info row, create an unpublished row: must still invalidate the guard.
   await q("insert into ops.product_information(business_id,branch_id,product_source_id,published,version) select business_id,branch_id,source_id,false,1 from public.menu_items where id=$1 on conflict do nothing",[p2]);
   await auth(users[0]);await reject('metadata changes invalidate preview proof',()=>pub('apply',applyInput(p5,9507)),'PUBLICATION_CHANGED');
   await db.exec('ROLLBACK TO SAVEPOINT changed_metadata; RELEASE SAVEPOINT changed_metadata');await auth(users[0]);
   const sixth=await prepare(p2,'tr','Diğer taslak');await reject('one batch cannot choose competing drafts for same product-language',()=>preview(fifth,sixth),'DUPLICATE_PUBLICATION_TARGET');
   await reject('bulk partial failure never leaves early target modified',async()=>pub('apply',{...applyInput(await preview(fifth),9508),items:[...applyInput(await preview(fifth),9508).items,{jobId:op(9899),jobRevision:'0',sourceHash:'a'.repeat(64),overlayVersion:'0'}]}),'STUDIO_JOB_NOT_FOUND');
   check('failed apply left first target unpublished',!(await pub('preview',{items:[{jobId:fifth}]})).items[0].reason);
-  await db.exec('reset role');
+  await db.exec('reset role; SET CONSTRAINTS ALL IMMEDIATE');
   await reject('publication audit cannot be edited even by table owner',()=>q("update ops.studio_text_changes set action='undo'"),'STUDIO_AUDIT_IMMUTABLE');
   await reject('publication receipts cannot be truncated',()=>q('truncate ops.studio_publication_batches cascade'),'STUDIO_AUDIT_IMMUTABLE');
   check('publication does not change order settings',JSON.stringify(await q('select * from ops.branch_settings order by branch_id'))===settings);
