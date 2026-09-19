@@ -7,6 +7,7 @@
   "onlinePayments": false,
   "automatedCourier": false,
   "marketingSms": false,
+  "mediaNative8k": false,
   "liveData": "Supabase",
   "transparentMerchantBrand": true,
   "whiteMerchantFooter": true,
