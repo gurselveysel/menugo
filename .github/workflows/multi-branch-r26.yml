@@ -2,10 +2,12 @@ name: Multi branch r26
 on:
   push:
     branches: ['feat/multibranch-master-menu-r26']
+  pull_request:
+    branches: ['main']
 permissions:
   contents: read
 concurrency:
-  group: multi-branch-r26
+  group: multi-branch-r26-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   verify:
