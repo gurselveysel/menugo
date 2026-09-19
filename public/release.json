@@ -1,5 +1,5 @@
 {
-  "version": "menugo-editorial-branding-20260919-r17",
+  "version": "menugo-visual-handover-20260919-r18",
   "merchantMenu": true,
   "roleInterfaces": [
     "customer",
@@ -14,7 +14,7 @@
   "automatedCourier": false,
   "marketingSms": false,
   "liveData": "Supabase",
-  "previous": "menugo-llm-assistant-20260919-r16",
+  "previous": "menugo-editorial-branding-20260919-r17",
   "transparentMerchantBrand": true,
   "whiteMerchantFooter": true,
   "dataAndPermissionsUnchanged": true,
@@ -66,5 +66,8 @@
   "editorialMenuArtwork": true,
   "editorialLivePriceCards": true,
   "illustrativeMedia": true,
-  "mediaNative8k": false
+  "mediaNative8k": false,
+  "visualOrderingWelcome": true,
+  "visualOrderingProductCards": true,
+  "canonicalBrandSurfaces": true
 }
