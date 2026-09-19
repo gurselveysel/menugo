@@ -11,6 +11,7 @@ export async function GET(req:Request){
   const s=await client();const{error}=await s.auth.exchangeCodeForSession(code);
   if(error)return redirectTo(u.origin+'/giris?error=verification');
   const{data}=await s.auth.getUser();if(!data.user)return redirectTo(u.origin+'/giris?error=verification');
+  if(next&&['/platform','/platform/ayarlar','/platform/yapay-zeka'].includes(next.split('?')[0])){try{await rpc(s,next.split('?')[0]==='/platform/yapay-zeka'?'platform_ai_console':'platform_principal');return redirectTo(u.origin+next);}catch{}}
   try{await rpc(s,'bootstrap_owner');}catch{}
   const membership=await rpc(s,'staff_bootstrap',scope);
   return redirectTo(u.origin+accountDestination(membership.role??null,'merchant',next));

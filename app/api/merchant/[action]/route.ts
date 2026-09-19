@@ -44,7 +44,7 @@ export async function POST(req:Request,ctx:Context){try{origin(req);const{action
  }
  if(action==='pause'){if(!Number.isInteger(b.minutes)||![0,15,30,60].includes(Number(b.minutes))||typeof b.version!=='string'||!/^\d{1,18}$/.test(b.version))throw new Failure('INVALID_INPUT');return json(await rpc(s,'service_pause',{...scope,p_minutes:b.minutes,p_version:b.version}));}
  if(action==='feedback')return json(await rpc(s,'feedback_inbox',{...scope,p_review_id:uuid(b.id)}));
- if(action==='table-policy'){if(!['direct','staff_approved'].includes(String(b.mode)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_ordering_policy',{...scope,p_mode:b.mode}));}
+ if(action==='table-policy')throw new Failure('PLATFORM_SECURITY_SETTINGS_REQUIRED',403);
  if(action==='reject-order'){if(typeof b.note!=='string'||!b.note.trim()||b.note.length>300)throw new Failure('REASON_REQUIRED');return json(await rpc(s,'reject_submitted_order',{...scope,p_order_id:uuid(b.orderId),p_note:b.note.trim()}));}
  if(action==='table-decision'){if(typeof b.approve!=='boolean'||typeof b.code!=='string'||(b.approve&&!/^[0-9]{4}$/.test(b.code)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'table_entry_decide',{...scope,p_request_id:uuid(b.id),p_code:b.code,p_approve:b.approve}));}
  if(action==='close-empty')return json(await rpc(s,'close_empty_check',{...scope,p_check_id:uuid(b.checkId)}));

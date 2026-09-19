@@ -9,7 +9,7 @@ type Branch={businessId:string;branchId:string;name:string};
 export function PlatformAi({branches,role}:{branches:Branch[];role:string}){
  const [selected,setSelected]=useState(branches[0]?.branchId??'');
  const branch=branches.find(b=>b.branchId===selected);
- return <main className="platform-ai"><header><MenuGoLogo alt="MenüGO" width="280" height="74"/><Link className="btn" href="/isletme">İşletme çalışma alanı</Link></header>
+ return <main className="platform-ai"><header><MenuGoLogo alt="MenüGO" width="280" height="74"/><Link className="btn" href="/platform">Şirket kontrol merkezi</Link></header>
  <p className="eyebrow">MENÜGO · ŞİRKET YÖNETİMİ</p><h1>AI kontrol merkezi</h1>
  <p>Sağlayıcılar, erişim anahtarları ve kullanım politikaları burada yönetilir. Restoran işletmecileri yalnız kendilerine açılan araçları kullanır.</p>
  <div className="notice">Yetki: {role==='platform_owner'?'Platform sahibi':'AI yöneticisi'} · Ücretli geçiş kapalı · Anahtarlar okunabilir olarak geri verilmez.</div>

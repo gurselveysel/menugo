@@ -4,7 +4,7 @@ export function safeDestination(value:string|null):string|null {
  try {
   const u=new URL(value,'https://menugo.invalid');
   if(u.origin!=='https://menugo.invalid'||u.hash||!value.startsWith('/')||value.startsWith('//'))return null;
-  if(!['/siparis','/hesabim','/isletme','/garson','/mutfak','/kasa','/panel','/parola','/yardim','/platform/yapay-zeka'].includes(u.pathname))return null;
+  if(!['/siparis','/hesabim','/isletme','/garson','/mutfak','/kasa','/panel','/parola','/yardim','/platform','/platform/ayarlar','/platform/yapay-zeka'].includes(u.pathname))return null;
   return u.pathname+u.search;
  }catch{return null;}
 }

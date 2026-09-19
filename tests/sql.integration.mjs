@@ -31,7 +31,7 @@ try{
  await q("insert into public.menu_items(id,business_id,branch_id,source_id,name,source_price,approved_price,price_approved)values($1,$2,$3,'TIR-TEST-1','Test ürün',33.33,33.33,true),($4,$2,$3,'TIR-TEST-2','Test ilave',0.01,0.01,true)",[p1,b,br,p2]);
  for(const [key,title] of [['sandvic','Sandviçler'],['sicak','Sıcak içecekler'],['tatli','Tatlılar'],['kahvalti','Kahvaltı'],['soguk','Soğuk içecekler'],['atistirmalik','Atıştırmalıklar']])await q('insert into public.categories(business_id,key,title) values($1,$2,$3)',[b,key,title]);
  const before=JSON.stringify(await q('select * from public.menu_items order by id'));
- for(const file of fs.readdirSync('supabase/migrations').filter(f=>f.endsWith('.sql')).sort()){try{await db.exec(fs.readFileSync('supabase/migrations/'+file,'utf8'));console.log('SQL MIGRATION OK',file);}catch(e){console.error('MIGRATION FAILED',file,e.message,e.detail,e.where);throw e;}}
+ for(const file of fs.readdirSync('supabase/migrations').filter(f=>f.endsWith('.sql')).sort()){try{await db.exec(fs.readFileSync('supabase/migrations/'+file,'utf8'));console.log('SQL MIGRATION OK',file);}catch(e){console.error('MIGRATION FAILED',file,e.message,e.detail,e.where,e.position,e.internalPosition,e.internalQuery);if(e.position)console.error(fs.readFileSync('supabase/migrations/'+file,'utf8').slice(Number(e.position)-150,Number(e.position)+150));throw e;}}
  await q('insert into ops.owner_invites values($1,$2,$3)', ['owner@example.test',b,br]);
  check('catalogue rows unchanged by migrations',JSON.stringify(await q('select * from public.menu_items order by id'))===before);
  await db.exec('set role anon');check('anonymous public catalogue works',(await q('select ops.catalogue($1,$2) as j',[b,br]))[0].j.items.length===2);
@@ -222,7 +222,7 @@ try{
  check('staff mixed-cart submit preserves every guest draft',(await ownStaffSnapshot()).lines.length===guestDraftsBefore);
  await db.exec('reset role');
  // Explicit optional staff-approved policy preserves existing verification workflow.
- await auth(users[0]);await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'staff_approved']);
+ await auth(users[0]);await db.exec('reset role');await q("update ops.service_controls set guest_entry_mode='staff_approved',version=version+1 where business_id=$1 and branch_id=$2",[b,br]);await auth(users[0]);
  // r10 permanent table QR is an identity, never an active-check capability.
  await db.exec('reset role');
  await q("insert into ops.dining_tables(id,business_id,branch_id,table_code,display_name) values($1,$2,$3,'ci-permanent','Kalıcı QR Testi')",[op(501),b,br]);
@@ -273,7 +273,7 @@ try{
 
  // r12 recommended direct entry: code-free, own financial and order data only.
  await auth(users[0]);
- await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'direct']);
+ await db.exec('reset role');await q("update ops.service_controls set guest_entry_mode='direct',version=version+1 where business_id=$1 and branch_id=$2",[b,br]);await auth(users[0]);
  await db.exec('reset role');
  const directTable=op(600),directSecrets=['c'.repeat(64),'d'.repeat(64)];
  await q("insert into ops.dining_tables(id,business_id,branch_id,table_code,display_name) values($1,$2,$3,'direct-ci','Doğrudan Masa')",[directTable,b,br]);
@@ -338,9 +338,9 @@ try{
  const newG=(await q('select ops.table_guest_join($1,$2,$3,$4) as j',[b,br,emptyTable,'f'.repeat(64)]))[0].j;
  check('new visit creates a different check',newG.checkId!==emptyG.checkId);
  await rejects('old cookie cannot access later bill',()=>q('select ops.guest_snapshot($1,$2,$3,$4)',[b,br,newG.checkId,emptySecret]),'GUEST_SESSION_EXPIRED');
- await auth(users[0]);await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'staff_approved']);await anon();
+ await auth(users[0]);await db.exec('reset role');await q("update ops.service_controls set guest_entry_mode='staff_approved',version=version+1 where business_id=$1 and branch_id=$2",[b,br]);await auth(users[0]);await anon();
  await rejects('optional staff approval cannot be bypassed',()=>q('select ops.table_guest_join($1,$2,$3,$4)',[b,br,emptyTable,'0'.repeat(64)]),'ENTRY_APPROVAL_REQUIRED');
- await auth(users[0]);await q('select ops.table_ordering_policy($1,$2,$3)',[b,br,'direct']);await db.exec('reset role');
+ await auth(users[0]);await db.exec('reset role');await q("update ops.service_controls set guest_entry_mode='direct',version=version+1 where business_id=$1 and branch_id=$2",[b,br]);await auth(users[0]);await db.exec('reset role');
 
  // r13: server-side busy mode and private visit feedback, no external effects.
  await auth(users[0]);const reportBefore=(await q('select ops.daily_service_report($1,$2) as j',[b,br]))[0].j;
@@ -505,5 +505,6 @@ try{
  await db.exec('reset role');check('removed credentials purged',(await q('select count(*)::integer n from vault.secrets'))[0].n===0);
  }
  await (await import('./studio-publication-checks.mjs')).runPublicationChecks({q,db,auth,check,b,br,users,op,p1,p2});
+ await (await import('./platform-control-checks.mjs')).platformControlChecks({q,db,auth,check,rejects,b,br,users,op,p1,p2});
  fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync('test-results/sql.json',JSON.stringify({engine:'PGlite isolated WASM PostgreSQL; mocked Supabase Auth/Realtime transport, real SQL constraints and triggers',passed:results.length,tests:results,liveDatabase:false},null,2));console.log('SQL TESTS PASS',results.length);
 }catch(e){console.error('SQL TEST FAILED',e.message,e.detail,e.where);process.exitCode=1;}finally{await db.close();}
