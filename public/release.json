@@ -1,23 +1,17 @@
 {
-  "version": "menugo-visual-handover-20260919-r18",
+  "version": "menugo-business-studio-drafts-20260919-r19",
+  "previous": "menugo-visual-handover-20260919-r18",
   "merchantMenu": true,
-  "roleInterfaces": [
-    "customer",
-    "owner",
-    "manager",
-    "waiter",
-    "kitchen",
-    "cashier"
-  ],
+  "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"],
   "whatsapp": "customer-confirmed-click-to-chat",
   "onlinePayments": false,
   "automatedCourier": false,
   "marketingSms": false,
   "liveData": "Supabase",
-  "previous": "menugo-editorial-branding-20260919-r17",
   "transparentMerchantBrand": true,
   "whiteMerchantFooter": true,
-  "dataAndPermissionsUnchanged": true,
+  "dataAndPermissionsUnchanged": false,
+  "existingOrderDataAndPermissionsUnchanged": true,
   "guestSessions": true,
   "personalDrafts": true,
   "customerAccountRequired": false,
@@ -55,10 +49,7 @@
   "aiCampaigns": false,
   "aiModel": "google/gemini-2.5-flash",
   "llmAssistant": true,
-  "llmDirectProviders": [
-    "openai",
-    "gemini"
-  ],
+  "llmDirectProviders": ["openai", "gemini"],
   "llmConfiguration": "owner-managed-supabase-vault",
   "llmAutomaticWrites": false,
   "llmRuntimeRequiresCredential": true,
@@ -69,5 +60,14 @@
   "mediaNative8k": false,
   "visualOrderingWelcome": true,
   "visualOrderingProductCards": true,
-  "canonicalBrandSurfaces": true
+  "canonicalBrandSurfaces": true,
+  "businessStudio": "private-drafts-only",
+  "studioProvider": "vercel-ai-gateway-access-and-credit-required",
+  "studioDraftKinds": ["product-copy", "translation", "campaign", "invoice", "photo-enhance"],
+  "studioCanPublishProducts": false,
+  "studioCanSendSocialMessages": false,
+  "studioPostsPurchases": false,
+  "recipeCostCalculator": "bigint-rational",
+  "aiSuiteComplete": false,
+  "studioRealProviderAcceptance": "pending"
 }
