@@ -10,6 +10,6 @@ export function decimalUnitsToMilli(raw:string):number{
  return n;
 }
 export function milliToUnits(raw:string|number):string{
- const n=typeof raw==='number'?raw:Number(raw);if(!Number.isSafeInteger(n)||n<0)throw new Error('INVALID_MILLI');
- const whole=Math.floor(n/1000),frac=String(n%1000).padStart(3,'0').replace(/0+$/,'');return frac?`${whole},${frac}`:String(whole);
+ let n:bigint;try{n=typeof raw==='number'?BigInt(raw):BigInt(raw);}catch{throw new Error('INVALID_MILLI');}
+ if(n<0n)throw new Error('INVALID_MILLI');const whole=n/1000n,rem=n%1000n,frac=String(rem).padStart(3,'0').replace(/0+$/,'');return frac?`${whole},${frac}`:String(whole);
 }

@@ -6,7 +6,7 @@ const extra=`
   await auth(users[0]);
   const read=async()=> (await q('select ops.demand_waste_snapshot($1,$2,28) as j',[b,br]))[0].j;
   const first=await read();
-  check('demand baseline stays closed without sufficient real history',first.demandReady===false&&first.baselineNextDayMilli===undefined);
+  check('demand baseline stays closed without sufficient real history',first.demandReady===false&&first.products.every(x=>x.baselineNextDayMilli===null));
   check('demand snapshot reports evidence counts instead of fabricating forecast',BigInt(first.completedOrders)<50n&&Array.isArray(first.reasons)&&first.reasons.length>0);
   const key=op(3500);
   const one=(await q("select ops.record_waste_event($1,$2,'TIR-TEST-1',500,'prep',$3) as j",[b,br,key]))[0].j;
