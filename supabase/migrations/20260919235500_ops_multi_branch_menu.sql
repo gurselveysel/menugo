@@ -87,7 +87,7 @@ END$$;
 CREATE FUNCTION ops.multi_branch_manage(p_business_id uuid,p_branch_id uuid,p_operation_id uuid,p_action text,p_payload jsonb) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE r text;req jsonb;cmd ops.multi_branch_commands%ROWTYPE;m ops.master_menu_items%ROWTYPE;mi public.menu_items%ROWTYPE;
- target_branch uuid;master_id uuid;v_source_id text;price_minor bigint;expected bigint;ov ops.branch_price_overrides%ROWTYPE;res jsonb;BEGIN
+ target_branch uuid;master_id uuid;v_source_id text;v_price_minor bigint;expected bigint;ov ops.branch_price_overrides%ROWTYPE;res jsonb;BEGIN
  r:=ops.multi_branch_role(p_business_id,p_branch_id);
  IF p_operation_id IS NULL OR p_action NOT IN('create-master','bind-product','set-master-price','set-local-price','clear-local-price') OR jsonb_typeof(p_payload) IS DISTINCT FROM 'object' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_MULTI_BRANCH_COMMAND';END IF;
  req:=jsonb_build_object('action',p_action,'payload',p_payload);
@@ -120,11 +120,11 @@ DECLARE r text;req jsonb;cmd ops.multi_branch_commands%ROWTYPE;m ops.master_menu
   ELSIF p_action='set-master-price' THEN
    IF r<>'owner' THEN RAISE SQLSTATE 'PT403' USING MESSAGE='OWNER_REQUIRED';END IF;
    IF coalesce(p_payload->>'priceMinor','')!~'^(0|[1-9][0-9]{0,8})$' OR coalesce(p_payload->>'expectedVersion','')!~'^[0-9]{1,18}$' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRICE';END IF;
-   price_minor:=(p_payload->>'priceMinor')::bigint;expected:=(p_payload->>'expectedVersion')::bigint;
-   IF price_minor>100000000 THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRICE';END IF;
+   v_price_minor:=(p_payload->>'priceMinor')::bigint;expected:=(p_payload->>'expectedVersion')::bigint;
+   IF v_price_minor>100000000 THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRICE';END IF;
    IF m.version<>expected THEN RAISE SQLSTATE 'PT409' USING MESSAGE='MASTER_ITEM_CHANGED';END IF;
-   UPDATE ops.master_menu_items SET base_price_minor=price_minor,version=version+1,updated_at=clock_timestamp() WHERE business_id=p_business_id AND id=m.id RETURNING * INTO m;
-   UPDATE public.menu_items mi2 SET approved_price=(price_minor::numeric/100),price_approved=true,updated_at=clock_timestamp()
+   UPDATE ops.master_menu_items SET base_price_minor=v_price_minor,version=version+1,updated_at=clock_timestamp() WHERE business_id=p_business_id AND id=m.id RETURNING * INTO m;
+   UPDATE public.menu_items mi2 SET approved_price=(v_price_minor::numeric/100),price_approved=true,updated_at=clock_timestamp()
     FROM ops.master_menu_bindings b LEFT JOIN ops.branch_price_overrides o ON o.business_id=b.business_id AND o.master_item_id=b.master_item_id AND o.branch_id=b.branch_id
     WHERE b.business_id=p_business_id AND b.master_item_id=m.id AND o.master_item_id IS NULL AND mi2.business_id=b.business_id AND mi2.branch_id=b.branch_id AND mi2.source_id=b.product_source_id;
    res:=jsonb_build_object('masterItemId',m.id,'version',m.version::text,'basePriceMinor',m.base_price_minor::text,'replayed',false);
@@ -140,10 +140,10 @@ DECLARE r text;req jsonb;cmd ops.multi_branch_commands%ROWTYPE;m ops.master_menu
    IF (FOUND AND ov.version<>expected) OR (NOT FOUND AND expected<>-1) THEN RAISE SQLSTATE 'PT409' USING MESSAGE='BRANCH_PRICE_CHANGED';END IF;
    IF p_action='set-local-price' THEN
     IF coalesce(p_payload->>'priceMinor','')!~'^(0|[1-9][0-9]{0,8})$' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRICE';END IF;
-    price_minor:=(p_payload->>'priceMinor')::bigint;IF price_minor>100000000 THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRICE';END IF;
-    INSERT INTO ops.branch_price_overrides(business_id,master_item_id,branch_id,price_minor,version,updated_by) VALUES(p_business_id,m.id,target_branch,price_minor,0,auth.uid())
+    v_price_minor:=(p_payload->>'priceMinor')::bigint;IF v_price_minor>100000000 THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_PRICE';END IF;
+    INSERT INTO ops.branch_price_overrides(business_id,master_item_id,branch_id,price_minor,version,updated_by) VALUES(p_business_id,m.id,target_branch,v_price_minor,0,auth.uid())
     ON CONFLICT(business_id,master_item_id,branch_id) DO UPDATE SET price_minor=EXCLUDED.price_minor,version=ops.branch_price_overrides.version+1,updated_by=auth.uid(),updated_at=clock_timestamp() RETURNING * INTO ov;
-    UPDATE public.menu_items SET approved_price=(price_minor::numeric/100),price_approved=true,updated_at=clock_timestamp() WHERE business_id=p_business_id AND branch_id=target_branch AND source_id=mi.source_id;
+    UPDATE public.menu_items SET approved_price=(v_price_minor::numeric/100),price_approved=true,updated_at=clock_timestamp() WHERE business_id=p_business_id AND branch_id=target_branch AND source_id=mi.source_id;
     res:=jsonb_build_object('masterItemId',m.id,'targetBranchId',target_branch,'overridePriceMinor',ov.price_minor::text,'overrideVersion',ov.version::text,'replayed',false);
    ELSE
     IF NOT FOUND THEN RAISE SQLSTATE 'PT409' USING MESSAGE='BRANCH_OVERRIDE_NOT_FOUND';END IF;
