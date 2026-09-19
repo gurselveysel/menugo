@@ -11,7 +11,8 @@ export async function preparePdf(file:File,signal:AbortSignal,onProgress:(done:n
  signal.addEventListener('abort',stop,{once:true});
  try{
   guard();pdfFileGuard(file.size,new Uint8Array(await file.slice(0,12).arrayBuffer()));guard();
-  const pdfjs=await import('pdfjs-dist');guard();
+  // Maintained compatibility build includes polyfills needed by older supported browsers.
+  const pdfjs=await import('pdfjs-dist/legacy/build/pdf.mjs');guard();
   pdfjs.GlobalWorkerOptions.workerSrc=`/vendor/pdfjs/${PDF_VERSION}/pdf.worker.min.mjs`;
   const bytes=new Uint8Array(await file.arrayBuffer());guard();
   const options={data:bytes,isEvalSupported:false,enableXfa:false,stopAtErrors:true,disableAutoFetch:true,disableStream:true,disableRange:true,useWorkerFetch:false,useSystemFonts:false,canvasMaxAreaInBytes:16_000_000,cMapUrl:`/vendor/pdfjs/${PDF_VERSION}/cmaps/`,cMapPacked:true,standardFontDataUrl:`/vendor/pdfjs/${PDF_VERSION}/standard_fonts/`,wasmUrl:`/vendor/pdfjs/${PDF_VERSION}/wasm/`,iccUrl:`/vendor/pdfjs/${PDF_VERSION}/iccs/`};
