@@ -46,11 +46,13 @@ jobs:
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      - name: UI regression
-        run: npm run test:ui
+      - name: UI regression and multi-branch browser acceptance
+        run: npm run test:ui && node tests/multi-branch-menu-ui.integration.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: multi-branch-r26-qa
-          path: test-results
+          path: |
+            test-results
+            public/qa/multi-branch
           if-no-files-found: ignore
