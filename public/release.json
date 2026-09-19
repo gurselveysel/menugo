@@ -1,15 +1,8 @@
 {
-  "version": "menugo-platform-ai-access-20260920-r27",
-  "previous": "menugo-free-ai-policy-20260919-r25",
+  "version": "menugo-multibranch-master-menu-20260920-r28",
+  "previous": "menugo-platform-ai-access-20260920-r27",
   "merchantMenu": true,
-  "roleInterfaces": [
-    "customer",
-    "owner",
-    "manager",
-    "waiter",
-    "kitchen",
-    "cashier"
-  ],
+  "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"],
   "whatsapp": "customer-confirmed-click-to-chat",
   "onlinePayments": false,
   "automatedCourier": false,
@@ -39,6 +32,7 @@
   "staffOrderAcceptance": true,
   "optional_staff_verified_table_admission": true,
   "cataloguePricesUnchanged": true,
+  "cataloguePricesUnchangedDuringReleaseAcceptance": true,
   "menuDiscovery": true,
   "productDeepLinks": true,
   "printMenu": true,
@@ -56,12 +50,7 @@
   "aiCampaigns": false,
   "aiModel": "task-and-privacy-gated-free-router",
   "llmAssistant": true,
-  "llmDirectProviders": [
-    "groq_free",
-    "gemini_free",
-    "openrouter_free",
-    "cloudflare_free"
-  ],
+  "llmDirectProviders": ["groq_free", "gemini_free", "openrouter_free", "cloudflare_free"],
   "llmConfiguration": "owner-managed-supabase-vault",
   "llmAutomaticWrites": false,
   "llmRuntimeRequiresCredential": true,
@@ -75,20 +64,10 @@
   "canonicalBrandSurfaces": true,
   "businessStudio": "private-drafts-and-reviewed-text-publication",
   "studioProvider": "free-only-owner-managed-credentials",
-  "studioDraftKinds": [
-    "product-copy",
-    "translation",
-    "campaign",
-    "invoice",
-    "photo-enhance"
-  ],
+  "studioDraftKinds": ["product-copy", "translation", "campaign", "invoice", "photo-enhance"],
   "studioCanPublishProducts": false,
   "studioReviewedTextPublication": true,
-  "studioTextFields": [
-    "tr.description",
-    "en.displayName",
-    "en.description"
-  ],
+  "studioTextFields": ["tr.description", "en.displayName", "en.description"],
   "studioPublicationBatchLimit": 20,
   "studioPublicationUndo": "source-and-version-guarded-append-only",
   "studioCanonicalCatalogueWrites": false,
@@ -101,5 +80,14 @@
   "aiMaximumPaidSpendMinor": "0",
   "aiFreeAccountAttestation": "required-30-day-expiry-provider-plan-not-detectable-from-key",
   "platformAiConfigurationOnly": true,
-  "restaurantAiConfiguration": false
+  "restaurantAiConfiguration": false,
+  "multiBranchMenu": true,
+  "multiBranchMenuRoute": "/isletme/subeler",
+  "multiBranchMoney": "bigint-minor-units",
+  "multiBranchIdempotency": true,
+  "multiBranchRowLocks": true,
+  "multiBranchOptimisticVersioning": true,
+  "multiBranchOwnerCrossBranchControl": true,
+  "multiBranchManagerScope": "current-branch-local-price-only",
+  "multiBranchRealCrossBranchAcceptance": "pending-second-genuine-production-branch"
 }

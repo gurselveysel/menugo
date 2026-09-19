@@ -1,0 +1,1 @@
+import Link from 'next/link';import {MultiBranchMenu} from '@/components/MultiBranchMenu';export default function Page(){return <main className="studio-page"><Link href="/isletme" className="btn">← İşletme paneli</Link><MultiBranchMenu/></main>;}
