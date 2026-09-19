@@ -1,0 +1,6 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';
+const sql=fs.readFileSync('supabase/migrations/20260919235500_ops_multi_branch_menu.sql','utf8');const api=fs.readFileSync('app/api/merchant/[action]/route.ts','utf8');const ui=fs.readFileSync('components/MultiBranchMenu.tsx','utf8');
+test('multi-branch prices are bigint, RLS protected and idempotent',()=>{assert.match(sql,/base_price_minor bigint/);assert.match(sql,/price_minor bigint/);assert.match(sql,/ENABLE ROW LEVEL SECURITY/);assert.match(sql,/multi_branch_commands/);assert.match(sql,/FOR UPDATE/);assert.match(sql,/IDEMPOTENCY_CONFLICT/);});
+test('master price propagation preserves explicit local overrides',()=>{assert.match(sql,/LEFT JOIN ops\.branch_price_overrides/);assert.match(sql,/o\.master_item_id IS NULL/);assert.match(sql,/BRANCH_PRICE_CHANGED/);});
+test('merchant API requires authenticated actor and explicit operation id',()=>{const read=api.indexOf("action==='multi-branch-menu'");assert.ok(read>api.indexOf('const{s}=await actor()'));assert.match(api,/p_operation_id:uuid\(b\.operationId\)/);assert.match(api,/set-local-price/);});
+test('operator UI distinguishes master and local prices',()=>{assert.match(ui,/Ana fiyatı uygula/);assert.match(ui,/Yerel fiyatı kaydet/);assert.match(ui,/Ana fiyata dön/);assert.match(ui,/crypto\.randomUUID\(\)/);});
