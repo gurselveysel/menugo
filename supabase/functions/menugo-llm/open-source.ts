@@ -14,7 +14,8 @@ export const SELF_HOSTED_MODELS = ['qwen3.5:4b','qwen3.5:9b','Qwen/Qwen3.5-4B','
 export const OPENROUTER_MODELS = ['openrouter/free'] as const;
 export const OPEN_MODELS = [...SELF_HOSTED_MODELS,...OPENROUTER_MODELS] as const;
 
-export function openSourceWire(model: string, key: string, prompt: string, text: string, schema: unknown, maxTokens: number, attachment: {mime:string;data:string}|null) {
+type OpenWire={url:string;headers:Record<string,string>;body:Record<string,unknown>};
+export function openSourceWire(model: string, key: string, prompt: string, text: string, schema: unknown, maxTokens: number, attachment: {mime:string;data:string}|null):OpenWire {
  if (!(OPEN_MODELS as readonly string[]).includes(model)) throw new Error('LLM_MODEL_NOT_ALLOWED');
  if (typeof key!=='string'||key.length<20||key.length>512||/[\s\u0000-\u001f]/.test(key)) throw new Error('LLM_KEY_REQUIRED');
  const content: unknown[] = [{type:'text',text}];
@@ -23,7 +24,7 @@ export function openSourceWire(model: string, key: string, prompt: string, text:
   if(!['image/png','image/jpeg','image/webp'].includes(attachment.mime)||attachment.data.length>2796204||!attachment.data.length||!/^[A-Za-z0-9+/]+={0,2}$/.test(attachment.data)) throw new Error('INVALID_LLM_REQUEST');
   content.push({type:'image_url',image_url:{url:`data:${attachment.mime};base64,${attachment.data}`}});
  }
- const common = {
+ const common:Record<string,unknown> = {
   model,stream:false,temperature:0,max_tokens:maxTokens,
   messages:[{role:'system',content:prompt},{role:'user',content}],
   response_format:{type:'json_schema',json_schema:{name:'menugo_draft',strict:true,schema}}
