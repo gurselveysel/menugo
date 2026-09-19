@@ -3,10 +3,10 @@
   "complete": false,
   "state": "implementation_and_acceptance",
   "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
-  "activeBranch": "fix/studio-idempotent-recovery",
+  "activeBranch": null,
   "pullRequest": 6,
   "releaseCandidate": "menugo-business-studio-drafts-20260919-r19",
-  "latestRuntimeCommit": "1484231e63a34f6762565ff7c151cf52b99430a4",
+  "latestRuntimeCommit": "cf5e1967c5de9611508a2043413d5af4da707c18",
   "modules": {
     "menuImport": "existing_implementation_real_provider_acceptance_pending",
     "photoStudio": "draft_pipeline_implemented_not_product_publishing",
@@ -21,18 +21,19 @@
   },
   "acceptance": {
     "testedImplementationCommit": "dbdd073ee5ce9cafc08b9d1b6dfff113bd8c8ab9",
-    "unit": "studio_slice_and_global_unit_regressions_passed_in_PR6; previous studio_slice_213_total_pass_including_49_new_studio_tests; voice_slice_unit_and_global_regressions_passed_in_PR3_and_PR4",
-    "postgres": "PR6 passed studio SQL plus real PostgreSQL17 constraints and row-lock gates; previous studio migration/RLS acceptance retained",
-    "browser": "PR6 Studio browser acceptance 23/23 with API doubles: lost create response retained as one pending operation, exact operationId reused, stale GET race protected, responsive 320/390/768/1440, no catalogue/payment/social writes; existing UI 20/20 and pilot 7/7 also passed",
-    "productionBuild": "PR6 Next16.3.5_React19 production build passed; previous studio_voice_and_microphone_policy builds passed",
-    "workflowRuns": [35446994353, 35446994357, 35447044402, 35447237391, 35447549301, 35447549271, 35448372846, 35448372874],
+    "unit": "studio recovery slice and global unit regressions passed in PR6; previous studio slice 213 total including 49 new studio tests; voice slice unit/global regressions passed in PR3 and PR4",
+    "postgres": "PR6 passed Studio SQL plus real PostgreSQL17 constraints and row-lock gates; previous Studio migration/RLS acceptance retained",
+    "browser": "PR6 Studio browser acceptance 23/23 with controlled API doubles: lost create response retained as one pending operation, exact operationId reused, stale GET race protected, responsive 320/390/768/1440, no catalogue/payment/social writes; existing UI 20/20 and pilot 7/7 also passed",
+    "productionBuild": "PR6 Next16.3.5/React19 production build passed; Git-linked Vercel production deployment for merge cf5e1967 is READY",
+    "workflowRuns": [35446994353, 35446994357, 35447044402, 35447237391, 35447549301, 35447549271, 35448372846, 35448372874, 35448541539, 35448541475],
     "screenshots": "PR6 studio320_390_768_1440 plus existing UI/pilot screenshots; no live transaction screenshots",
     "realProvider": "not_run",
-    "production": "PR6 implementation CI green but production merge/deployment pending at this progress commit; latest verified production runtime before PR6=1484231e63a34f6762565ff7c151cf52b99430a4",
+    "production": "Studio idempotent recovery merge cf5e1967c5de9611508a2043413d5af4da707c18 deployed READY as dpl_GYwHoVWPHE7su1sUADoJHmG8Xzxj to www.menugo.app, menugo.app, sariyerborekcisi.menugo.app and menugo-tau.vercel.app; safe live reads verified",
     "studioRecovery": {
       "pullRequest": 6,
       "implementationCommit": "dbdd073ee5ce9cafc08b9d1b6dfff113bd8c8ab9",
-      "workflowRuns": [35448372846, 35448372874],
+      "mergeCommit": "cf5e1967c5de9611508a2043413d5af4da707c18",
+      "workflowRuns": [35448372846, 35448372874, 35448541539, 35448541475],
       "qaArtifact": "10586227204",
       "browserChecks": 23,
       "operationIdReused": true,
@@ -42,7 +43,14 @@
       "paymentsSent": false,
       "socialPublishes": false,
       "realProviderCalls": 0,
-      "production": "pending_merge_and_domain_verification"
+      "vercelDeployment": "dpl_GYwHoVWPHE7su1sUADoJHmG8Xzxj",
+      "productionDomains": ["https://www.menugo.app", "https://sariyerborekcisi.menugo.app"],
+      "productionSafeReads": [
+        "https://www.menugo.app/release.json -> 200, aiSuiteComplete=false, studioRealProviderAcceptance=pending",
+        "https://sariyerborekcisi.menugo.app/siparis -> 200 with Permissions-Policy camera=(self), microphone=(self), X-Frame-Options DENY",
+        "https://www.menugo.app/api/studio/list -> 401 UNAUTHENTICATED with private no-store cache policy"
+      ],
+      "production": "verified_ready"
     },
     "voiceOrder": {
       "pullRequests": [3, 4],
@@ -72,7 +80,6 @@
   ],
   "safety": {"customerOrderingUnchanged": true, "catalogueWrites": false, "paymentsSent": false, "messagesSent": false, "providerCalls": 0, "liveTestOrdersCreated": false},
   "next": [
-    "Merge PR6 only after the updated progress commit reruns and passes unit, PostgreSQL17/RLS/row-lock, build and browser gates; then verify the Git-linked Vercel production deployment and real domains with safe reads.",
     "Run authorized real Gateway/model acceptance without extracting credentials or buying credits; do not mark draft modules complete before provider evidence passes.",
     "Add source-version-locked product image/text application plus audit and rollback; current review approval intentionally never updates the catalogue.",
     "Complete purchasing/recipe ledger, campaign graphics and authorized social adapter, customer assistant, historical demand/waste data pipeline, and multi-branch master-menu/local-price slices.",
