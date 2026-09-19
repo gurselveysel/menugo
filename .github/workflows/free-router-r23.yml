@@ -49,7 +49,11 @@ jobs:
         with:
           deno-version: v2.x
       - name: Check Edge types
-        run: deno check supabase/functions/menugo-llm/index.ts
+        shell: bash
+        run: |
+          mkdir -p public/qa
+          set -o pipefail
+          deno check supabase/functions/menugo-llm/index.ts 2>&1 | tee public/qa/free-router-deno.log
       - name: Unit and protocol tests
         run: npm test
       - name: SQL integration tests
