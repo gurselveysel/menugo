@@ -1,0 +1,79 @@
+name: Editorial artwork and brand acceptance
+on:
+  push:
+    branches: [release/editorial-r17]
+    paths: ['.github/workflows/editorial-r17.yml']
+permissions:
+  contents: write
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Import scoped artwork and interface patch
+        env:
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-699c-8246-b027-d8539eede6e0/raw?se=2026-09-19T07%3A32%3A52Z&sp=r&sv=2026-02-06&sr=b&scid=c217d2e4-c02a-5479-a792-b697c6dc4057&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-19T05%3A53%3A50Z&ske=2026-09-20T05%3A53%3A50Z&sks=b&skv=2026-02-06&sig=tqnYrXLpnqXBXeYVOoTDRtu6MDXbpHbNeJ0rKw8dQyM%3D'
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+          import {dirname} from 'node:path';import {createHash} from 'node:crypto';import {gunzipSync} from 'node:zlib';
+          const hash=b=>createHash('sha256').update(b).digest('hex');
+          const r=await fetch(process.env.SOURCE_URL,{signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('Source unavailable '+r.status);
+          const bytes=Buffer.from(await r.arrayBuffer());if(hash(bytes)!=='9a907c3c6f29c6548fe3a7c4dce4c30280321d7a0dbcc109af0fba775eac429d')throw Error('Transfer hash mismatch');
+          const p=JSON.parse(gunzipSync(bytes));if(p.version!=='menugo-editorial-branding-20260919-r17')throw Error('Wrong release');
+          const allowed=new Set(['app/editorial-brand.css','app/layout.tsx','app/yardim/page.tsx','components/ApprovedTableEntry.tsx','components/CustomerAccount.tsx','components/GuestTable.tsx','components/Login.tsx','components/MenuEditorial.tsx','components/MenuGoLogo.tsx','components/MerchantMenu.tsx','components/PrintMenu.tsx','components/Shell.tsx','components/TableEntry.tsx','docs/editorial-r17.md','lib/config.ts','lib/merchant-visuals.ts','lib/public-format.ts','public/legacy/branch.html','public/legacy/platform.html','public/media/editorial-r17/breakfast.webp','public/media/editorial-r17/cold-drinks.webp','public/media/editorial-r17/croissant.webp','public/media/editorial-r17/food-banner-480.webp','public/media/editorial-r17/food-banner-800.webp','public/media/editorial-r17/food-banner.webp','public/media/editorial-r17/hot-drinks.webp','public/media/editorial-r17/manifest.json','public/media/editorial-r17/sandwich.webp','public/media/editorial-r17/waffle.webp','public/media/menugo-on-dark-r17.png','public/release.json','tests/editorial-brand.test.mjs','tests/editorial-ui.integration.mjs']);
+          if(Object.keys(p.files).length!==allowed.size)throw Error('Invalid patch scope');
+          for(const[path,e]of Object.entries(p.files)){if(!allowed.has(path))throw Error('Unexpected file');if(e.beforeSha256){if(!existsSync(path)||hash(readFileSync(path))!==e.beforeSha256)throw Error('Concurrent edit '+path);}else if(existsSync(path))throw Error('New file conflict '+path);}
+          for(const[path,e]of Object.entries(p.files)){mkdirSync(dirname(path),{recursive:true});writeFileSync(path,Buffer.from(e.data,'base64'));}
+          console.log('33 scoped files imported. No DB, API, permissions, product data or payment changes.');
+          NODE
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Editorial UI and real-price contracts
+        id: editorial
+        continue-on-error: true
+        run: node tests/editorial-ui.integration.mjs
+      - name: Existing transparent-brand regression
+        id: branding
+        continue-on-error: true
+        run: node tests/branding-ui.integration.mjs
+      - name: Mobile layout and waiter QR regression
+        id: mobile
+        continue-on-error: true
+        run: node tests/mobile-qr.integration.mjs
+      - name: Existing filters and service experience
+        id: experience
+        continue-on-error: true
+        run: node tests/experience-ui.integration.mjs
+      - name: Four code-free guest ordering regression
+        id: guests
+        continue-on-error: true
+        run: node tests/codeless-e2e.integration.mjs
+      - name: Require all acceptance suites
+        run: test '${{ steps.editorial.outcome }}' = 'success' && test '${{ steps.branding.outcome }}' = 'success' && test '${{ steps.mobile.outcome }}' = 'success' && test '${{ steps.experience.outcome }}' = 'success' && test '${{ steps.guests.outcome }}' = 'success'
+      - name: Commit to review branch only, never force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app components lib/public-format.ts lib/merchant-visuals.ts lib/config.ts docs/editorial-r17.md public/legacy public/media/editorial-r17 public/media/menugo-on-dark-r17.png public/release.json tests/editorial-brand.test.mjs tests/editorial-ui.integration.mjs
+          git commit -m 'feat: editorial merchant imagery with canonical surface-aware MenuGO logos'
+          git push origin HEAD:release/editorial-r17
+          git archive --format=zip -o /tmp/menugo-r17-accepted-source.zip HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: menugo-editorial-r17-acceptance
+          path: |
+            public/qa
+            test-results
+            /tmp/menugo-r17-accepted-source.zip
+          retention-days: 3
+          if-no-files-found: ignore
