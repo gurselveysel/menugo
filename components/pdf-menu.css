@@ -1,0 +1,16 @@
+.pdf-menu-preparation{margin-block:22px;min-width:0}
+.pdf-menu-preparation .pdf-file-button{position:relative;overflow:hidden;cursor:pointer}
+.pdf-file-button input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pdf-menu-preparation .section-heading{flex-wrap:wrap;gap:12px}
+.pdf-file-name{overflow-wrap:anywhere}
+.pdf-page-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px;margin:20px 0}
+.pdf-page-grid figure{margin:0;border:1px solid #dce1e8;border-radius:14px;padding:14px;background:#fff;min-width:0}
+.pdf-page-grid label{display:flex;align-items:center;gap:10px;font-weight:700;padding-bottom:10px}
+.pdf-page-grid input,.pdf-review-check input{width:20px;height:20px;flex-shrink:0}
+.pdf-page-grid img{display:block;width:100%;height:230px;object-fit:contain;background:#f5f6f8;border-radius:6px}
+.pdf-page-grid figcaption{display:flex;flex-direction:column;gap:10px;padding-top:12px;font-size:13px;overflow-wrap:anywhere}
+.pdf-page-grid figcaption span{display:block}
+.pdf-review-check{display:flex;align-items:flex-start;gap:12px;line-height:1.6;margin:20px 0}
+.pdf-menu-preparation a:focus-visible,.pdf-menu-preparation button:focus-visible,.pdf-file-button:focus-within{outline:3px solid #1665dc;outline-offset:3px}
+.pdf-menu-preparation .btn{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:480px){.pdf-page-grid{grid-template-columns:1fr}.pdf-menu-preparation .tag{white-space:normal}.pdf-page-grid img{height:250px}}

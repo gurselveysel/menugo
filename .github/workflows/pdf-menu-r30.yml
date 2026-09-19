@@ -1,0 +1,39 @@
+name: Local PDF menu acceptance
+on:
+  push:
+    branches: [feat/local-pdf-menu-r30, main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: pdf-menu-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Unit tests
+        run: npm test > /tmp/pdf-units.log 2>&1 || { tail -150 /tmp/pdf-units.log; exit 1; }
+      - run: tail -10 /tmp/pdf-units.log
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/ai-menu-ui.integration.mjs
+      - run: node tests/pdf-menu-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pdf-menu-qa
+          path: |
+            public/qa/pdf-menu
+            public/qa/ai-menu
+          retention-days: 3
+          if-no-files-found: ignore
