@@ -3,6 +3,7 @@ import {cookies} from 'next/headers';
 import {origin,scope,client,actor,rpc,json,failed,body,uuid,revision,Failure} from '@/lib/api';
 import {guestContext,guestCookie} from '@/lib/guest';
 import {cartInput} from '@/lib/orders/validation';
+import {buildVoiceDraft} from '@/lib/voice-order';
 export const dynamic='force-dynamic';export const runtime='nodejs';
 type Context={params:Promise<{checkId:string;action:string}>};
 export async function GET(req:Request,ctx:Context){try{
@@ -29,6 +30,11 @@ export async function POST(req:Request,ctx:Context){try{
  if(action==='order'){
   if(Object.keys(data).some(k=>!['operationId','expectedRevision'].includes(k)))throw new Failure('INVALID_INPUT');
   return json(await rpc(s,'guest_order_submit',{...args,p_operation_id:uuid(data.operationId),p_expected_revision:revision(data.expectedRevision)}),201);
+ }
+ if(action==='voice-draft'){
+  if(Object.keys(data).some(k=>k!=='transcript')||typeof data.transcript!=='string'||data.transcript.trim().length<1||data.transcript.length>1000)throw new Failure('INVALID_INPUT');
+  const catalogue=await rpc(s,'catalogue',scope);const items=Array.isArray(catalogue?.items)?catalogue.items:[];
+  return json(buildVoiceDraft(data.transcript,items));
  }
  if(action==='service'){if(!['waiter','bill'].includes(String(data.kind)))throw new Failure('INVALID_INPUT');return json(await rpc(s,'guest_service',{...args,p_kind:data.kind}));}
  if(action==='cancel'){
