@@ -5,18 +5,18 @@
   "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
   "activeBranch": null,
   "pullRequest": null,
-  "releaseCandidate": "menugo-open-models-20260919-r21",
-  "latestRuntimeCommit": "80c2589b16d10c4c54ee1ad4e4d9a42f6aa71c66",
-  "updatedAt": "2026-09-19T17:58:30Z",
+  "releaseCandidate": "menugo-free-router-20260919-r23",
+  "latestRuntimeCommit": "413a9bd3d84649b57872981aac17cb981ac4664f",
+  "updatedAt": "2026-09-19T18:53:30Z",
   "modules": {
-    "menuImport": "self_hosted_connector_in_production_real_qwen_acceptance_and_pdf_rasterization_pending",
+    "menuImport": "free_or_self_hosted_vision_runtime_in_production_real_provider_acceptance_and_pdf_rasterization_pending",
     "photoStudio": "draft_pipeline_implemented_image_engine_and_reviewed_product_publication_pending",
-    "productCopyTranslation": "reviewed_TR_description_and_EN_display_name_description_batch_apply_and_undo_in_production_self_hosted_runtime_deployed_real_qwen_acceptance_pending",
+    "productCopyTranslation": "reviewed_TR_description_and_EN_display_name_description_batch_apply_and_undo_in_production_free_or_self_hosted_runtime_deployed_real_provider_acceptance_pending",
     "campaigns": "source_validated_post_story_graphics_in_production_ai_photo_and_authorized_social_publish_pending",
-    "operatorAssistant": "read_only_assistant_self_hosted_runtime_path_deployed_real_qwen_acceptance_and_authorized_commands_pending",
-    "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_self_hosted_runtime_path_deployed_real_qwen_and_purchase_posting_pending",
+    "operatorAssistant": "read_only_assistant_free_or_self_hosted_runtime_path_deployed_real_provider_acceptance_and_authorized_commands_pending",
+    "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_free_or_self_hosted_runtime_path_deployed_real_provider_and_purchase_posting_pending",
     "voiceOrder": "catalogue_grounded_review_draft_in_production_browser_speech_available_real_provider_and_physical_device_acceptance_pending",
-    "customerAssistant": "grounded_published_catalogue_read_only_slice_in_production_real_qwen_acceptance_pending",
+    "customerAssistant": "grounded_published_catalogue_read_only_slice_in_production_real_provider_acceptance_pending",
     "demandWaste": "pure_descriptive_estimator_only_data_pipeline_pending",
     "multiBranch": "pending"
   },
@@ -24,55 +24,57 @@
     "realProvider": "not_run",
     "openSourceConnector": {
       "pullRequest": 9,
-      "testedHead": "d12a7843510652b3fa6b55ad72396cc02af80bc6",
       "mergeCommit": "f8b84d2b71bb733f68d66e21365d366a48cde2a4",
       "policy": "self_hosted_only_no_paid_execution_fallback",
-      "models": [
-        "qwen3.5:4b",
-        "qwen3.5:9b",
-        "Qwen/Qwen3.5-4B",
-        "Qwen/Qwen3.5-9B"
-      ],
+      "models": ["qwen3.5:4b","qwen3.5:9b","Qwen/Qwen3.5-4B","Qwen/Qwen3.5-9B"],
       "endpointContract": "https://ai.menugo.app/v1/chat/completions",
       "supabaseProject": "lrfcqpmjgghodymhnvue",
       "migration": "ops_open_source_llm",
       "appliedMigrationVersion": "20260919152811",
       "edgeFunction": "menugo-llm",
-      "edgeFunctionVersion": 3,
-      "edgeFunctionStatus": "ACTIVE",
-      "edgeDeployment": "deployed_from_PR9_tracked_sources_with_explicit_relative_deno_json_path",
-      "workflowRuns": [
-        35451765141,
-        35451804964,
-        35451804966,
-        35451805001
-      ],
-      "ci": "green: Open models validation, MenuGO checks, Studio publication browser acceptance, Campaign export acceptance, Merchant release acceptance",
+      "initialEdgeFunctionVersion": 3,
       "vercelDeployment": "dpl_6D9BTExykPeXMT3hjDkZZBwgN2ZA",
-      "vercelState": "READY",
-      "productionDomains": [
-        "https://www.menugo.app",
-        "https://menugo.app",
-        "https://sariyerborekcisi.menugo.app"
-      ],
-      "productionManifest": "https://www.menugo.app/open-models-release.json -> 200; version menugo-open-models-20260919-r21; policy self_hosted_only; completeAiSuite=false; realInferenceAcceptance=not_run; imageGenerationReady=false; directPdfReady=false",
-      "directLlmConnectionsAtCheck": 0,
-      "productsAtCheck": 76,
-      "approvedPricesAtCheck": 71,
-      "catalogueOrPriceWritesDuringAcceptance": false,
+      "productionDomains": ["https://www.menugo.app","https://menugo.app","https://sariyerborekcisi.menugo.app"],
       "realModelCalls": 0,
       "paidFallbackCalls": 0,
-      "scopeBoundary": "deployable authenticated self-hosted model connector/runtime only; this is not real Qwen inference acceptance"
+      "scopeBoundary": "authenticated self-hosted connector/runtime only; not real-Qwen inference acceptance"
+    },
+    "managedFreeRouter": {
+      "pullRequest": 11,
+      "branch": "feat/free-router-openrouter-r23",
+      "testedHead": "6f59500150d25942f77a0430e84e4ab054206081",
+      "mergeCommit": "413a9bd3d84649b57872981aac17cb981ac4664f",
+      "provider": "openrouter_free",
+      "model": "openrouter/free",
+      "policy": "managed_free_models_only_no_openrouter_auto_no_paid_fallback",
+      "privacyRequestPolicy": {"zdr": true, "dataCollection": "deny", "requireParameters": true},
+      "endpointContract": "https://openrouter.ai/api/v1/chat/completions",
+      "credentialStorage": "owner_supplied_vault_backed",
+      "supabaseProject": "lrfcqpmjgghodymhnvue",
+      "migration": "ops_free_router",
+      "edgeFunction": "menugo-llm",
+      "edgeFunctionVersion": 4,
+      "edgeFunctionStatus": "ACTIVE",
+      "workflowRun": 35462156536,
+      "ci": "green: Deno Edge typecheck, unit/protocol, SQL integration, native PostgreSQL 17, Next production build, UI regression",
+      "vercelDeployment": "dpl_5isCcuAGQZSZUpE8DPY7Zx8H8B8m",
+      "vercelState": "READY",
+      "productionCommit": "413a9bd3d84649b57872981aac17cb981ac4664f",
+      "productionDomains": ["https://www.menugo.app","https://menugo.app","https://sariyerborekcisi.menugo.app"],
+      "productsAtCheck": 76,
+      "approvedPricesAtCheck": 71,
+      "configuredOpenRouterConnectionsAtCheck": 0,
+      "realOpenRouterRunsAtCheck": 0,
+      "catalogueOrPriceWritesDuringAcceptance": false,
+      "realProviderCalls": 0,
+      "paidFallbackCalls": 0,
+      "scopeBoundary": "production runtime support for the managed free-model router; not real-provider inference acceptance until an owner supplies a credential and the live probe plus representative tasks pass"
     },
     "reviewedTextPublication": {
       "pullRequest": 7,
       "mergeCommit": "7568cea9a90c7791c77ff0a01ba977a29fb30225",
       "batchLimit": 20,
-      "allowedFields": [
-        "tr.description",
-        "en.displayName",
-        "en.description"
-      ],
+      "allowedFields": ["tr.description","en.displayName","en.description"],
       "atomicApplyAndUndo": true,
       "sourceVersionGuard": true,
       "appendOnlyAudit": true,
@@ -92,10 +94,7 @@
       "production": "verified_and_preserved"
     },
     "voiceOrder": {
-      "pullRequests": [
-        3,
-        4
-      ],
+      "pullRequests": [3,4],
       "voiceCoreMerge": "c45142503cf2a17cd0eafe779f5f51d84745d6aa",
       "microphonePolicyMerge": "1484231e63a34f6762565ff7c151cf52b99430a4",
       "behaviour": "live catalogue and approved-price grounding; BigInt minor-unit totals; ambiguity and option failures stay review-only; explicit customer add to existing idempotent cart mutation; no auto-order/payment/message",
@@ -106,10 +105,7 @@
     "campaignExport": {
       "pullRequest": 8,
       "mergeCommit": "96cf1fc51be38024ab3b48b63fe342e21d75446f",
-      "formats": [
-        "1080x1350",
-        "1080x1920"
-      ],
+      "formats": ["1080x1350","1080x1920"],
       "canonicalLogos": true,
       "publicProductQr": true,
       "sourceVersionGuard": true,
@@ -121,43 +117,33 @@
       "production": "verified_and_preserved"
     },
     "customerAssistantGrounded": {
-      "branch": "feat/customer-menu-assistant-grounded-r22",
       "scope": "published_catalogue_read_only_deterministic_grounding_only",
       "modelCalls": 0,
       "productionWrites": false,
       "questionPersistence": false,
-      "localUnit": "6/6 passed using Node 22 type stripping/TypeScript transpile; full CI also passed",
       "browserAcceptance": "passed_on_real_Next_route_in_GitHub_Actions",
       "production": "verified_read_only_deterministic_slice",
-      "realQwenAcceptance": "pending",
+      "realProviderAcceptance": "pending",
       "testedHead": "687358a797d1570a41082a0eba027363ffa58a40",
       "mergeCommit": "80c2589b16d10c4c54ee1ad4e4d9a42f6aa71c66",
       "deterministicBudgetFilter": true,
       "allergenSafety": "fail_closed_staff_handoff_no_allergen_safe_claim",
-      "ciWorkflowRuns": [
-        35459298985,
-        35459298990
-      ],
-      "ci": "green: SQL + Studio SQL, native PostgreSQL 17 constraints/row locks, unit, Next production build, existing UI/pilot/Studio regression and customer assistant browser acceptance",
       "productionDeployment": "dpl_7osMT6a3jNut4Mj8Xq7wxQZY516M",
-      "productionState": "READY",
-      "productionCommit": "80c2589b16d10c4c54ee1ad4e4d9a42f6aa71c66",
-      "productionRead": "https://sariyerborekcisi.menugo.app/siparis -> 200; GET /api/menu-assistant -> 405 Method Not Allowed, private/no-store, matched route",
-      "runtimeErrorsLastHour": "none_at_acceptance_check"
+      "productionState": "READY"
     }
   },
   "blockers": [
-    "No self-hosted LLM connection is configured in production. Real Qwen acceptance requires an operator-controlled HTTPS model endpoint and owner-supplied credential; do not claim inference success before that test passes.",
+    "Managed free-model routing is deployed, but no OpenRouter free-router connection is configured in production. Real-provider acceptance requires an owner-supplied OpenRouter credential and live probe; self-hosted Qwen remains an alternative. Do not claim inference success before a real provider test passes.",
     "AI product-photo generation/editing engine is not connected or accepted.",
-    "Direct PDF upload still requires safe local/client rasterization into supported image pages before self-hosted vision inference.",
+    "Direct PDF upload still requires safe local/client rasterization into supported image pages before vision inference.",
     "No approved invoice/recipe purchasing data exists for live purchase-ledger acceptance; synthetic fixtures must not be promoted as live business data.",
     "Social publishing requires an authorized business social connection plus separate explicit publication permission for the exact creative/timing; no live social publish is authorized by the general development approval.",
     "Voice speech/LLM provider acceptance and physical-device microphone acceptance are not run.",
-    "Historical production/waste data pipeline and multi-branch master-menu/local-price implementation remain incomplete; customer assistant real-Qwen acceptance remains pending."
+    "Historical production/waste data pipeline and multi-branch master-menu/local-price implementation remain incomplete; customer assistant real-provider acceptance remains pending."
   ],
   "safety": {
     "customerOrderingUnchanged": true,
-    "canonicalCatalogueWritesDuringR21Acceptance": false,
+    "catalogueWritesDuringR23Acceptance": false,
     "productsAtCheck": 76,
     "approvedPricesAtCheck": 71,
     "paymentsSent": false,
@@ -169,10 +155,10 @@
   },
   "next": [
     "Keep complete=false until every Issue #1 acceptance item has real-provider and production evidence.",
-    "When an operator-controlled self-hosted endpoint is available, register it through the owner-only Vault-backed connection flow and run a real no-business-data connection probe before representative menu/copy/invoice acceptance.",
+    "When an owner supplies an OpenRouter credential, register openrouter/free through the owner-only Vault-backed flow and run a no-business-data live connection probe before representative menu/copy/invoice acceptance; never fall through to openrouter/auto or a paid model.",
     "Implement safe PDF page rasterization without sending document bytes to an unapproved third party, then run real menu-photo/PDF extraction acceptance with human review and no automatic catalogue mutation.",
-    "Add source-preserving product image storage, reviewed image publication with audit/rollback and an accepted open-source image edit/generation engine.",
-    "Complete purchasing/recipe ledger, authorized social adapter, sufficient-data demand/waste pipeline and multi-branch master-menu/local-price slices; connect customer assistant to accepted self-hosted Qwen only after real-provider acceptance.",
+    "Add source-preserving product image storage, reviewed image publication with audit/rollback and an accepted image edit/generation engine.",
+    "Complete purchasing/recipe ledger, authorized social adapter, sufficient-data demand/waste pipeline and multi-branch master-menu/local-price slices; connect customer assistant to accepted real provider only after provider acceptance.",
     "For voice ordering, preserve reviewed catalogue grounding and add accepted speech/model plus physical-device coverage without live-order side effects."
   ]
 }
