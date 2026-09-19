@@ -11,15 +11,16 @@ const options={
 type Provider=keyof typeof options;
 type Route={provider:Provider;model:string;priority:number;enabled:boolean;hasKey:boolean;accountId:string|null;publicContentAllowed:boolean;privateContentAllowed:boolean;attestedUntil:string;dailyLimit:number;lastSuccessAt:string|null};
 type Status={version:string;canManage:boolean;paidFallback:false;routes:Route[]};
-export function FreeAiSettings({onSaved}:{onSaved:()=>void}){
+export function FreeAiSettings({onSaved,businessId,branchId}:{onSaved:()=>void;businessId:string;branchId:string}){
+ const endpoint=(action:string)=>'/api/platform/ai/'+action+'?businessId='+encodeURIComponent(businessId)+'&branchId='+encodeURIComponent(branchId);
  const [s,setS]=useState<Status|null>(null),[error,setError]=useState(''),[note,setNote]=useState(''),[busy,setBusy]=useState(false);
  const generation=useRef(0),alive=useRef(true);
- async function load(){const g=++generation.current;try{const v=await api<Status>('/api/llm/free-status');if(alive.current&&g===generation.current)setS(v);}catch(e){if(alive.current&&g===generation.current)setError(llmMessage(e));}}
+ async function load(){const g=++generation.current;try{const v=await api<Status>(endpoint('free-status'));if(alive.current&&g===generation.current)setS(v);}catch(e){if(alive.current&&g===generation.current)setError(llmMessage(e));}}
  useEffect(()=>{alive.current=true;void load();return()=>{alive.current=false;generation.current++;};},[]);
  async function save(provider:Provider,form:HTMLFormElement){if(busy||!s)return;const f=new FormData(form);setBusy(true);setError('');setNote('');
-  try{await api('/api/llm/free-save',{version:s.version,provider,model:f.get('model'),apiKey:String(f.get('key')||''),priority:Number(f.get('priority')),dailyLimit:Number(f.get('limit')),accountId:String(f.get('accountId')||''),enabled:f.get('enabled')==='on',publicContentAllowed:f.get('public')==='on',privateContentAllowed:f.get('private')==='on',freePlanConfirmed:f.get('free')==='on',consent:f.get('consent')==='on'});setNote('Bağlantı kaydedildi. Aşağıdaki bağlantı testi gerçek sağlayıcı yanıtını doğrular; henüz denenmeyen rotalar ayrıca belirtilir.');await load();onSaved();}
+  try{await api(endpoint('free-save'),{version:s.version,provider,model:f.get('model'),apiKey:String(f.get('key')||''),priority:Number(f.get('priority')),dailyLimit:Number(f.get('limit')),accountId:String(f.get('accountId')||''),enabled:f.get('enabled')==='on',publicContentAllowed:f.get('public')==='on',privateContentAllowed:f.get('private')==='on',freePlanConfirmed:f.get('free')==='on',consent:f.get('consent')==='on'});setNote('Bağlantı kaydedildi. Aşağıdaki bağlantı testi gerçek sağlayıcı yanıtını doğrular; henüz denenmeyen rotalar ayrıca belirtilir.');await load();onSaved();}
   catch(e){setError(llmMessage(e));await load();}finally{const key=form.elements.namedItem('key') as HTMLInputElement|null;if(key)key.value='';setBusy(false);}}
- async function remove(provider:Provider){if(!s||busy||!confirm('Bu sağlayıcının kayıtlı anahtarı silinsin mi?'))return;setBusy(true);setError('');try{await api('/api/llm/free-remove',{version:s.version,provider});await load();onSaved();}catch(e){setError(llmMessage(e));await load();}finally{setBusy(false);}}
+ async function remove(provider:Provider){if(!s||busy||!confirm('Bu sağlayıcının kayıtlı anahtarı silinsin mi?'))return;setBusy(true);setError('');try{await api(endpoint('free-remove'),{version:s.version,provider});await load();onSaved();}catch(e){setError(llmMessage(e));await load();}finally{setBusy(false);}}
  return <div className="free-ai-settings"><h2>Ücretsiz AI bağlantıları</h2><p>Ücretli modele geçiş ve otomatik kredi alımı kapalı. Öncelik sırasındaki uygun bağlantılar denenir. Kota bittiğinde iş bekler; restoran siparişleri etkilenmez.</p>
  <p className="notice"><strong>Yalnız API kotası ücretsizdir.</strong> Anahtar, hesabınızın Free planda kaldığını kanıtlamaz. Faturalandırmayı sağlayıcı panelinden kapalı tutun. Bu beyan 30 gün sonra yenilenir; planı ücretliye değiştirirseniz önce buradaki bağlantıyı kapatın.</p>
  {error&&<p className="alert" role="alert">{error}</p>}{note&&<p className="notice" role="status">{note}</p>}
@@ -35,6 +36,6 @@ export function FreeAiSettings({onSaved}:{onSaved:()=>void}){
  <label className="llm-check"><input name="free" type="checkbox" required/>Sağlayıcı hesabı Free planda; ücretli kullanım, kredi alımı ve otomatik yükleme kapalı.</label>
  <label className="llm-check"><input name="consent" type="checkbox" required/>Veri kullanım koşullarını kontrol ettim; anahtarı yalnızca burada şifreli olarak saklamayı onaylıyorum.</label>
  <div className="llm-actions"><button className="btn primary" disabled={busy}>{busy?'Kaydediliyor…':'Ücretsiz bağlantıyı kaydet'}</button><a className="text-button" href={o.url} target="_blank" rel="noopener noreferrer">Sağlayıcı paneli</a>{r&&<button type="button" className="text-button" disabled={busy} onClick={()=>void remove(provider)}>Anahtarı sil</button>}</div>
- </form>:<p>Ayarları yalnız işletme sahibi değiştirebilir.</p>}</details>;})}
+ </form>:<p>Ayarları yalnız MenüGO şirket yönetimi değiştirebilir.</p>}</details>;})}
  <p className="helper">NVIDIA NIM deneme, Cohere değerlendirme ve ücretli OpenAI/DeepSeek/Claude uçları otomatik üretim rotasına alınmaz. Kota artırmak için hesap veya anahtar çoğaltılmaz.</p></div>;
 }

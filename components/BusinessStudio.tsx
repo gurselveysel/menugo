@@ -35,7 +35,7 @@ export function BusinessStudio({demo=false}:{demo?:boolean}){
  {tab==='cost'?<RecipeCalculator/>:demo?<Card><Empty title="Gerçek işletme oturumu gerekli" description="AI çalıştırma, özel belgeler ve ürün kaynakları demo hesabında bulunmaz."/></Card>:<>
  {error&&<div className="notice" role="alert">{error}</div>}
  {pendingCreate&&<div className="notice" role="status"><strong>Önceki taslak isteğinin sonucu kesinleşmedi.</strong><p>Aynı işlem kimliğiyle yeniden kontrol edilir; sunucuda iş oluştuysa ikinci bir stüdyo işi oluşturulmaz. Dosya yalnız bu açık sayfanın belleğinde tutulur.</p><button type="button" className="btn" disabled={busy} onClick={()=>void retryPending()}>Bekleyen işlemi güvenle kontrol et</button></div>}
- {data&&!data.aiReady&&<div className="notice">{llmMessages[data.aiReason]||ERRORS[data.aiReason]||'Açık kaynak model bağlantısı doğrulanmadı. LLM Asistanı bölümünde kendi model sunucunuzu bağlayın; mevcut menü ve siparişler etkilenmez.'}</div>}
+ {data&&!data.aiReady&&<div className="notice">{llmMessages[data.aiReason]||ERRORS[data.aiReason]||'AI hizmetiniz MenüGO tarafından hazırlanıyor; mevcut menü ve siparişler etkilenmez.'}</div>}
  <div className="studio-grid"><Card><h3>Yeni taslak</h3><form onSubmit={submit}>
  <label>Ne hazırlayalım?<select disabled={!!pendingCreate} value={kind} onChange={e=>{setKind(e.target.value as StudioKind);setFile(null);}}>{Object.entries(TITLES).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
  {kind!=='invoice'&&<label>Kaynak ürün<select disabled={!!pendingCreate} required value={product} onChange={e=>setProduct(e.target.value)}>{(data?.catalogue||[]).map((p:any)=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}
