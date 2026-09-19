@@ -3,9 +3,10 @@
   "complete": false,
   "state": "implementation_and_acceptance",
   "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
-  "activeBranch": "feat/ai-business-studio",
-  "pullRequest": 2,
+  "activeBranch": null,
+  "pullRequest": null,
   "releaseCandidate": "menugo-business-studio-drafts-20260919-r19",
+  "latestRuntimeCommit": "1484231e63a34f6762565ff7c151cf52b99430a4",
   "modules": {
     "menuImport": "existing_implementation_real_provider_acceptance_pending",
     "photoStudio": "draft_pipeline_implemented_not_product_publishing",
@@ -13,39 +14,54 @@
     "campaigns": "text_draft_only_graphics_and_social_pending",
     "operatorAssistant": "existing_read_only_assistant_commands_pending",
     "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_purchase_posting_pending",
-    "voiceOrder": "pending",
+    "voiceOrder": "catalogue_grounded_review_draft_in_production_browser_speech_available_real_provider_and_physical_device_acceptance_pending",
     "customerAssistant": "pending",
     "demandWaste": "pure_descriptive_estimator_only_data_pipeline_pending",
     "multiBranch": "pending"
   },
   "acceptance": {
     "testedImplementationCommit": "4538ecd3fd800b6fad951419cab73f79ec4cdd21",
-    "unit": "213_total_pass_including_49_new_studio_tests",
-    "postgres": "237_existing_checks_and_new_migration_pass_on_PostgreSQL17; studio-specific_commands_also_tested_in_PGlite",
-    "browser": "21_studio_API-double_checks_pass_and_existing_merchant_pilot_checks_pass",
-    "productionBuild": "Next16.3.5_React19_real_typecheck_and_production_build_pass",
-    "workflowRuns": [35446600375,35446600420],
+    "unit": "studio_slice_213_total_pass_including_49_new_studio_tests; voice_slice_unit_and_global_regressions_passed_in_PR3_and_PR4",
+    "postgres": "studio_migration_and_existing_constraints_passed_on_PostgreSQL17; voice_slice_reused_and_passed_real_PostgreSQL17_constraints_and_row_lock_gates; studio-specific_commands_also_tested_in_PGlite",
+    "browser": "studio_21_controlled_API_checks_plus_existing_merchant_pilot_checks_pass; voice_slice_existing_UI_pilot_merchant_regressions_pass",
+    "productionBuild": "Next16.3.5_React19_real_typecheck_and_production_build_pass_for_studio_voice_and_microphone_policy_slices",
+    "workflowRuns": [35446994353, 35446994357, 35447044402, 35447237391, 35447549301, 35447549271],
     "screenshots": "studio320_390_768_1440;390visually_inspected",
     "realProvider": "not_run",
-    "production": "migration_applied_UI_deployment_pending"
+    "production": "studio_r19_and_voice_safe_core_deployed; latest_runtime_commit=1484231e63a34f6762565ff7c151cf52b99430a4; domains_verified",
+    "voiceOrder": {
+      "pullRequests": [3, 4],
+      "voiceCoreMerge": "c45142503cf2a17cd0eafe779f5f51d84745d6aa",
+      "microphonePolicyMerge": "1484231e63a34f6762565ff7c151cf52b99430a4",
+      "workflowRuns": [35447044402, 35447237391, 35447549301, 35447549271],
+      "vercelDeployment": "dpl_2xF8sBzKoye3r2PcKFkmK7FYBbzB",
+      "productionDomains": ["https://www.menugo.app", "https://sariyerborekcisi.menugo.app"],
+      "productionSafeRead": "https://sariyerborekcisi.menugo.app/siparis returned 200 with Permissions-Policy camera=(self), microphone=(self) and X-Frame-Options DENY",
+      "behaviour": "live catalogue product and approved price grounding; BigInt minor-unit totals; ambiguity and option failures stay review-only; explicit customer add to existing idempotent cart mutation; no auto-order/payment/message",
+      "realSpeechOrLLMProvider": "not_run",
+      "physicalDeviceMicrophoneAcceptance": "not_run",
+      "liveOrderCreatedForTest": false
+    }
   },
   "migration": {
     "file": "supabase/migrations/20260919001900_ops_business_studio.sql",
     "appliedTo": "lrfcqpmjgghodymhnvue",
-    "verified": {"rlsEnabled":true,"anonRead":false,"authenticatedInsert":false,"anonExecute":false,"authenticatedPurge":false,"jobs":0},
+    "verified": {"rlsEnabled": true, "anonRead": false, "authenticatedInsert": false, "anonExecute": false, "authenticatedPurge": false, "jobs": 0},
     "catalogueSha256BeforeAndAfter": "1a50578b3f415d81ed65a4c42b57df21aeb452a1d1be019c86affb16120b0ac3"
   },
   "blockers": [
-    "No verified direct LLM connection on initial inspection. Gateway credit/model must be verified through authorized runtime; never expose credentials.",
+    "No verified direct LLM connection on initial inspection. Gateway credit/model must be verified through authorized runtime; never expose credentials or buy credits automatically.",
     "No approved invoice/recipe purchasing data. Synthetic fixtures only; no fake live data.",
-    "Social publishing needs authorized business connection, exact creative, timing and permission."
+    "Social publishing needs authorized business connection, exact creative, timing and separate publication permission.",
+    "Voice speech/LLM provider acceptance and physical-device microphone acceptance are not run; browser SpeechRecognition capability and production first-party microphone policy alone do not complete the voice AI acceptance item."
   ],
-  "safety": {"customerOrderingUnchanged":true,"catalogueWrites":false,"paymentsSent":false,"messagesSent":false,"providerCalls":0},
+  "safety": {"customerOrderingUnchanged": true, "catalogueWrites": false, "paymentsSent": false, "messagesSent": false, "providerCalls": 0, "liveTestOrdersCreated": false},
   "next": [
-    "Verify release candidate CI, merge PR2 only if green, confirm Vercel READY and real domains. Follow issue comments for final merge/deploy IDs.",
-    "Provider acceptance first: do not treat a rendered form or synthetic provider response as a working AI feature.",
-    "Harden studio client pending-operation recovery across network loss and stale GET race before enabling new publish/financial actions.",
-    "Add source-version-locked product image/text application and rollback; current review approval intentionally never updates catalogue.",
-    "Complete remaining issue1 modules in isolated, tested slices and keep complete=false until full end-to-end evidence."
+    "Run authorized real Gateway/model acceptance without extracting credentials or buying credits; do not mark draft modules complete before provider evidence passes.",
+    "Harden studio client pending-operation recovery across network loss and stale GET races before enabling publish or financial actions.",
+    "Add source-version-locked product image/text application plus audit and rollback; current review approval intentionally never updates the catalogue.",
+    "Complete purchasing/recipe ledger, campaign graphics and authorized social adapter, customer assistant, historical demand/waste data pipeline, and multi-branch master-menu/local-price slices.",
+    "For voice ordering, preserve reviewed catalogue grounding and add accepted provider plus physical-device coverage without live-order side effects.",
+    "Keep complete=false until every Issue #1 acceptance item has real provider and production evidence."
   ]
 }
