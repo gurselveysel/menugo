@@ -1,0 +1,51 @@
+{
+  "scopeIssue": 1,
+  "complete": false,
+  "state": "implementation_and_acceptance",
+  "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
+  "activeBranch": "feat/ai-business-studio",
+  "pullRequest": 2,
+  "releaseCandidate": "menugo-business-studio-drafts-20260919-r19",
+  "modules": {
+    "menuImport": "existing_implementation_real_provider_acceptance_pending",
+    "photoStudio": "draft_pipeline_implemented_not_product_publishing",
+    "productCopyTranslation": "draft_pipeline_implemented_bulk_apply_pending",
+    "campaigns": "text_draft_only_graphics_and_social_pending",
+    "operatorAssistant": "existing_read_only_assistant_commands_pending",
+    "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_purchase_posting_pending",
+    "voiceOrder": "pending",
+    "customerAssistant": "pending",
+    "demandWaste": "pure_descriptive_estimator_only_data_pipeline_pending",
+    "multiBranch": "pending"
+  },
+  "acceptance": {
+    "testedImplementationCommit": "4538ecd3fd800b6fad951419cab73f79ec4cdd21",
+    "unit": "213_total_pass_including_49_new_studio_tests",
+    "postgres": "237_existing_checks_and_new_migration_pass_on_PostgreSQL17; studio-specific_commands_also_tested_in_PGlite",
+    "browser": "21_studio_API-double_checks_pass_and_existing_merchant_pilot_checks_pass",
+    "productionBuild": "Next16.3.5_React19_real_typecheck_and_production_build_pass",
+    "workflowRuns": [35446600375,35446600420],
+    "screenshots": "studio320_390_768_1440;390visually_inspected",
+    "realProvider": "not_run",
+    "production": "migration_applied_UI_deployment_pending"
+  },
+  "migration": {
+    "file": "supabase/migrations/20260919001900_ops_business_studio.sql",
+    "appliedTo": "lrfcqpmjgghodymhnvue",
+    "verified": {"rlsEnabled":true,"anonRead":false,"authenticatedInsert":false,"anonExecute":false,"authenticatedPurge":false,"jobs":0},
+    "catalogueSha256BeforeAndAfter": "1a50578b3f415d81ed65a4c42b57df21aeb452a1d1be019c86affb16120b0ac3"
+  },
+  "blockers": [
+    "No verified direct LLM connection on initial inspection. Gateway credit/model must be verified through authorized runtime; never expose credentials.",
+    "No approved invoice/recipe purchasing data. Synthetic fixtures only; no fake live data.",
+    "Social publishing needs authorized business connection, exact creative, timing and permission."
+  ],
+  "safety": {"customerOrderingUnchanged":true,"catalogueWrites":false,"paymentsSent":false,"messagesSent":false,"providerCalls":0},
+  "next": [
+    "Verify release candidate CI, merge PR2 only if green, confirm Vercel READY and real domains. Follow issue comments for final merge/deploy IDs.",
+    "Provider acceptance first: do not treat a rendered form or synthetic provider response as a working AI feature.",
+    "Harden studio client pending-operation recovery across network loss and stale GET race before enabling new publish/financial actions.",
+    "Add source-version-locked product image/text application and rollback; current review approval intentionally never updates catalogue.",
+    "Complete remaining issue1 modules in isolated, tested slices and keep complete=false until full end-to-end evidence."
+  ]
+}
