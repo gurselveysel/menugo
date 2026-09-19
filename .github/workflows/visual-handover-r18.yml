@@ -23,14 +23,24 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      - name: Real UI, responsive camera priority and dark-light surfaces
+      - name: Real UI responsive camera priority and dark-light surfaces
+        id: visuals
+        continue-on-error: true
         run: node tests/visual-handover.integration.mjs
       - name: Existing merchant images and catalogue operations
+        id: editorial
+        continue-on-error: true
         run: node tests/editorial-ui.integration.mjs
       - name: Four codeless guests and personal order scope
+        id: guests
+        continue-on-error: true
         run: node tests/codeless-e2e.integration.mjs
       - name: Original alpha and red GO geometry regression
+        id: branding
+        continue-on-error: true
         run: node tests/branding-ui.integration.mjs
+      - name: Require all acceptance suites
+        run: test '${{ steps.visuals.outcome }}' = 'success' && test '${{ steps.editorial.outcome }}' = 'success' && test '${{ steps.guests.outcome }}' = 'success' && test '${{ steps.branding.outcome }}' = 'success'
       - name: Commit tested integration to the release branch only
         run: |
           git config user.name 'github-actions[bot]'
