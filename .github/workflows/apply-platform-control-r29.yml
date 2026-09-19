@@ -24,7 +24,7 @@ jobs:
           ref: feat/platform-control-center-r29
       - name: Verify and import source-only bundle
         env:
-          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-4354-8246-85a7-bcf01acfe85c/raw?se=2026-09-19T22%3A23%3A30Z&sp=r&sv=2026-02-06&sr=b&scid=77a73e4d-bb67-53df-88f3-3070d5f14395&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-19T09%3A51%3A49Z&ske=2026-09-20T09%3A51%3A49Z&sks=b&skv=2026-02-06&sig=ABsqz7gdhHAmqlIr8lYXa778B9/1pkjOmrnMSdZxXe0%3D'
+          SOURCE_URL: 'https://sdmntpritalynorth.oaiusercontent.com/files/00000000-d24c-8246-9a61-63d0383972a0/raw?se=2026-09-19T22%3A27%3A07Z&sp=r&sv=2026-02-06&sr=b&scid=1c5e3f0f-2532-5c61-ba05-ee0e4fd7a94a&skoid=82a3371f-2f6c-4f81-8a78-2701b362559b&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2026-09-19T10%3A42%3A13Z&ske=2026-09-20T10%3A42%3A13Z&sks=b&skv=2026-02-06&sig=fgaWcmHvvfyty48OFh5Aevr8%2BWbY092Fd4HR/HjEdtA%3D'
         run: |
           python - <<'PY'
           import os, io, hashlib, urllib.request, zipfile, pathlib
@@ -39,7 +39,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add app components lib src supabase tests docs public/release.json
-          git commit -m 'feat: company control center with scoped permissions, runtime policies and audit'
+          git diff --cached --quiet || git commit -m 'feat: company control center with scoped permissions, runtime policies and audit'
           git push origin HEAD:feat/platform-control-center-r29
       - uses: actions/setup-node@v4
         with:
