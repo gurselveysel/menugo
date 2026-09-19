@@ -3,11 +3,11 @@
   "complete": false,
   "state": "implementation_and_acceptance",
   "baseline": "b8122d17fb451765f1ec956a18a4e02194adda6d",
-  "activeBranch": null,
+  "activeBranch": "feat/customer-menu-assistant-grounded-r22",
   "pullRequest": null,
   "releaseCandidate": "menugo-open-models-20260919-r21",
   "latestRuntimeCommit": "f8b84d2b71bb733f68d66e21365d366a48cde2a4",
-  "updatedAt": "2026-09-19T16:26:47Z",
+  "updatedAt": "2026-09-19T17:34:00Z",
   "modules": {
     "menuImport": "self_hosted_connector_in_production_real_qwen_acceptance_and_pdf_rasterization_pending",
     "photoStudio": "draft_pipeline_implemented_image_engine_and_reviewed_product_publication_pending",
@@ -16,7 +16,7 @@
     "operatorAssistant": "read_only_assistant_self_hosted_runtime_path_deployed_real_qwen_acceptance_and_authorized_commands_pending",
     "invoiceRecipe": "extraction_review_and_pure_cost_engine_implemented_self_hosted_runtime_path_deployed_real_qwen_and_purchase_posting_pending",
     "voiceOrder": "catalogue_grounded_review_draft_in_production_browser_speech_available_real_provider_and_physical_device_acceptance_pending",
-    "customerAssistant": "pending",
+    "customerAssistant": "grounded_published_catalogue_read_only_slice_in_progress_real_qwen_acceptance_pending",
     "demandWaste": "pure_descriptive_estimator_only_data_pipeline_pending",
     "multiBranch": "pending"
   },
@@ -92,7 +92,10 @@
       "production": "verified_and_preserved"
     },
     "voiceOrder": {
-      "pullRequests": [3, 4],
+      "pullRequests": [
+        3,
+        4
+      ],
       "voiceCoreMerge": "c45142503cf2a17cd0eafe779f5f51d84745d6aa",
       "microphonePolicyMerge": "1484231e63a34f6762565ff7c151cf52b99430a4",
       "behaviour": "live catalogue and approved-price grounding; BigInt minor-unit totals; ambiguity and option failures stay review-only; explicit customer add to existing idempotent cart mutation; no auto-order/payment/message",
@@ -103,7 +106,10 @@
     "campaignExport": {
       "pullRequest": 8,
       "mergeCommit": "96cf1fc51be38024ab3b48b63fe342e21d75446f",
-      "formats": ["1080x1350", "1080x1920"],
+      "formats": [
+        "1080x1350",
+        "1080x1920"
+      ],
       "canonicalLogos": true,
       "publicProductQr": true,
       "sourceVersionGuard": true,
@@ -113,6 +119,17 @@
       "catalogueWrites": false,
       "modelCalls": 0,
       "production": "verified_and_preserved"
+    },
+    "customerAssistantGrounded": {
+      "branch": "feat/customer-menu-assistant-grounded-r22",
+      "scope": "published_catalogue_read_only_deterministic_grounding_only",
+      "modelCalls": 0,
+      "productionWrites": false,
+      "questionPersistence": false,
+      "localUnit": "6/6 passed using Node 22 type stripping/TypeScript transpile; full CI pending",
+      "browserAcceptance": "pending",
+      "production": "pending",
+      "realQwenAcceptance": "pending"
     }
   },
   "blockers": [
