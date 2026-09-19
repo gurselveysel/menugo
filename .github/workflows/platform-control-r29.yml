@@ -1,0 +1,54 @@
+name: Platform control center acceptance
+on:
+  push:
+    branches: ['feat/platform-control-center-r29']
+permissions:
+  contents: read
+concurrency:
+  group: platform-control-r29
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Export dependency-only local test environment
+        run: tar -czf /tmp/menugo-r29-dependencies.tgz node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: menugo-r29-dependencies
+          path: /tmp/menugo-r29-dependencies.tgz
+          retention-days: 1
+      - run: npm test
+      - run: npm run test:sql && node tests/studio.sql.integration.mjs
+      - run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Platform control browser tests
+        run: if [ -f tests/platform-control-ui.integration.mjs ]; then node tests/platform-control-ui.integration.mjs; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-control-r29-qa
+          path: |
+            public/qa
+            test-results
+          retention-days: 3
