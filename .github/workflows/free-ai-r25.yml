@@ -1,0 +1,66 @@
+name: Free AI r25 acceptance
+on:
+  push:
+    branches: ['feat/free-ai-quota-r25']
+permissions:
+  contents: write
+concurrency:
+  group: free-ai-r25
+  cancel-in-progress: false
+jobs:
+  verify:
+    if: github.repository == 'gurselveysel/menugo'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+          POSTGRES_DB: menugo_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Expand reviewed source package to feature branch
+        run: |
+          python3 scripts/apply-free-ai-r25.py
+          if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add app components lib supabase tests docs public/release.json
+            git commit -m 'feat: free-only provider routing, privacy gates and image draft adapter'
+            git push origin HEAD:feat/free-ai-quota-r25
+          fi
+          git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/menugo-llm/index.ts
+      - run: npm test
+      - run: npm run test:sql && node tests/studio.sql.integration.mjs
+      - run: node tests/native-postgres.integration.mjs
+        env:
+          POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/llm-ui.integration.mjs && node tests/studio-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: free-ai-r25-qa
+          path: |
+            public/qa
+            test-results
+          if-no-files-found: ignore
