@@ -49,3 +49,11 @@ test('repeated mentions merge deterministically without changing unit price',()=
  const d=buildVoiceDraft('iki çay ve üç çay',catalogue);
  assert.equal(d.lines.length,1);assert.equal(d.lines[0].quantity,5);assert.equal(d.lines[0].unitPriceMinor,'4500');assert.equal(d.lines[0].lineTotalMinor,'22500');assert.equal(d.totalMinor,'22500');
 });
+
+test('production headers allow only first-party camera and microphone capabilities',async()=>{
+ const config=(await import('../next.config.mjs?voice-policy-test='+Date.now())).default;
+ const rules=await config.headers();const global=rules.find(r=>r.source==='/(.*)');assert.ok(global);
+ const policy=global.headers.find(h=>h.key.toLowerCase()==='permissions-policy')?.value;
+ assert.equal(policy,'camera=(self), microphone=(self)');
+ assert.equal(global.headers.find(h=>h.key.toLowerCase()==='x-frame-options')?.value,'DENY');
+});
