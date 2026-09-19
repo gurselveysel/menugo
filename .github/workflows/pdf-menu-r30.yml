@@ -1,0 +1,50 @@
+name: Local PDF menu acceptance
+on:
+  push:
+    branches: [feat/local-pdf-menu-r30, main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: pdf-menu-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  acceptance:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Integrate reviewed source changes on isolated feature branch
+        if: github.ref == 'refs/heads/feat/local-pdf-menu-r30'
+        run: |
+          node scripts/integrate-pdf-r30.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add components/AiMenuStudio.tsx lib/ai-menu/contracts.ts package.json .gitignore
+          git diff --cached --quiet || git commit -m 'feat: integrate local PDF page preparation with company-managed menu import'
+          git push origin HEAD:feat/local-pdf-menu-r30
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: node tests/ai-menu-ui.integration.mjs
+      - run: node tests/pdf-menu-ui.integration.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pdf-menu-qa
+          path: |
+            public/qa/pdf-menu
+            public/qa/ai-menu
+          retention-days: 3
+          if-no-files-found: ignore
