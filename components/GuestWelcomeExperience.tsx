@@ -1,3 +1,5 @@
+import {PublishedProductPhoto} from './PublishedProductPhoto';
+import {publicPhotoPath} from '@/src/studio/photo-publication';
 import type {ReactNode} from 'react';
 import Link from 'next/link';
 import MenuGoLogo from './MenuGoLogo';
@@ -26,7 +28,8 @@ export function GuestWelcomeExperience({children}:{children:ReactNode}) {
 }
 
 /** Use only reviewed name/category matches. Never attach invented product photos. */
-export function MenuSelectionVisual({item}:{item:EditorialProduct}) {
+export function MenuSelectionVisual({item}:{item:EditorialProduct & {photoUrl?:string}}) {
+ if(publicPhotoPath(item.photoUrl))return <figure className={styles.productVisual} data-reviewed-product-photo="true"><PublishedProductPhoto url={item.photoUrl} name={item.name}/></figure>;
  const art=productArtwork(item);
  if(!art)return null;
  return <figure className={styles.productVisual} data-menu-illustration="true">

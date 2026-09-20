@@ -2,7 +2,7 @@
   "scopeIssue": 1,
   "complete": false,
   "state": "implementation_and_acceptance",
-  "updatedDate": "2026-09-21",
+  "updatedDate": "2026-09-20",
   "previousProgressArchive": "docs/progress/ai-suite-before-r30.json",
   "baseline": "d68f67f1a8f900015596dc10d48fdca1a3fb6326",
   "releaseCandidate": "menugo-local-pdf-menu-20260920-r30",
@@ -12,7 +12,7 @@
   "modules": {
     "platformControl": "r29_company_roles_policies_limits_and_audit_retained_no_infrastructure_credentials_read_or_changed_in_r30",
     "menuImport": "local_PDF_page_preparation_implemented_and_browser_accepted_explicit_selected_JPEG_pages_to_existing_review_apply_undo_flow_real_provider_extraction_pending",
-    "photoStudio": "reviewed_photo_apply_undo_candidate_prepared_on_r30_base_full_CI_native_Postgres_migration_deploy_and_real_provider_acceptance_pending",
+    "photoStudio": "draft_pipeline_and_free_cloudflare_adapter_implemented_real_image_engine_acceptance_and_reviewed_product_publication_pending",
     "productCopyTranslation": "reviewed_TR_description_and_EN_name_description_batch_apply_undo_deployed_real_provider_acceptance_pending",
     "campaigns": "source_validated_post_story_graphics_deployed_AI_photo_and_authorized_social_publish_pending",
     "operatorAssistant": "read_only_data_grounded_path_deployed_real_provider_acceptance_and_authorized_commands_pending",
@@ -34,7 +34,7 @@
     "databaseWritesPerformed": false,
     "catalogueWritesPerformed": false,
     "realInferenceCalls": 0,
-    "liveDatabaseVerification": "No r31 production mutation has been performed. Production state must be re-read before migration and after deployment."
+    "liveDatabaseVerification": "Read-only verification attempt was blocked by tool safety check. No bypass attempted; do not claim new live DB counts/fingerprint."
   },
   "acceptance": {
     "codeCommit": "9be7fad9974914dc7cd338571e7816455b7c1e17",
@@ -48,24 +48,11 @@
     "realProvider": "not_run"
   },
   "nextRequired": [
-    "Promote r30/r31 only after the current head passes exact-lockfile full Next/TypeScript, native PostgreSQL 17/RLS/concurrency and relevant browser regression gates.",
-    "Apply the additive r31 photo-publication migration only after those CI gates are green; then verify a single Git-linked production deployment on both real domains.",
+    "Verify the r30 candidate on the actual production host after merge; record actual deployment in PR #15.",
     "Company-managed free provider credentials and real menu/photo/invoice acceptance, with no paid fallback.",
+    "Reviewed photo draft product publication and conflict-safe rollback.",
     "Approved invoice and purchase/recipe persistence through verified accounting adapters.",
     "Authorized social publishing and real multi-branch acceptance when genuine second-branch data exists."
   ],
-  "completionRule": "Do not mark the AI suite complete from UI/build/mock tests. Require real provider output and business review/publication acceptance for each advertised capability.",
-  "r31Candidate": {
-    "name": "reviewed-product-photo-publication-r31",
-    "baseCommit": "31179a957efb44e49368bd8a6e740bbf0e33a1f9",
-    "handoffSha256": "ac1c04ad8fbf37c64fecd1c2385bac67ac8eafc3a1a80b94994f77a49e3abc74",
-    "state": "prepared_for_branch_ci",
-    "productionApplied": false,
-    "paidServiceCalls": 0,
-    "realProviderCalls": 0,
-    "handoffEvidence": {"unitTests":443,"pgliteChecks":381,"browserHarnessChecks":25,"isolatedPhotoNextBuild":"passed","fullAppBuild":"not_run_in_handoff","nativePostgres":"not_run_in_handoff"},
-    "connectorReconciliation": "To avoid replacing very large unchanged r30 files, photo CSS is isolated in app/photo-publication.css and imported by app/layout.tsx; photo PGlite lifecycle checks are injected by tests/studio-photo-sql.integration.mjs while the r30 tests/sql.integration.mjs fixture remains unchanged. The semantic r31 gates are retained and are required in CI.",
-    "migration": "20260920003100_ops_studio_photo_publication.sql"
-  },
-  "deploymentCooldownNotBeforeUtc": "2026-09-20T23:12:57Z"
+  "completionRule": "Do not mark the AI suite complete from UI/build/mock tests. Require real provider output and business review/publication acceptance for each advertised capability."
 }
