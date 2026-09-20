@@ -1,0 +1,13 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
+fs.mkdirSync('test-results/photo-unit',{recursive:true});fs.writeFileSync('test-results/photo-unit/input.mjs',ts.transpileModule(fs.readFileSync('src/studio/photo-publication.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);
+const {readPhotoCommand,photoApplyCommand,publicPhotoPath}=await import('../test-results/photo-unit/input.mjs');
+const id='11111111-1111-4111-8111-111111111111';
+const p={jobId:id,jobRevision:'9223372036854775807',sourceHash:'a'.repeat(64),imageHash:'b'.repeat(64),overlayVersion:'9007199254740993',ready:true};
+test('photo exact proof-only contract',()=>assert.deepEqual(readPhotoCommand(photoApplyCommand(p,id)).payload,{operationId:id,confirmed:true,jobId:id,jobRevision:p.jobRevision,sourceHash:p.sourceHash,imageHash:p.imageHash,overlayVersion:p.overlayVersion}));
+for(const patch of [{confirmed:false},{confirmed:'true'},{priceMinor:'1'},{imageUrl:'https://attacker.test/image.svg'},{data:'raw data'},{jobRevision:1},{jobRevision:'01'},{overlayVersion:'9223372036854775808'},{imageHash:'unknown'},{operationId:'not uuid'}])test('photo rejects input '+JSON.stringify(patch),()=>assert.throws(()=>readPhotoCommand({...photoApplyCommand(p,id),...patch})));
+test('photo unready cannot apply',()=>assert.throws(()=>photoApplyCommand({...p,ready:false},id)));
+test('preview contract',()=>assert.equal(readPhotoCommand({action:'preview',jobId:id}).action,'preview'));
+test('undo contract',()=>assert.equal(readPhotoCommand({action:'undo',operationId:id,publicationId:id,confirmed:true}).action,'undo'));
+const good='/api/menu-photo/'+id+'/'+id;
+test('photo validates local public path',()=>assert.equal(publicPhotoPath(good),good));
+for(const url of [null,'https://attacker.test/photo','//attacker.test/photo',good+'?token=secret',good+'#x','/api/studio/source?id='+id,'/api/menu-photo/a/b','/api/menu-photo/../../private'])test('reject unsafe photo '+url,()=>assert.equal(publicPhotoPath(url),null));

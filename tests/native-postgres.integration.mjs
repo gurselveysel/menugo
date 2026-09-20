@@ -47,5 +47,6 @@ try{
  console.log('NATIVE CODELESS CONCURRENCY PASS: parallel table QR opens exactly one check and distinct private visitors.');
  await (await import('./studio-publication-concurrency.mjs')).publicationConcurrency(a,b);
  await (await import('./platform-control-concurrency.mjs')).controlConcurrency(a,b);
+ await (await import('./studio-photo-concurrency.mjs')).photoConcurrency(a,b);
  console.log('NATIVE POSTGRES PASS: real row-lock exclusion and release, isolated Auth/Realtime fixtures');
 }finally{await a.query('ROLLBACK').catch(()=>{});await a.end().catch(()=>{});await b.end().catch(()=>{});}
