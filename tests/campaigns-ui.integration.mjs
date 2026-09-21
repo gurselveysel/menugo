@@ -10,6 +10,7 @@ try{
  browser=await pw.launch({args:chromium.args,executablePath:await chromium.executablePath(),headless:true});const context=await browser.newContext({acceptDownloads:true});const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('download',()=>downloads++);
  await context.route('**/api/campaigns/**',async route=>{const req=route.request(),url=new URL(req.url());
   if(url.pathname.endsWith('catalogue'))return route.fulfill({json:{products:[{...snap, id:pid,available:true},{id:second,name:'Çay',priceMinor:'2500',available:true}],drafts:[]}});
+  if(url.pathname.endsWith('publication-status'))return route.fulfill({json:{enabled:false,dispatchConfigured:false,items:[]}});
   if(url.pathname.endsWith('preview')){const id=url.searchParams.get('productId');if(id===pid)await new Promise(r=>setTimeout(r,50));return route.fulfill({json:id===second?{...snap,productId:second,name:'Çay'}:snap});}
   if(url.pathname.endsWith('export')){const data=req.postDataJSON();posts.push(data);if(conflict)return route.fulfill({status:409,json:{error:{code:'CAMPAIGN_SOURCE_CHANGED'}}});assert.equal(data.expectedVersion,snap.version);assert.ok(!('priceMinor'in data));return route.fulfill({json:{snapshot:snap,caption:'Onaylı ürün ve güncel fiyat: 180,00 TL',format:data.format}});}
   return route.fulfill({status:404,json:{}});
@@ -17,6 +18,7 @@ try{
  await page.goto(base+'/isletme/kampanya',{waitUntil:'networkidle'});
  await page.getByRole('checkbox').waitFor();await page.waitForFunction(()=>{const c=document.querySelector('canvas');return c&&getComputedStyle(c).visibility==='visible';});
  assert.equal(await page.getByRole('button',{name:'PNG görselini indir'}).isEnabled(),false);checks.push('download requires explicit operator review');
+ assert.equal(await page.getByText('Şirket sosyal yayın isteğini henüz açmadı. Bu durum görsel indirmenizi engellemez.').isVisible(),true);checks.push('social publication stays fail closed when company gate disabled');
  for(const width of [320,390,768,1440]){await page.setViewportSize({width,height:940});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.screenshot({path:`${out}/campaign-${width}.png`,fullPage:true});checks.push('responsive '+width);}
  for(const [format,height] of [['post',1350],['story',1920]]){
   await page.getByLabel('Boyut',{exact:true}).selectOption(format);await page.waitForFunction(()=>getComputedStyle(document.querySelector('canvas')).visibility==='visible');await page.getByRole('checkbox').check();
@@ -28,8 +30,8 @@ try{
  conflict=false;await page.getByLabel('Ürün',{exact:true}).selectOption(second);await page.waitForTimeout(100);await page.getByLabel('Ürün',{exact:true}).selectOption(pid);await page.getByLabel('Ürün',{exact:true}).selectOption(second);await page.waitForTimeout(500);assert.equal(await page.locator('canvas').getAttribute('aria-label'),'Çay — paylaşım görseli');checks.push('late prior selection cannot overwrite active preview');
  assert.equal(await page.getByRole('checkbox').isChecked(),false);checks.push('changing product clears previous approval');
  await context.unroute('**/api/campaigns/**');
- for(const action of ['catalogue','preview']){const r=await page.request.get(base+'/api/campaigns/'+action);assert.equal(r.status(),401);checks.push('real unauthenticated '+action+' denied');}
- const r=await page.request.post(base+'/api/campaigns/export',{headers:{Origin:base},data:{}});assert.equal(r.status(),401);checks.push('real unauthenticated export denied');
+ for(const action of ['catalogue','preview','publication-status']){const r=await page.request.get(base+'/api/campaigns/'+action);assert.equal(r.status(),401);checks.push('real unauthenticated '+action+' denied');}
+ for(const action of ['export','publication-request','publication-cancel']){const r=await page.request.post(base+'/api/campaigns/'+action,{headers:{Origin:base},data:{}});assert.equal(r.status(),401);checks.push('real unauthenticated '+action+' denied');}
  assert.deepEqual(errors,[]);assert.ok(posts.every(p=>Object.keys(p).sort().join(',')==='expectedVersion,format,jobId,productId'));checks.push('no prices or private context in export intent');
  fs.writeFileSync(out+'/results.json',JSON.stringify({passed:checks.length,checks,apiDoubles:true,realQrDecode:true,pngDownloads:downloads,modelCalls:0,socialPublishes:0,catalogueWrites:0,errors},null,2));console.log('CAMPAIGN UI PASS',checks.length);
 }catch(e){console.error('CAMPAIGN UI FAILED',e.message,errors,logs.slice(-2500));process.exitCode=1;}finally{if(browser)await browser.close();server.kill('SIGTERM');}
