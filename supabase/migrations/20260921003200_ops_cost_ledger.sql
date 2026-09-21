@@ -182,7 +182,7 @@ BEGIN
   END IF;
 
  ELSE
-  IF (SELECT count(*) FROM jsonb_object_keys(p_payload))<>8 OR p_payload->>'productId' IS NULL OR p_payload->>'name' IS NULL OR p_payload->>'portions' IS NULL OR p_payload->>'overheadMinor' IS NULL OR jsonb_typeof(p_payload->'ingredients')<>'array' OR p_payload->>'confirmed' IS DISTINCT FROM 'true' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_COST_INPUT';END IF;
+  IF (SELECT count(*) FROM jsonb_object_keys(p_payload))<>7 OR p_payload->>'productId' IS NULL OR p_payload->>'name' IS NULL OR p_payload->>'portions' IS NULL OR p_payload->>'overheadMinor' IS NULL OR jsonb_typeof(p_payload->'ingredients')<>'array' OR p_payload->>'confirmed' IS DISTINCT FROM 'true' THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_COST_INPUT';END IF;
   BEGIN product_v:=(p_payload->>'productId')::uuid;portions_v:=(p_payload->>'portions')::integer;overhead_v:=(p_payload->>'overheadMinor')::bigint;EXCEPTION WHEN others THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_COST_INPUT';END;
   recipe_name_v:=btrim(p_payload->>'name');
   IF recipe_name_v='' OR length(recipe_name_v)>120 OR recipe_name_v ~ '[[:cntrl:]]' OR portions_v NOT BETWEEN 1 AND 1000 OR overhead_v<0 OR jsonb_array_length(p_payload->'ingredients') NOT BETWEEN 1 AND 100 THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_COST_INPUT';END IF;
@@ -191,7 +191,7 @@ BEGIN
   recipe_total:=overhead_v::numeric;idx:=0;
   FOR line IN SELECT value FROM jsonb_array_elements(p_payload->'ingredients') LOOP
    idx:=idx+1;
-   IF jsonb_typeof(line)<>'object' OR (SELECT count(*) FROM jsonb_object_keys(line))<>7 OR btrim(coalesce(line->>'name',''))='' OR length(line->>'name')>160 OR line->>'unit' NOT IN('g','ml','piece')
+   IF jsonb_typeof(line)<>'object' OR (SELECT count(*) FROM jsonb_object_keys(line))<>6 OR btrim(coalesce(line->>'name',''))='' OR length(line->>'name')>160 OR line->>'unit' NOT IN('g','ml','piece')
       OR NOT(coalesce(line->>'packQuantity','') ~ '^[1-9][0-9]{0,18}$') OR NOT(coalesce(line->>'packCostMinor','') ~ '^(0|[1-9][0-9]{0,18})$') OR NOT(coalesce(line->>'recipeQuantity','') ~ '^[1-9][0-9]{0,18}$') OR NOT(coalesce(line->>'edibleYieldBps','') ~ '^[1-9][0-9]{0,4}$') THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_COST_INPUT';END IF;
    BEGIN pack_v:=(line->>'packQuantity')::bigint;cost_v:=(line->>'packCostMinor')::bigint;used_v:=(line->>'recipeQuantity')::bigint;yield_v:=(line->>'edibleYieldBps')::integer;EXCEPTION WHEN others THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_COST_INPUT';END;
    IF pack_v<=0 OR used_v<=0 OR cost_v<0 OR yield_v NOT BETWEEN 1 AND 10000 THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_COST_INPUT';END IF;
