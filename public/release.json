@@ -1,6 +1,6 @@
 {
-  "version": "menugo-assistant-commands-20260921-r33",
-  "previous": "menugo-cost-ledger-20260921-r32",
+  "version": "menugo-production-evidence-20260921-r36",
+  "previous": "menugo-ai-suite-acceptance-20260921-r35",
   "merchantMenu": true,
   "roleInterfaces": [
     "customer",
@@ -149,5 +149,21 @@
   "operatorAssistantPriceWrites": false,
   "operatorAssistantAutomaticWrites": false,
   "operatorAssistantCommandJournal": "append-only-idempotent-row-locked",
-  "operatorAssistantCommandProductionAcceptance": "pending-r33-ci-migration-deploy"
+  "operatorAssistantCommandProductionAcceptance": "verified-r33-migration-and-live-domains-20260921",
+  "socialPublicationIntents": "company-gated-fail-closed",
+  "socialPublicationEnabledByDefault": false,
+  "socialPublicationDispatchConfigured": false,
+  "socialPublicationIntentProductionAcceptance": "verified-r34-migration-and-live-domains-20260921",
+  "aiSuiteAcceptanceView": true,
+  "aiSuiteAcceptancePath": "/platform/kabul",
+  "aiSuiteAcceptanceProduction": "verified-r35-migration-and-live-domains-20260921",
+  "aiSuiteRealProviderRuns": 0,
+  "aiSuiteConfiguredFreeRoutes": 0,
+  "aiSuiteExternalAcceptancePending": [
+    "company-managed-free-provider-and-real-inference",
+    "authorized-menugo-or-sariyer-social-provider",
+    "physical-device-pdf-photo-voice-customer-assistant",
+    "second-genuine-production-branch",
+    "sufficient-genuine-demand-waste-history"
+  ]
 }

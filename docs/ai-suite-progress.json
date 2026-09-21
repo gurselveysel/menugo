@@ -4,11 +4,11 @@
   "state": "implementation_and_acceptance",
   "updatedDate": "2026-09-21",
   "previousProgressArchive": "docs/progress/ai-suite-before-r30.json",
-  "baseline": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
-  "releaseCandidate": "menugo-ai-suite-acceptance-20260921-r35",
-  "latestRuntimeCommit": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
-  "lastVerifiedProductionBeforeIncrement": "menugo-social-publication-intents-20260921-r34",
-  "releaseVerificationRecord": "Main 6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd is READY in Vercel production on www.menugo.app, menugo.app and sariyerborekcisi.menugo.app. r34 social publication intent boundary is live, dispatchConfigured remains false and no external social post was sent. Production still has zero configured free AI routes and zero real AI runs, so full AI-suite completion remains false.",
+  "baseline": "c98987690a29fbe646dd6557ab07db89027e3c96",
+  "releaseCandidate": "menugo-production-evidence-20260921-r36",
+  "latestRuntimeCommit": "c98987690a29fbe646dd6557ab07db89027e3c96",
+  "lastVerifiedProductionBeforeIncrement": "menugo-ai-suite-acceptance-20260921-r35",
+  "releaseVerificationRecord": "Main c98987690a29fbe646dd6557ab07db89027e3c96 is READY in Vercel production deployment dpl_GF7e9K2HgQg8vu2yCWaLDU3zRBA3 on www.menugo.app, menugo.app and sariyerborekcisi.menugo.app. The r35 company-only acceptance snapshot is live. Read-only production verification on 2026-09-21 still shows zero configured free AI routes, zero LLM connections/runs, one genuine branch and no photo/social/assistant acceptance records, so full AI-suite completion remains false.",
   "modules": {
     "platformControl": "r29_company_roles_policies_limits_and_audit_live_free_only_ai_and_zero_paid_fallback_retained",
     "menuImport": "r30_local_PDF_page_preparation_live_selected_pages_feed_existing_review_apply_undo_flow_real_provider_extraction_and_physical_device_acceptance_pending",
@@ -23,47 +23,52 @@
     "multiBranch": "core_master_menu_binding_and_local_price_override_schema_api_ui_live_real_two_branch_acceptance_pending_one_real_branch_only"
   },
   "latestIncrement": {
-    "name": "Company-only production acceptance evidence snapshot r35 candidate",
-    "path": "/platform/kabul",
-    "dataFlow": "A platform-authenticated read-only RPC derives aggregate evidence from production tables for all ten scope modules. It does not expose provider secrets, business payloads, customer data or editable completion switches.",
-    "safetyBoundary": "Restaurant roles cannot call the snapshot because platform_principal is required. The snapshot never mutates catalogue, prices, orders, payments, provider settings or social accounts. It intentionally keeps completion false and distinguishes production evidence from external physical-device/domain/business acceptance.",
-    "freePolicy": "No new provider, service, credit, GPU or paid fallback. Existing company-only free-provider policy is unchanged.",
+    "name": "Production evidence metadata synchronization r36 candidate",
+    "dataFlow": "Synchronize release metadata and the persistent AI-suite progress record to the already-verified r35 production SHA without changing business behavior, provider settings or completion state.",
+    "safetyBoundary": "Metadata-only source change. No database migration, provider call, catalogue/price/order/payment/photo/social write, credential read, role change or paid fallback.",
+    "freePolicy": "No new provider, service, credit, GPU or paid fallback. Company-only free-provider policy remains unchanged.",
     "companyOnlyConfiguration": true,
     "productionDatabaseWritesPerformed": false,
     "catalogueWritesPerformed": false,
     "realInferenceCalls": 0,
-    "candidateBranch": "codex/r35-ai-suite-acceptance",
-    "migration": "20260921003500_ops_ai_suite_acceptance.sql",
-    "validation": "pending_pull_request_ci_and_native_postgres_before_any_production_migration"
+    "candidateBranch": "codex/r36-runtime-evidence-sync",
+    "migration": null,
+    "validation": "pending_latest_head_required_ci_before_merge_or_production"
   },
   "acceptance": {
-    "r34Production": {
-      "commit": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
+    "r35Production": {
+      "commit": "c98987690a29fbe646dd6557ab07db89027e3c96",
       "vercel": "READY",
-      "deployment": "dpl_9mdh9ZJK9Qg6V22dRREmknHS8eZV",
-      "domains": ["www.menugo.app","menugo.app","sariyerborekcisi.menugo.app"],
-      "socialDispatchConfigured": false,
-      "externalSocialPostsSentByAcceptance": 0,
+      "deployment": "dpl_GF7e9K2HgQg8vu2yCWaLDU3zRBA3",
+      "domains": [
+        "www.menugo.app",
+        "menugo.app",
+        "sariyerborekcisi.menugo.app"
+      ],
+      "companyAcceptancePath": "/platform/kabul",
       "realProviderCalls": 0,
-      "configuredFreeRoutes": 0
+      "configuredFreeRoutes": 0,
+      "llmConnections": 0,
+      "realBranches": 1,
+      "externalSocialDispatchConfigured": false
     },
-    "r35Candidate": {
-      "baseCommit": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
-      "branch": "codex/r35-ai-suite-acceptance",
+    "r36Candidate": {
+      "baseCommit": "c98987690a29fbe646dd6557ab07db89027e3c96",
+      "branch": "codex/r36-runtime-evidence-sync",
       "fullCi": "pending",
-      "nativePostgres17": "pending",
+      "nativePostgres17": "pending_if_required_by_workflow",
       "fullNextBuild": "pending",
-      "productionMigration": "not_applied",
+      "productionMigration": "not_required",
       "productionDeployment": "not_deployed",
       "realProviderCalls": 0
     }
   },
   "nextRequired": [
-    "Run the required pull-request CI on the latest r35 tree; do not promote unless SQL, native PostgreSQL 17, unit, full Next build and frontend regressions are green.",
-    "If r35 is green and main is unchanged, apply only the additive acceptance snapshot migration, merge, deploy and verify company-only access plus both production domains without touching real catalogue/order/payment data.",
-    "Connect a genuinely free/no-billing company-managed provider and perform real menu/photo/copy/invoice/assistant inference acceptance without paid fallback or weakened data-policy filters.",
-    "Complete authorized social publishing acceptance without sending content on the user’s behalf during unapproved tests.",
-    "Complete physical-device PDF/photo/voice/customer-assistant acceptance, a real second branch, and sufficient genuine demand/waste history."
+    "Run the existing required pull-request CI on the latest r36 metadata tree and merge only if the latest head remains conflict-free and all mandatory checks are green.",
+    "After any r36 production promotion, verify release metadata on both real domains and keep aiSuiteComplete false.",
+    "Connect a genuinely free/no-billing company-managed provider under platform control and perform real menu/photo/copy/invoice/assistant inference acceptance without paid fallback or weakened data-policy filters.",
+    "Complete authorized MenüGO/Sarıyer social-provider connection acceptance without sending content on the user’s behalf during unapproved tests.",
+    "Complete physical-device PDF/photo/voice/customer-assistant acceptance, a genuine second production branch, and sufficient genuine demand/waste history."
   ],
   "completionRule": "Do not mark the AI suite complete from UI/build/mock/local tests or this readiness screen. Require real provider output and business review/publication acceptance for each advertised capability plus the stated physical-device, social, multi-branch and real-history gates."
 }
