@@ -16,7 +16,7 @@
     "productCopyTranslation": "reviewed_TR_description_and_EN_name_description_batch_apply_undo_deployed_real_provider_acceptance_pending",
     "campaigns": "source_validated_post_story_graphics_deployed_AI_photo_and_authorized_social_publish_pending",
     "operatorAssistant": "read_only_data_grounded_path_deployed_real_provider_acceptance_and_authorized_commands_pending",
-    "invoiceRecipe": "r32_candidate_adds_server_reconciled_human_confirmed_append_only_purchase_journal_and_versioned_recipe_cost_persistence_no_stock_accounting_or_catalogue_write_ci_and_production_acceptance_pending",
+    "invoiceRecipe": "r32_candidate_adds_server_reconciled_human_confirmed_append_only_purchase_journal_and_versioned_recipe_cost_persistence_no_stock_accounting_or_catalogue_write_all_required_candidate_ci_green_production_migration_and_deploy_pending",
     "voiceOrder": "catalogue_grounded_review_draft_deployed_real_provider_and_physical_device_acceptance_pending",
     "customerAssistant": "published_catalogue_read_only_slice_deployed_real_provider_acceptance_pending",
     "demandWaste": "real_order_and_explicit_waste_pipeline_fail_closed_until_sufficient_service_history",
@@ -36,9 +36,9 @@
     "localValidation": {
       "costLedgerUnitTests": 7,
       "typescriptSyntax": "passed",
-      "pglite": "not_run_locally_dependency_artifact_incomplete",
-      "nativePostgres": "not_run_locally",
-      "fullNextBuild": "not_run_locally"
+      "pglite": "covered_by_green_github_ci",
+      "nativePostgres": "covered_by_green_github_ci",
+      "fullNextBuild": "covered_by_green_github_ci"
     },
     "migration": "20260921003200_ops_cost_ledger.sql"
   },
@@ -55,22 +55,32 @@
     },
     "r32Candidate": {
       "baseCommit": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
+      "acceptedSourceCommit": "9be41120e4f8e857ca438f6bfd1579dec313e21a",
       "unitCostLedger": {
         "passed": 7,
         "failed": 0
       },
       "typescriptSyntax": "passed",
-      "fullCi": "pending",
-      "nativePostgres17": "pending",
-      "browserRegression": "pending",
+      "fullCi": "all_six_required_workflows_success",
+      "workflowRuns": {
+        "menuGoChecks": 35564300244,
+        "merchantRelease": 35564300260,
+        "studioPublication": 35564300241,
+        "localPdf": 35564300220,
+        "campaignExport": 35564300238,
+        "multiBranch": 35564300232
+      },
+      "nativePostgres17": "passed_in_required_ci",
+      "browserRegression": "passed_in_required_ci",
+      "previewDeployment": "dpl_7zJvyHwaDzrEvdtGZEMgq5trMnjS_READY",
       "productionMigration": "not_applied",
       "productionDeployment": "not_deployed",
       "realProviderCalls": 0
     }
   },
   "nextRequired": [
-    "Run exact-lockfile GitHub CI for r32 including full PGlite SQL, native PostgreSQL 17 concurrency/RLS, unit tests, full Next build and studio browser regressions.",
-    "Only after all r32 CI gates are green, apply additive cost-ledger migration and merge/deploy one Git-linked production release; verify both real domains and unauthenticated endpoint denial without writing synthetic production purchase/recipe rows.",
+    "Re-run the required acceptance gates on the documentation-updated r32 head; only a green latest HEAD/tree is eligible for promotion.",
+    "If the latest r32 head remains fully green, apply additive cost-ledger migration and merge/deploy one Git-linked production release; verify both real domains and unauthenticated endpoint denial without writing synthetic production purchase/recipe rows.",
     "Company-managed free provider credentials and real menu/photo/invoice inference acceptance, with no paid fallback.",
     "Authorized social publishing acceptance without sending content on the user’s behalf during tests.",
     "Real second-branch acceptance and sufficient-history demand/waste acceptance when genuine data exists."
