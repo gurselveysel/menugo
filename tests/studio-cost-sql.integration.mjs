@@ -16,7 +16,7 @@ const extra=`
   check('purchase post replays idempotently',(await ledger('post-invoice',post)).purchaseId===posted.purchaseId);
   await rejects('purchase operation id cannot change intent',()=>ledger('post-invoice',{...post,jobId:p1}),'IDEMPOTENCY_CONFLICT');
   const again=await ledger('post-invoice',{...post,operationId:op(6102)});check('same approved invoice never duplicates purchase',again.purchaseId===posted.purchaseId&&again.alreadyPosted);
-  const lines=await q('select * from ops.purchase_entry_lines where purchase_id=$1',[posted.purchaseId]);check('purchase values come from approved server draft',lines.length===1&&lines[0].gross_minor==='120');
+  const purchaseView=(await ledger('list')).purchases.find(x=>x.id===posted.purchaseId);check('purchase values come from approved server draft',purchaseView?.lines?.length===1&&purchaseView.lines[0].grossMinor==='120');
   const bad=await createInvoice(6103,{...invoice,totalMinor:'119'});await rejects('mismatched invoice cannot become purchase journal',()=>ledger('post-invoice',{operationId:op(6104),jobId:bad.id,revision:bad.revision,confirmed:true}),'INVOICE_RECONCILIATION_REQUIRED');
   const recipe={operationId:op(6110),productId:p1,name:'Test reçete',portions:3,overheadMinor:'0',confirmed:true,ingredients:[{name:'Un',unit:'g',packQuantity:'1000',packCostMinor:'12345',recipeQuantity:'100',edibleYieldBps:10000}]};
   const saved=await ledger('save-recipe',recipe);check('recipe journal recomputes exact bigint cost server-side',saved.totalMinor==='1235'&&saved.portionMinMinor==='411'&&saved.portionMaxMinor==='412'&&saved.version==='1');
