@@ -1,4 +1,4 @@
-/** Free service != open weights != free web chat. Reviewed 2026-09-19. */
+/** Free service != open weights != free web chat. Reviewed 2026-09-21. */
 export const FREE_PROVIDERS = ['groq_free','gemini_free','openrouter_free','cloudflare_free'] as const;
 export type FreeProvider = typeof FREE_PROVIDERS[number];
 export const FREE_MODELS: Record<FreeProvider, readonly string[]> = {
@@ -7,12 +7,19 @@ export const FREE_MODELS: Record<FreeProvider, readonly string[]> = {
  openrouter_free: ['openrouter/free'],
  cloudflare_free: ['@cf/black-forest-labs/flux-2-klein-4b']
 };
+export const CLOUDFLARE_TEXT_MODEL='@cf/google/gemma-4-26b-a4b-it' as const;
 export interface FreeRoute {provider:FreeProvider;model:string;key:string;priority:number;version:string;accountId:string|null;attestedUntil:string;publicContentAllowed:boolean;privateContentAllowed:boolean}
 export function routeEligible(r:FreeRoute,kind:string,context:any,request:any,now=Date.now()):boolean {
  if(!FREE_MODELS[r.provider]?.includes(r.model)||!Number.isInteger(r.priority)||r.priority<1||r.priority>100) return false;
  if(!Number.isFinite(Date.parse(r.attestedUntil))||Date.parse(r.attestedUntil)<=now) return false;
  const photo=kind==='studio'&&context?.studioKind==='photo-enhance';
- if(kind!=='test'&&photo!== (r.provider==='cloudflare_free'))return false;
+ if(kind!=='test'&&photo&&r.provider!=='cloudflare_free')return false;
+ if(kind!=='test'&&!photo&&r.provider==='cloudflare_free'){
+  // The same Workers Free credential may use the separately reviewed Cloudflare-hosted Gemma text fallback.
+  // Keep this route text-only: no document/image attachment is forwarded through the chat endpoint.
+  const attachment=kind==='menu-extract'?context:context?.input?.attachment;
+  if(attachment||kind==='menu-extract'||(kind==='studio'&&!['product-copy','translation','campaign'].includes(context?.studioKind)))return false;
+ }
  // Free-text questions/invoices/photos are private. Menu-only uploads require explicit public-use permission.
  // Only structured product-copy/translation/campaign input is eligible for opt-in public routing.
  const publicData=kind==='test'||kind==='menu-extract'||(kind==='studio'&&['product-copy','translation','campaign'].includes(context?.studioKind));
