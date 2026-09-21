@@ -4,68 +4,76 @@
   "state": "implementation_and_acceptance",
   "updatedDate": "2026-09-21",
   "previousProgressArchive": "docs/progress/ai-suite-before-r30.json",
-  "baseline": "d68f67f1a8f900015596dc10d48fdca1a3fb6326",
-  "releaseCandidate": "menugo-local-pdf-menu-20260920-r30",
-  "latestRuntimeCommit": "9be7fad9974914dc7cd338571e7816455b7c1e17",
-  "lastVerifiedProductionBeforeIncrement": "menugo-platform-control-center-20260920-r29",
-  "releaseVerificationRecord": "GitHub PR #15 discussion and live /release.json; candidate label alone is not evidence of deployment",
+  "baseline": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
+  "releaseCandidate": "menugo-cost-ledger-20260921-r32",
+  "latestRuntimeCommit": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
+  "lastVerifiedProductionBeforeIncrement": "menugo-reviewed-product-photo-publication-20260921-r31",
+  "releaseVerificationRecord": "Main e61164b70b5ca1d5349ac893b38a649a69a18fc0 is READY in Vercel production on www.menugo.app, menugo.app and sariyerborekcisi.menugo.app; r31 migration applied and unauthenticated photo-publication endpoint rejected. Real provider acceptance remains blocked by zero configured free provider connections.",
   "modules": {
     "platformControl": "r29_company_roles_policies_limits_and_audit_retained_no_infrastructure_credentials_read_or_changed_in_r30",
     "menuImport": "local_PDF_page_preparation_implemented_and_browser_accepted_explicit_selected_JPEG_pages_to_existing_review_apply_undo_flow_real_provider_extraction_pending",
-    "photoStudio": "reviewed_photo_apply_undo_candidate_prepared_on_r30_base_full_CI_native_Postgres_migration_deploy_and_real_provider_acceptance_pending",
+    "photoStudio": "r31_reviewed_photo_apply_undo_merged_migrated_and_live_domain_verified_real_provider_acceptance_pending",
     "productCopyTranslation": "reviewed_TR_description_and_EN_name_description_batch_apply_undo_deployed_real_provider_acceptance_pending",
     "campaigns": "source_validated_post_story_graphics_deployed_AI_photo_and_authorized_social_publish_pending",
     "operatorAssistant": "read_only_data_grounded_path_deployed_real_provider_acceptance_and_authorized_commands_pending",
-    "invoiceRecipe": "extraction_review_and_bigint_cost_engine_implemented_real_provider_and_approved_purchase_posting_acceptance_pending",
+    "invoiceRecipe": "r32_candidate_adds_server_reconciled_human_confirmed_append_only_purchase_journal_and_versioned_recipe_cost_persistence_no_stock_accounting_or_catalogue_write_ci_and_production_acceptance_pending",
     "voiceOrder": "catalogue_grounded_review_draft_deployed_real_provider_and_physical_device_acceptance_pending",
     "customerAssistant": "published_catalogue_read_only_slice_deployed_real_provider_acceptance_pending",
     "demandWaste": "real_order_and_explicit_waste_pipeline_fail_closed_until_sufficient_service_history",
     "multiBranch": "core_schema_rpc_api_ui_deployed_real_two_branch_acceptance_pending_one_real_branch_only"
   },
   "latestIncrement": {
-    "name": "Local PDF menu preparation",
-    "path": "İşletme yönetimi / AI Menü Stüdyosu / PDF sayfalarını hazırla",
-    "renderer": "Official PDF.js 6.3.289 compatibility build and matching first-party worker",
-    "limits": {"inputBytes":10485760,"pages":8,"pagePixels":3000000,"pageBytes":2097152,"totalEncodedBytes":12582912},
-    "dataFlow": "Original PDF stays on device. Explicitly selected JPEG pages only are uploaded after readability review. Each page is a separate import source job, not a combined automatic catalogue write.",
-    "retry": "Successful pages skipped; unknown response stops batch, same operationId and bytes retained for manual retry while mounted; server content-hash dedup remains. Re-opened sessions must inspect import history.",
-    "freePolicy": "No new external service, paid fallback, model call or GPU. Local preparation needs no AI credentials. Analysis still requires company-managed suitable free connection.",
+    "name": "Approved purchase and recipe cost journal r32 candidate",
+    "path": "İşletme yönetimi / AI Menü Stüdyosu / Reçete maliyeti + approved invoice detail",
+    "dataFlow": "Approved invoice posting accepts only job/revision/confirmation proof; server reloads and reconciles the approved studio draft before appending an immutable internal purchase journal. Recipe saves accept human-verified normalized inputs and server-recompute exact bigint costs into append-only versions.",
+    "retry": "Browser session journal preserves the exact operationId and proof/input after an ambiguous response; server command journal rejects changed intent and replays the same result.",
+    "financialBoundary": "No stock, accounting, payment, catalogue-price or social write. Purchase journal is internal operational evidence, not an accounting adapter.",
+    "freePolicy": "No new AI/provider/service, no paid fallback, no credits and no model call. This increment is deterministic and works only after human review.",
     "companyOnlyConfiguration": true,
-    "databaseWritesPerformed": false,
+    "productionDatabaseWritesPerformed": false,
     "catalogueWritesPerformed": false,
     "realInferenceCalls": 0,
-    "liveDatabaseVerification": "No r31 production mutation has been performed. Production state must be re-read before migration and after deployment."
+    "localValidation": {
+      "costLedgerUnitTests": 7,
+      "typescriptSyntax": "passed",
+      "pglite": "not_run_locally_dependency_artifact_incomplete",
+      "nativePostgres": "not_run_locally",
+      "fullNextBuild": "not_run_locally"
+    },
+    "migration": "20260921003200_ops_cost_ledger.sql"
   },
   "acceptance": {
-    "codeCommit": "9be7fad9974914dc7cd338571e7816455b7c1e17",
-    "unitTests": {"passed":410,"failed":0},
-    "pdfBrowser": {"passed":19,"realLocalPdfRenderer":true,"syntheticApi":true,"realInference":false,"workflowRun":35475138447},
-    "existingMenuImportBrowser": {"passed":22,"syntheticApi":true,"workflowRun":35475138447},
-    "productionBuildAndTypeScript": "passed",
-    "regressionWorkflows": {"menuGoChecks":35475138395,"merchantRelease":35475138410,"studioPublication":35475138375,"multiBranch":35475138369,"result":"all_success"},
-    "visualReview": "390 and 1440 pixel screenshots inspected; actual PDF raster colors/rotation validated; 320,360,390,768,1440 overflow checks passed",
-    "physicalDevicePdf": "not_run",
-    "realProvider": "not_run"
+    "r31Production": {
+      "commit": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
+      "vercel": "READY",
+      "domains": [
+        "www.menugo.app",
+        "menugo.app",
+        "sariyerborekcisi.menugo.app"
+      ],
+      "realProvider": "not_run_zero_connections"
+    },
+    "r32Candidate": {
+      "baseCommit": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
+      "unitCostLedger": {
+        "passed": 7,
+        "failed": 0
+      },
+      "typescriptSyntax": "passed",
+      "fullCi": "pending",
+      "nativePostgres17": "pending",
+      "browserRegression": "pending",
+      "productionMigration": "not_applied",
+      "productionDeployment": "not_deployed",
+      "realProviderCalls": 0
+    }
   },
   "nextRequired": [
-    "Promote r30/r31 only after the current head passes exact-lockfile full Next/TypeScript, native PostgreSQL 17/RLS/concurrency and relevant browser regression gates.",
-    "Apply the additive r31 photo-publication migration only after those CI gates are green; then verify a single Git-linked production deployment on both real domains.",
-    "Company-managed free provider credentials and real menu/photo/invoice acceptance, with no paid fallback.",
-    "Approved invoice and purchase/recipe persistence through verified accounting adapters.",
-    "Authorized social publishing and real multi-branch acceptance when genuine second-branch data exists."
+    "Run exact-lockfile GitHub CI for r32 including full PGlite SQL, native PostgreSQL 17 concurrency/RLS, unit tests, full Next build and studio browser regressions.",
+    "Only after all r32 CI gates are green, apply additive cost-ledger migration and merge/deploy one Git-linked production release; verify both real domains and unauthenticated endpoint denial without writing synthetic production purchase/recipe rows.",
+    "Company-managed free provider credentials and real menu/photo/invoice inference acceptance, with no paid fallback.",
+    "Authorized social publishing acceptance without sending content on the user’s behalf during tests.",
+    "Real second-branch acceptance and sufficient-history demand/waste acceptance when genuine data exists."
   ],
-  "completionRule": "Do not mark the AI suite complete from UI/build/mock tests. Require real provider output and business review/publication acceptance for each advertised capability.",
-  "r31Candidate": {
-    "name": "reviewed-product-photo-publication-r31",
-    "baseCommit": "31179a957efb44e49368bd8a6e740bbf0e33a1f9",
-    "handoffSha256": "ac1c04ad8fbf37c64fecd1c2385bac67ac8eafc3a1a80b94994f77a49e3abc74",
-    "state": "prepared_for_branch_ci",
-    "productionApplied": false,
-    "paidServiceCalls": 0,
-    "realProviderCalls": 0,
-    "handoffEvidence": {"unitTests":443,"pgliteChecks":381,"browserHarnessChecks":25,"isolatedPhotoNextBuild":"passed","fullAppBuild":"not_run_in_handoff","nativePostgres":"not_run_in_handoff"},
-    "connectorReconciliation": "To avoid replacing very large unchanged r30 files, photo CSS is isolated in app/photo-publication.css and imported by app/layout.tsx; photo PGlite lifecycle checks are injected by tests/studio-photo-sql.integration.mjs while the r30 tests/sql.integration.mjs fixture remains unchanged. The semantic r31 gates are retained and are required in CI.",
-    "migration": "20260920003100_ops_studio_photo_publication.sql"
-  },
-  "deploymentCooldownNotBeforeUtc": "2026-09-20T23:12:57Z"
+  "completionRule": "Do not mark the AI suite complete from UI/build/mock tests. Require real provider output and business review/publication acceptance for each advertised capability."
 }
