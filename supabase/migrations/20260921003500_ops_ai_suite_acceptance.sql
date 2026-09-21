@@ -42,52 +42,36 @@ BEGIN
   v_principal:=ops.platform_principal();
 
   SELECT count(*) INTO v_branch_count FROM ops.branch_settings;
-  SELECT count(*) INTO v_enabled_routes
-  FROM ops.ai_free_routes
+  SELECT count(*) INTO v_enabled_routes FROM ops.ai_free_routes
   WHERE enabled AND attested_until>clock_timestamp();
-  SELECT count(*) INTO v_real_provider_attempts
-  FROM ops.ai_free_attempts
-  WHERE state='success';
+  SELECT count(*) INTO v_real_provider_attempts FROM ops.ai_free_attempts WHERE state='success';
 
-  SELECT count(*) INTO v_menu_provider_runs
-  FROM ops.menu_import_runs r
+  SELECT count(*) INTO v_menu_provider_runs FROM ops.menu_import_runs r
   WHERE r.state='finished' AND r.model IS NOT NULL;
-  SELECT count(*) INTO v_menu_applied
-  FROM ops.menu_import_jobs j
+  SELECT count(*) INTO v_menu_applied FROM ops.menu_import_jobs j
   WHERE j.status IN('applied','reverted') AND j.apply_receipt IS NOT NULL;
 
-  SELECT count(*) INTO v_photo_provider_jobs
-  FROM ops.studio_jobs j
+  SELECT count(*) INTO v_photo_provider_jobs FROM ops.studio_jobs j
   WHERE j.kind='photo-enhance' AND j.state IN('review','approved')
     AND j.model IS NOT NULL AND j.result IS NOT NULL AND j.error_code IS NULL;
-  SELECT count(*) INTO v_photo_publications
-  FROM ops.studio_photo_publications p
-  WHERE p.action='publish';
+  SELECT count(*) INTO v_photo_publications FROM ops.studio_photo_publications p WHERE p.action='publish';
 
-  SELECT count(*) INTO v_copy_provider_jobs
-  FROM ops.studio_jobs j
+  SELECT count(*) INTO v_copy_provider_jobs FROM ops.studio_jobs j
   WHERE j.kind IN('product-copy','translation') AND j.state IN('review','approved')
     AND j.model IS NOT NULL AND j.result IS NOT NULL AND j.error_code IS NULL;
-  SELECT count(*) INTO v_copy_applies
-  FROM ops.studio_text_changes c
-  WHERE c.action='apply';
+  SELECT count(*) INTO v_copy_applies FROM ops.studio_text_changes c WHERE c.action='apply';
 
-  SELECT count(*) INTO v_campaign_provider_jobs
-  FROM ops.studio_jobs j
+  SELECT count(*) INTO v_campaign_provider_jobs FROM ops.studio_jobs j
   WHERE j.kind='campaign' AND j.state IN('review','approved')
     AND j.model IS NOT NULL AND j.result IS NOT NULL AND j.error_code IS NULL;
-  SELECT count(*) INTO v_social_external
-  FROM ops.social_publication_intents s
-  WHERE s.external_ref IS NOT NULL;
+  SELECT count(*) INTO v_social_external FROM ops.social_publication_intents s WHERE s.external_ref IS NOT NULL;
 
   SELECT count(*) INTO v_assistant_provider_runs
-  FROM ops.llm_runs r
-  JOIN ops.ai_free_attempts a ON a.run_id=r.id AND a.state='success'
+  FROM ops.llm_runs r JOIN ops.ai_free_attempts a ON a.run_id=r.id AND a.state='success'
   WHERE r.kind='assistant' AND r.state='succeeded';
   SELECT count(*) INTO v_assistant_commands FROM ops.assistant_commands;
 
-  SELECT count(*) INTO v_invoice_provider_jobs
-  FROM ops.studio_jobs j
+  SELECT count(*) INTO v_invoice_provider_jobs FROM ops.studio_jobs j
   WHERE j.kind='invoice' AND j.state IN('review','approved')
     AND j.model IS NOT NULL AND j.result IS NOT NULL AND j.error_code IS NULL;
   SELECT count(*) INTO v_purchase_entries FROM ops.purchase_entries;
@@ -99,10 +83,12 @@ BEGIN
 
   WITH per_branch AS (
     SELECT b.business_id,b.branch_id,
-      count(DISTINCT (coalesce(o.submitted_at,o.created_at) AT TIME ZONE b.timezone)::date)
-        FILTER (WHERE o.status IN('served','completed') AND coalesce(o.submitted_at,o.created_at)>=clock_timestamp()-interval '90 days')::bigint AS service_days,
-      count(o.id) FILTER (WHERE o.status IN('served','completed') AND coalesce(o.submitted_at,o.created_at)>=clock_timestamp()-interval '90 days')::bigint AS completed_orders,
-      (SELECT count(*)::bigint FROM ops.waste_events w WHERE w.business_id=b.business_id AND w.branch_id=b.branch_id AND w.observed_at>=clock_timestamp()-interval '90 days') AS waste_events
+      (count(DISTINCT (coalesce(o.submitted_at,o.created_at) AT TIME ZONE b.timezone)::date)
+        FILTER (WHERE o.status IN('served','completed') AND coalesce(o.submitted_at,o.created_at)>=clock_timestamp()-interval '90 days'))::bigint AS service_days,
+      (count(o.id) FILTER (WHERE o.status IN('served','completed') AND coalesce(o.submitted_at,o.created_at)>=clock_timestamp()-interval '90 days'))::bigint AS completed_orders,
+      (SELECT count(*)::bigint FROM ops.waste_events w
+       WHERE w.business_id=b.business_id AND w.branch_id=b.branch_id
+         AND w.observed_at>=clock_timestamp()-interval '90 days') AS waste_events
     FROM ops.branch_settings b
     LEFT JOIN ops.orders o ON o.business_id=b.business_id AND o.branch_id=b.branch_id
     GROUP BY b.business_id,b.branch_id,b.timezone
@@ -116,12 +102,7 @@ BEGIN
   RETURN jsonb_build_object(
     'generatedAt',clock_timestamp(),
     'role',v_principal->>'role',
-    'policy',jsonb_build_object(
-      'companyOnly',true,
-      'freeOnly',true,
-      'paidFallback',false,
-      'autoCompletion',false
-    ),
+    'policy',jsonb_build_object('companyOnly',true,'freeOnly',true,'paidFallback',false,'autoCompletion',false),
     'providerEvidence',jsonb_build_object(
       'enabledRoutes',v_enabled_routes::text,
       'successfulAttempts',v_real_provider_attempts::text,
