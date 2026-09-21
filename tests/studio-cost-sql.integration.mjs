@@ -8,6 +8,7 @@ const extra=`
   await auth(users[0]);
   const studio=async(action,id=null,payload={})=>(await q('select ops.studio_job($1,$2,$3,$4,$5::jsonb) as j',[b,br,action,id,JSON.stringify(payload)]))[0].j;
   const ledger=async(action,payload={})=>(await q('select ops.studio_cost_ledger($1,$2,$3,$4::jsonb) as j',[b,br,action,JSON.stringify(payload)]))[0].j;
+  const catalogueBefore=await ledger('list');const priceBefore=catalogueBefore.catalogue.find(x=>x.id===p1)?.priceMinor;check('cost acceptance fixture sees current catalogue price',typeof priceBefore==='string');
   const createInvoice=async(n,draft)=>{const created=await studio('create',null,{operationId:op(n),kind:'invoice',input:{language:'tr',style:'white',attachment:{mime:'image/png',data:'cG5n',pages:1}}});const claim=await studio('claim',created.id);await studio('finish',created.id,{lease:claim.lease,model:'TEST-NO-MODEL',draft,inputTokens:'0',outputTokens:'0'});const review=await studio('get',created.id);await studio('approve',created.id,{revision:review.revision,comparedOriginal:true});return studio('get',created.id);};
   const invoice={kind:'invoice',draftOnly:true,currency:'TRY',invoiceNumber:'T-1',invoiceDate:'2026-09-20',totalMinor:'120',lines:[{name:'Un',quantityText:'1',unitText:'kg',netMinor:'100',taxMinor:'20',grossMinor:'120',page:1,sourceText:'Un 1 kg'}],warnings:[]};
   const approved=await createInvoice(6100,invoice);
@@ -26,7 +27,7 @@ const extra=`
   const listed=await ledger('list');check('ledger list is branch scoped',listed.scopeKey===b+':'+br+':'+users[0]&&listed.purchases.length>=1&&listed.recipes.some(x=>x.id===v2.recipeId));
   await rejects('manager cannot directly read purchase journal',()=>q('select * from ops.purchase_entries'),'42501');
   await rejects('manager cannot directly read recipe journal',()=>q('select * from ops.recipe_versions'),'42501');
-  check('cost journal never changes catalogue price',listed.catalogue.find(x=>x.id===p1)?.priceMinor==='3333');
+  check('cost journal never changes catalogue price',listed.catalogue.find(x=>x.id===p1)?.priceMinor===priceBefore);
   await auth(users[2]);await rejects('customer cannot read cost ledger',()=>ledger('list'),'MANAGER_REQUIRED');
  }
 `;
