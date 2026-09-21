@@ -34,12 +34,13 @@
     "catalogueWritesPerformed": false,
     "realInferenceCalls": 0,
     "localValidation": {
-      "javascriptSyntax": "passed_for_new_mjs_tests",
-      "typescriptSyntax": "pending_ci_full_project",
-      "pglite": "pending_ci",
-      "nativePostgres": "pending_ci",
-      "fullNextBuild": "pending_ci",
-      "browserRegression": "pending_ci"
+      "codeBearingCommit": "0312bf2c5dcded297bba1173f15cb41d8aba582b",
+      "exactNpmCi": "passed_in_required_ci",
+      "pglite": "passed_in_required_ci",
+      "nativePostgres": "passed_in_required_ci",
+      "unitTests": "455_passed_in_menuGo_checks",
+      "fullNextBuild": "passed_in_required_ci",
+      "browserRegression": "passed_in_required_ci"
     },
     "migration": "20260921003300_ops_assistant_commands.sql"
   },
@@ -58,18 +59,26 @@
     },
     "r33Candidate": {
       "baseCommit": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
-      "sourceCommit": "pending",
-      "fullCi": "pending",
-      "nativePostgres17": "pending",
-      "browserRegression": "pending",
-      "productionMigration": "not_applied",
+      "codeBearingCommit": "0312bf2c5dcded297bba1173f15cb41d8aba582b",
+      "fullCi": "all_six_required_workflows_success",
+      "workflowRuns": {
+        "menuGoChecks": 35584985750,
+        "merchantRelease": 35584985867,
+        "studioPublication": 35584985864,
+        "localPdf": 35584985832,
+        "campaignExport": 35584985738,
+        "multiBranch": 35584985907
+      },
+      "nativePostgres17": "passed_in_required_ci",
+      "browserRegression": "passed_in_required_ci",
+      "productionMigration": "applied_empty_command_journal_verified",
       "productionDeployment": "not_deployed",
       "realProviderCalls": 0
     }
   },
   "nextRequired": [
-    "Run exact-lockfile full CI on the complete r33 head, including PGlite assistant lifecycle, native PostgreSQL17 stale-proof concurrency, full Next/TypeScript build and browser recovery/undo acceptance.",
-    "Only if the latest r33 head is fully green, apply the additive assistant-command migration before application promotion, merge/deploy one Git-linked production release, and verify both real domains plus unauthenticated endpoint denial without changing a real product during acceptance.",
+    "Re-run the six required acceptance workflows on this documentation-updated r33 HEAD; only a green latest HEAD/tree is eligible for merge and production promotion.",
+    "If the latest r33 head remains fully green, merge and deploy one Git-linked production release; verify both real domains plus unauthenticated endpoint denial without changing a real product during acceptance.",
     "Company-managed free provider credentials and real menu/photo/invoice/assistant inference acceptance, with no paid fallback.",
     "Authorized social publishing acceptance without sending content on the user’s behalf during tests.",
     "Physical-device PDF/photo/voice acceptance, a real second branch, and sufficient genuine history for demand/waste acceptance."
