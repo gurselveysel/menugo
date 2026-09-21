@@ -1,8 +1,15 @@
 {
-  "version": "menugo-local-pdf-menu-20260920-r30",
-  "previous": "menugo-platform-control-center-20260920-r29",
+  "version": "menugo-cost-ledger-20260921-r32",
+  "previous": "menugo-reviewed-product-photo-publication-20260921-r31",
   "merchantMenu": true,
-  "roleInterfaces": ["customer", "owner", "manager", "waiter", "kitchen", "cashier"],
+  "roleInterfaces": [
+    "customer",
+    "owner",
+    "manager",
+    "waiter",
+    "kitchen",
+    "cashier"
+  ],
   "whatsapp": "customer-confirmed-click-to-chat",
   "onlinePayments": false,
   "automatedCourier": false,
@@ -50,7 +57,12 @@
   "aiCampaigns": false,
   "aiModel": "task-and-privacy-gated-free-router",
   "llmAssistant": true,
-  "llmDirectProviders": ["groq_free", "gemini_free", "openrouter_free", "cloudflare_free"],
+  "llmDirectProviders": [
+    "groq_free",
+    "gemini_free",
+    "openrouter_free",
+    "cloudflare_free"
+  ],
   "llmConfiguration": "platform-managed-supabase-vault",
   "llmAutomaticWrites": false,
   "llmRuntimeRequiresCredential": true,
@@ -62,18 +74,28 @@
   "visualOrderingWelcome": true,
   "visualOrderingProductCards": true,
   "canonicalBrandSurfaces": true,
-  "businessStudio": "private-drafts-and-reviewed-text-publication",
+  "businessStudio": "private-drafts-reviewed-publication-and-human-approved-cost-journals",
   "studioProvider": "free-only-platform-managed-credentials",
-  "studioDraftKinds": ["product-copy", "translation", "campaign", "invoice", "photo-enhance"],
+  "studioDraftKinds": [
+    "product-copy",
+    "translation",
+    "campaign",
+    "invoice",
+    "photo-enhance"
+  ],
   "studioCanPublishProducts": false,
   "studioReviewedTextPublication": true,
-  "studioTextFields": ["tr.description", "en.displayName", "en.description"],
+  "studioTextFields": [
+    "tr.description",
+    "en.displayName",
+    "en.description"
+  ],
   "studioPublicationBatchLimit": 20,
   "studioPublicationUndo": "source-and-version-guarded-append-only",
   "studioCanonicalCatalogueWrites": false,
   "studioCanSendSocialMessages": false,
-  "studioPostsPurchases": false,
-  "recipeCostCalculator": "bigint-rational",
+  "studioPostsPurchases": "approved-internal-journal-only-no-stock-or-accounting-write",
+  "recipeCostCalculator": "bigint-rational-with-append-only-versioned-journal",
   "aiSuiteComplete": false,
   "studioRealProviderAcceptance": "pending-company-credentials",
   "aiPaidFallback": false,
@@ -102,7 +124,20 @@
   "pdfSourceUpload": false,
   "pdfPageSelection": "explicit-review-before-selected-jpeg-transfer",
   "pdfDraftMode": "separate-source-preserving-page-jobs",
-  "pdfLimits": {"inputBytes":10485760,"pages":8,"pagePixels":3000000,"pageBytes":2097152,"totalBytes":12582912},
+  "pdfLimits": {
+    "inputBytes": 10485760,
+    "pages": 8,
+    "pagePixels": 3000000,
+    "pageBytes": 2097152,
+    "totalBytes": 12582912
+  },
   "pdfModelAcceptance": "not-run",
-  "pdfPhysicalDeviceAcceptance": "pending"
+  "pdfPhysicalDeviceAcceptance": "pending",
+  "costLedger": "human-confirmed-server-reconciled-idempotent-append-only",
+  "costLedgerMoney": "bigint-minor-units",
+  "costLedgerDirectTableAccess": false,
+  "costLedgerCataloguePriceWrites": false,
+  "costLedgerStockWrites": false,
+  "costLedgerAccountingWrites": false,
+  "costLedgerProductionAcceptance": "pending-r32-ci-migration-deploy"
 }
