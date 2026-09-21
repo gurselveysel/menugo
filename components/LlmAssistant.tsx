@@ -3,6 +3,7 @@ import {useEffect,useRef,useState} from 'react';
 import {Card} from './Shell';
 import {llmApi as api} from '@/lib/llm/browser';
 import {llmMessage,type LlmStatus} from '@/lib/llm/messages';
+import {AssistantCommands} from './AssistantCommands';
 type Status=LlmStatus&{products:{id:string;name:string}[]};
 type Pending={operationId:string;task:string;question:string;productId:string|null;day:string};
 type Answer={answer:string;warnings:string[];sources:{id:string;title:string;data:Record<string,unknown>}[];capturedAt:string;draftOnly:true};
@@ -35,5 +36,5 @@ export function LlmAssistant(){
  </div>
  {answer&&<article className="llm-answer" aria-label="LLM yanıtı"><div className="section-heading"><strong>AI taslağı</strong><button className="text-button" onClick={()=>void navigator.clipboard.writeText(answer.answer).then(()=>setNote('Taslak metin kopyalandı. Menüye uygulanmadı.')).catch(()=>setError('Metni seçerek kopyalayın.'))}>Metni kopyala</button></div><p className="llm-answer-text">{answer.answer}</p>{answer.warnings.map((w,i)=><p className="notice" key={i}>{w}</p>)}<p className="helper">AI yanılabilir. Bu yanıt hiçbir ürün, fiyat, sipariş veya kampanyayı değiştirmedi.</p><details><summary>Kullanılan kayıtlar ({answer.sources.length})</summary>{answer.sources.map(s=><div className="llm-source" key={s.id}><strong>{s.title}</strong><pre>{JSON.stringify(s.data,null,2)}</pre></div>)}</details></article>}
  {!answer&&!busy&&<div className="llm-empty"><span aria-hidden>✦</span><h3>Önce kaynak, sonra yorum.</h3><p>Yanıtın altında hangi ürünlerin veya raporun kullanıldığını görebilirsiniz. Fiyat hesabı, ödeme ve sadakat kuralları LLM’ye bırakılmaz.</p></div>}
- </Card></div></section>;
+ </Card></div><div style={{marginTop:20}}><AssistantCommands/></div></section>;
 }

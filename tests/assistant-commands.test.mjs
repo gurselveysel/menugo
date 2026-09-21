@@ -1,0 +1,8 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';import {pathToFileURL} from 'node:url';
+const out='test-results/assistant-command-unit.mjs';fs.mkdirSync('test-results',{recursive:true});fs.writeFileSync(out,ts.transpileModule(fs.readFileSync('src/assistant/commands.ts','utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);const c=await import(pathToFileURL(process.cwd()+'/'+out).href);
+const id='55555555-5555-4555-8555-555555555555',op='44444444-4444-4444-8444-000000093001',product={id,name:'Test ürün',available:true,updatedAt:'2026-09-21T05:00:00.000Z'};
+test('availability command copies only reviewed product proof',()=>assert.deepEqual(c.availabilityCommand(op,product,false,'Ürün tükendi'),{operationId:op,productId:id,expectedUpdatedAt:product.updatedAt,available:false,confirmed:true,reason:'Ürün tükendi'}));
+test('reason must be meaningful and printable',()=>{assert.throws(()=>c.availabilityCommand(op,product,false,'x'));assert.throws(()=>c.availabilityCommand(op,product,false,'abc\ndef'));});
+test('pending apply roundtrip keeps exact operation and product proof',()=>{const p={kind:'apply',request:c.availabilityCommand(op,product,false,'Ürün tükendi')};assert.deepEqual(c.parsePending(JSON.stringify(p)),p);});
+test('tampered pending command is discarded',()=>assert.equal(c.parsePending(JSON.stringify({kind:'apply',request:{...c.availabilityCommand(op,product,false,'Ürün tükendi'),priceMinor:'1'}})),null));
+test('undo command contains no product or price payload',()=>assert.deepEqual(Object.keys(c.undoCommand(op,id,'Yönetici geri alma')).sort(),['commandId','confirmed','operationId','reason']));
