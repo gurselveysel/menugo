@@ -51,7 +51,10 @@ export async function generateFree(d:RoutingDispatch,hooks:RoutingHooks,fetcher:
   if(!await hooks.before(route))continue;
   try{
    const photo=d.kind==='studio'&&d.context?.studioKind==='photo-enhance';
-   const result=route.provider==='cloudflare_free'?(photo?await cloudflareImage(d,route,timedFetch):await cloudflareText(d,route,timedFetch)):await generate({...d,...route},timedFetch);
+   // The configured Cloudflare route is FLUX; keep the explicit connection probe on that endpoint.
+   // Text fallback is exercised only for real attachment-free text work and remains independently fail-closed.
+   const useImage=route.provider==='cloudflare_free'&&(d.kind==='test'||photo);
+   const result=route.provider==='cloudflare_free'?(useImage?await cloudflareImage(d,route,timedFetch):await cloudflareText(d,route,timedFetch)):await generate({...d,...route},timedFetch);
    await hooks.after(route,'success',null,result.model);
    return result;
   }catch(e){
