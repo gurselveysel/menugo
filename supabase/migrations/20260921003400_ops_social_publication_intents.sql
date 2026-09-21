@@ -16,7 +16,7 @@ DECLARE k text;v jsonb;BEGIN
 END;$$;
 
 UPDATE ops.platform_control_policies
- SET settings=settings||'{"socialPublicationEnabled":false}'::jsonb,version=version+1,updated_at=clock_timestamp()
+ SET settings=settings||'{"socialPublicationEnabled":false}'::jsonb,updated_at=clock_timestamp()
  WHERE scope_key='global' AND NOT settings?'socialPublicationEnabled';
 
 CREATE OR REPLACE FUNCTION ops.platform_policy_guard() RETURNS trigger LANGUAGE plpgsql SET search_path='' AS $$
