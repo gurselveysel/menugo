@@ -3,6 +3,7 @@ export const policyFields = [
  {key:'aiEnabled',label:'AI üretimi',help:'Yeni AI işlerini ve henüz gönderilmemiş model çağrılarını durdurabilir. Mevcut sonuçlar silinmez.',permission:'ai'},
  {key:'importsEnabled',label:'AI menü aktarımı',help:'Yeni menü belgelerinin aktarımı ve modelle çıkarımı. Mevcut katalog korunur.',permission:'ai'},
  {key:'studioPublicationEnabled',label:'İncelenmiş metin ve fotoğrafları yayımlama',help:'Yeni metin ve ürün fotoğrafı uygulamalarını durdurur. Önceki yayınları geri alma çalışmaya devam eder.',permission:'ai'},
+ {key:'socialPublicationEnabled',label:'Sosyal yayın isteği',help:'İşletmelerin incelenmiş kampanya için sosyal yayın isteği oluşturmasını kontrol eder. Sağlayıcı bağlantısı veya dış hesaba gönderim bu anahtarla kendiliğinden açılmaz.',permission:'operations'},
  {key:'orderingEnabled',label:'Yeni masa siparişi',help:'Merkezi güvenlik anahtarı. Mevcut siparişlerin kabulü, servisi ve kasa kapanışı etkilenmez.',permission:'operations'},
  {key:'whatsappEnabled',label:'WhatsApp sipariş talebi',help:'Yeni fiyat doğrulanmış WhatsApp talebi hazırlamayı kontrol eder; mesaj göndermez.',permission:'operations'},
  {key:'crmEvaluationEnabled',label:'CRM aday değerlendirmesi',help:'21 gün ve diğer kampanya aday taramalarını kontrol eder. SMS gönderimini açmaz.',permission:'operations'},
