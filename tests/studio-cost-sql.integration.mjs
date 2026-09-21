@@ -26,7 +26,7 @@ const extra=`
   const listed=await ledger('list');check('ledger list is branch scoped',listed.scopeKey===b+':'+br+':'+users[0]&&listed.purchases.length>=1&&listed.recipes.some(x=>x.id===v2.recipeId));
   await rejects('manager cannot directly read purchase journal',()=>q('select * from ops.purchase_entries'),'42501');
   await rejects('manager cannot directly read recipe journal',()=>q('select * from ops.recipe_versions'),'42501');
-  check('cost journal never changes catalogue price',(await q('select approved_price::text p from public.menu_items where id=$1',[p1]))[0].p==='33.33');
+  check('cost journal never changes catalogue price',listed.catalogue.find(x=>x.id===p1)?.priceMinor==='3333');
   await auth(users[2]);await rejects('customer cannot read cost ledger',()=>ledger('list'),'MANAGER_REQUIRED');
  }
 `;
