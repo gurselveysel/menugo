@@ -62,7 +62,7 @@ BEGIN
   result_v:=jsonb_build_object('commandId',gen_random_uuid(),'productId',m.id,'productName',m.name,'available',m.available,'updatedAt',m.updated_at,'priceChanged',false,'duplicate',false);
   INSERT INTO ops.assistant_commands(id,business_id,branch_id,actor_user_id,operation_id,action,product_id,request_hash,before_value,after_value,reason,result)
   VALUES((result_v->>'commandId')::uuid,p_business_id,p_branch_id,auth.uid(),op_id,p_action,m.id,h,before_v,after_v,reason_v,result_v);
-  INSERT INTO ops.operator_events(business_id,branch_id,actor_user_id,kind,subject_id,details) VALUES(p_business_id,p_branch_id,auth.uid(),'assistant-set-product-availability',m.id,jsonb_build_object('commandId',result_v->>'commandId','before',before_v,Iafter',after_v,'reason',reason_v));
+  INSERT INTO ops.operator_events(business_id,branch_id,actor_user_id,kind,subject_id,details) VALUES(p_business_id,p_branch_id,auth.uid(),'assistant-set-product-availability',m.id,jsonb_build_object('commandId',result_v->>'commandId','before',before_v,'after',after_v,'reason',reason_v));
   RETURN result_v;
  END IF;
 
