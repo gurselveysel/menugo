@@ -4,84 +4,66 @@
   "state": "implementation_and_acceptance",
   "updatedDate": "2026-09-21",
   "previousProgressArchive": "docs/progress/ai-suite-before-r30.json",
-  "baseline": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
-  "releaseCandidate": "menugo-assistant-commands-20260921-r33",
-  "latestRuntimeCommit": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
-  "lastVerifiedProductionBeforeIncrement": "menugo-cost-ledger-20260921-r32",
-  "releaseVerificationRecord": "Main 2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24 is READY in Vercel production on www.menugo.app, menugo.app and sariyerborekcisi.menugo.app; r32 cost-ledger migration is applied, purchase/recipe/command production tables were empty at acceptance, and the unauthenticated cost-ledger endpoint was denied. Real provider acceptance remains blocked by zero configured free provider connections.",
+  "baseline": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
+  "releaseCandidate": "menugo-ai-suite-acceptance-20260921-r35",
+  "latestRuntimeCommit": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
+  "lastVerifiedProductionBeforeIncrement": "menugo-social-publication-intents-20260921-r34",
+  "releaseVerificationRecord": "Main 6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd is READY in Vercel production on www.menugo.app, menugo.app and sariyerborekcisi.menugo.app. r34 social publication intent boundary is live, dispatchConfigured remains false and no external social post was sent. Production still has zero configured free AI routes and zero real AI runs, so full AI-suite completion remains false.",
   "modules": {
-    "platformControl": "r29_company_roles_policies_limits_and_audit_retained_free_only_ai_and_zero_paid_fallback",
-    "menuImport": "local_PDF_page_preparation_implemented_and_browser_accepted_explicit_selected_JPEG_pages_to_existing_review_apply_undo_flow_real_provider_extraction_pending",
-    "photoStudio": "r31_reviewed_photo_apply_undo_merged_migrated_and_live_domain_verified_real_provider_acceptance_pending",
-    "productCopyTranslation": "reviewed_TR_description_and_EN_name_description_batch_apply_undo_deployed_real_provider_acceptance_pending",
-    "campaigns": "source_validated_post_story_graphics_deployed_AI_photo_and_authorized_social_publish_pending",
-    "operatorAssistant": "r33_candidate_adds_human_confirmed_allowlisted_product_availability_apply_undo_with_row_lock_idempotency_and_append_only_command_journal_no_arbitrary_sql_or_price_write_real_provider_acceptance_pending",
-    "invoiceRecipe": "r32_human_confirmed_purchase_journal_and_versioned_recipe_cost_persistence_migrated_and_live_domain_verified_no_stock_accounting_or_catalogue_price_write_real_invoice_provider_acceptance_pending",
-    "voiceOrder": "catalogue_grounded_review_draft_deployed_real_provider_and_physical_device_acceptance_pending",
-    "customerAssistant": "published_catalogue_read_only_slice_deployed_real_provider_acceptance_pending",
-    "demandWaste": "real_order_and_explicit_waste_pipeline_fail_closed_until_sufficient_service_history",
-    "multiBranch": "core_schema_rpc_api_ui_deployed_real_two_branch_acceptance_pending_one_real_branch_only"
+    "platformControl": "r29_company_roles_policies_limits_and_audit_live_free_only_ai_and_zero_paid_fallback_retained",
+    "menuImport": "r30_local_PDF_page_preparation_live_selected_pages_feed_existing_review_apply_undo_flow_real_provider_extraction_and_physical_device_acceptance_pending",
+    "photoStudio": "r31_reviewed_photo_apply_undo_live_real_provider_and_physical_device_acceptance_pending",
+    "productCopyTranslation": "reviewed_TR_description_and_EN_name_description_batch_apply_undo_live_real_provider_acceptance_pending",
+    "campaigns": "source_validated_post_story_graphics_and_r34_company_gated_social_intents_live_real_AI_photo_and_authorized_social_dispatch_acceptance_pending",
+    "operatorAssistant": "r33_human_confirmed_allowlisted_product_availability_apply_undo_live_real_provider_acceptance_pending",
+    "invoiceRecipe": "r32_human_confirmed_purchase_journal_and_versioned_recipe_cost_persistence_live_real_invoice_provider_acceptance_pending",
+    "voiceOrder": "catalogue_grounded_review_only_browser_speech_draft_live_physical_device_acceptance_pending",
+    "customerAssistant": "published_catalogue_read_only_slice_live_real_provider_and_customer_device_acceptance_pending",
+    "demandWaste": "real_order_and_explicit_waste_pipeline_live_fail_closed_until_14_service_days_50_completed_orders_and_10_waste_events",
+    "multiBranch": "core_master_menu_binding_and_local_price_override_schema_api_ui_live_real_two_branch_acceptance_pending_one_real_branch_only"
   },
   "latestIncrement": {
-    "name": "Human-confirmed allowlisted operator assistant commands r33 candidate",
-    "path": "İşletme yönetimi / LLM Asistanı / İzinli işletme komutları",
-    "dataFlow": "Manager selects a current catalogue product, desired availability and reason; server reloads and row-locks the product, checks the exact updated_at proof, and changes only available. Undo is a separate human-confirmed command and refuses to overwrite any newer product edit.",
-    "retry": "Browser session journal preserves the exact operationId and proof after an ambiguous response; server command journal rejects changed intent and replays the stored result.",
-    "safetyBoundary": "No arbitrary SQL, price, payment, order, provider, campaign or social write. Central aiEnabled pause blocks new apply commands while conflict-safe undo remains available.",
-    "freePolicy": "No new provider/service, no paid fallback, no credits and no model call. Provider settings remain company-only.",
+    "name": "Company-only production acceptance evidence snapshot r35 candidate",
+    "path": "/platform/kabul",
+    "dataFlow": "A platform-authenticated read-only RPC derives aggregate evidence from production tables for all ten scope modules. It does not expose provider secrets, business payloads, customer data or editable completion switches.",
+    "safetyBoundary": "Restaurant roles cannot call the snapshot because platform_principal is required. The snapshot never mutates catalogue, prices, orders, payments, provider settings or social accounts. It intentionally keeps completion false and distinguishes production evidence from external physical-device/domain/business acceptance.",
+    "freePolicy": "No new provider, service, credit, GPU or paid fallback. Existing company-only free-provider policy is unchanged.",
     "companyOnlyConfiguration": true,
     "productionDatabaseWritesPerformed": false,
     "catalogueWritesPerformed": false,
     "realInferenceCalls": 0,
-    "localValidation": {
-      "codeBearingCommit": "0312bf2c5dcded297bba1173f15cb41d8aba582b",
-      "exactNpmCi": "passed_in_required_ci",
-      "pglite": "passed_in_required_ci",
-      "nativePostgres": "passed_in_required_ci",
-      "unitTests": "455_passed_in_menuGo_checks",
-      "fullNextBuild": "passed_in_required_ci",
-      "browserRegression": "passed_in_required_ci"
-    },
-    "migration": "20260921003300_ops_assistant_commands.sql"
+    "candidateBranch": "codex/r35-ai-suite-acceptance",
+    "migration": "20260921003500_ops_ai_suite_acceptance.sql",
+    "validation": "pending_pull_request_ci_and_native_postgres_before_any_production_migration"
   },
   "acceptance": {
-    "r32Production": {
-      "commit": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
+    "r34Production": {
+      "commit": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
       "vercel": "READY",
-      "deployment": "dpl_GJYcQNjZLZNsZcuVSve7S2PznPAL",
-      "domains": [
-        "www.menugo.app",
-        "menugo.app",
-        "sariyerborekcisi.menugo.app"
-      ],
-      "costLedgerMigration": "applied",
-      "realProvider": "not_run_zero_connections"
+      "deployment": "dpl_9mdh9ZJK9Qg6V22dRREmknHS8eZV",
+      "domains": ["www.menugo.app","menugo.app","sariyerborekcisi.menugo.app"],
+      "socialDispatchConfigured": false,
+      "externalSocialPostsSentByAcceptance": 0,
+      "realProviderCalls": 0,
+      "configuredFreeRoutes": 0
     },
-    "r33Candidate": {
-      "baseCommit": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
-      "codeBearingCommit": "0312bf2c5dcded297bba1173f15cb41d8aba582b",
-      "fullCi": "all_six_required_workflows_success",
-      "workflowRuns": {
-        "menuGoChecks": 35584985750,
-        "merchantRelease": 35584985867,
-        "studioPublication": 35584985864,
-        "localPdf": 35584985832,
-        "campaignExport": 35584985738,
-        "multiBranch": 35584985907
-      },
-      "nativePostgres17": "passed_in_required_ci",
-      "browserRegression": "passed_in_required_ci",
-      "productionMigration": "applied_empty_command_journal_verified",
+    "r35Candidate": {
+      "baseCommit": "6b88f2d8aaa2f9040ee28503b9d292c2bfb7a9fd",
+      "branch": "codex/r35-ai-suite-acceptance",
+      "fullCi": "pending",
+      "nativePostgres17": "pending",
+      "fullNextBuild": "pending",
+      "productionMigration": "not_applied",
       "productionDeployment": "not_deployed",
       "realProviderCalls": 0
     }
   },
   "nextRequired": [
-    "Re-run the six required acceptance workflows on this documentation-updated r33 HEAD; only a green latest HEAD/tree is eligible for merge and production promotion.",
-    "If the latest r33 head remains fully green, merge and deploy one Git-linked production release; verify both real domains plus unauthenticated endpoint denial without changing a real product during acceptance.",
-    "Company-managed free provider credentials and real menu/photo/invoice/assistant inference acceptance, with no paid fallback.",
-    "Authorized social publishing acceptance without sending content on the user’s behalf during tests.",
-    "Physical-device PDF/photo/voice acceptance, a real second branch, and sufficient genuine history for demand/waste acceptance."
+    "Run the required pull-request CI on the latest r35 tree; do not promote unless SQL, native PostgreSQL 17, unit, full Next build and frontend regressions are green.",
+    "If r35 is green and main is unchanged, apply only the additive acceptance snapshot migration, merge, deploy and verify company-only access plus both production domains without touching real catalogue/order/payment data.",
+    "Connect a genuinely free/no-billing company-managed provider and perform real menu/photo/copy/invoice/assistant inference acceptance without paid fallback or weakened data-policy filters.",
+    "Complete authorized social publishing acceptance without sending content on the user’s behalf during unapproved tests.",
+    "Complete physical-device PDF/photo/voice/customer-assistant acceptance, a real second branch, and sufficient genuine demand/waste history."
   ],
-  "completionRule": "Do not mark the AI suite complete from UI/build/mock tests. Require real provider output and business review/publication acceptance for each advertised capability."
+  "completionRule": "Do not mark the AI suite complete from UI/build/mock/local tests or this readiness screen. Require real provider output and business review/publication acceptance for each advertised capability plus the stated physical-device, social, multi-branch and real-history gates."
 }
