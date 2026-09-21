@@ -1,6 +1,6 @@
 {
-  "version": "menugo-cost-ledger-20260921-r32",
-  "previous": "menugo-reviewed-product-photo-publication-20260921-r31",
+  "version": "menugo-assistant-commands-20260921-r33",
+  "previous": "menugo-cost-ledger-20260921-r32",
   "merchantMenu": true,
   "roleInterfaces": [
     "customer",
@@ -139,5 +139,15 @@
   "costLedgerCataloguePriceWrites": false,
   "costLedgerStockWrites": false,
   "costLedgerAccountingWrites": false,
-  "costLedgerProductionAcceptance": "pending-r32-ci-migration-deploy"
+  "costLedgerProductionAcceptance": "verified-r32-migration-and-live-domains-20260921",
+  "operatorAssistantHumanConfirmedCommands": true,
+  "operatorAssistantCommandAllowlist": [
+    "set-product-availability",
+    "undo-product-availability"
+  ],
+  "operatorAssistantArbitrarySql": false,
+  "operatorAssistantPriceWrites": false,
+  "operatorAssistantAutomaticWrites": false,
+  "operatorAssistantCommandJournal": "append-only-idempotent-row-locked",
+  "operatorAssistantCommandProductionAcceptance": "pending-r33-ci-migration-deploy"
 }

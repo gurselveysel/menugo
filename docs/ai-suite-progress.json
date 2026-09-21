@@ -4,86 +4,75 @@
   "state": "implementation_and_acceptance",
   "updatedDate": "2026-09-21",
   "previousProgressArchive": "docs/progress/ai-suite-before-r30.json",
-  "baseline": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
-  "releaseCandidate": "menugo-cost-ledger-20260921-r32",
-  "latestRuntimeCommit": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
-  "lastVerifiedProductionBeforeIncrement": "menugo-reviewed-product-photo-publication-20260921-r31",
-  "releaseVerificationRecord": "Main e61164b70b5ca1d5349ac893b38a649a69a18fc0 is READY in Vercel production on www.menugo.app, menugo.app and sariyerborekcisi.menugo.app; r31 migration applied and unauthenticated photo-publication endpoint rejected. Real provider acceptance remains blocked by zero configured free provider connections.",
+  "baseline": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
+  "releaseCandidate": "menugo-assistant-commands-20260921-r33",
+  "latestRuntimeCommit": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
+  "lastVerifiedProductionBeforeIncrement": "menugo-cost-ledger-20260921-r32",
+  "releaseVerificationRecord": "Main 2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24 is READY in Vercel production on www.menugo.app, menugo.app and sariyerborekcisi.menugo.app; r32 cost-ledger migration is applied, purchase/recipe/command production tables were empty at acceptance, and the unauthenticated cost-ledger endpoint was denied. Real provider acceptance remains blocked by zero configured free provider connections.",
   "modules": {
-    "platformControl": "r29_company_roles_policies_limits_and_audit_retained_no_infrastructure_credentials_read_or_changed_in_r30",
+    "platformControl": "r29_company_roles_policies_limits_and_audit_retained_free_only_ai_and_zero_paid_fallback",
     "menuImport": "local_PDF_page_preparation_implemented_and_browser_accepted_explicit_selected_JPEG_pages_to_existing_review_apply_undo_flow_real_provider_extraction_pending",
     "photoStudio": "r31_reviewed_photo_apply_undo_merged_migrated_and_live_domain_verified_real_provider_acceptance_pending",
     "productCopyTranslation": "reviewed_TR_description_and_EN_name_description_batch_apply_undo_deployed_real_provider_acceptance_pending",
     "campaigns": "source_validated_post_story_graphics_deployed_AI_photo_and_authorized_social_publish_pending",
-    "operatorAssistant": "read_only_data_grounded_path_deployed_real_provider_acceptance_and_authorized_commands_pending",
-    "invoiceRecipe": "r32_candidate_adds_server_reconciled_human_confirmed_append_only_purchase_journal_and_versioned_recipe_cost_persistence_no_stock_accounting_or_catalogue_write_all_required_candidate_ci_green_production_migration_and_deploy_pending",
+    "operatorAssistant": "r33_candidate_adds_human_confirmed_allowlisted_product_availability_apply_undo_with_row_lock_idempotency_and_append_only_command_journal_no_arbitrary_sql_or_price_write_real_provider_acceptance_pending",
+    "invoiceRecipe": "r32_human_confirmed_purchase_journal_and_versioned_recipe_cost_persistence_migrated_and_live_domain_verified_no_stock_accounting_or_catalogue_price_write_real_invoice_provider_acceptance_pending",
     "voiceOrder": "catalogue_grounded_review_draft_deployed_real_provider_and_physical_device_acceptance_pending",
     "customerAssistant": "published_catalogue_read_only_slice_deployed_real_provider_acceptance_pending",
     "demandWaste": "real_order_and_explicit_waste_pipeline_fail_closed_until_sufficient_service_history",
     "multiBranch": "core_schema_rpc_api_ui_deployed_real_two_branch_acceptance_pending_one_real_branch_only"
   },
   "latestIncrement": {
-    "name": "Approved purchase and recipe cost journal r32 candidate",
-    "path": "İşletme yönetimi / AI Menü Stüdyosu / Reçete maliyeti + approved invoice detail",
-    "dataFlow": "Approved invoice posting accepts only job/revision/confirmation proof; server reloads and reconciles the approved studio draft before appending an immutable internal purchase journal. Recipe saves accept human-verified normalized inputs and server-recompute exact bigint costs into append-only versions.",
-    "retry": "Browser session journal preserves the exact operationId and proof/input after an ambiguous response; server command journal rejects changed intent and replays the same result.",
-    "financialBoundary": "No stock, accounting, payment, catalogue-price or social write. Purchase journal is internal operational evidence, not an accounting adapter.",
-    "freePolicy": "No new AI/provider/service, no paid fallback, no credits and no model call. This increment is deterministic and works only after human review.",
+    "name": "Human-confirmed allowlisted operator assistant commands r33 candidate",
+    "path": "İşletme yönetimi / LLM Asistanı / İzinli işletme komutları",
+    "dataFlow": "Manager selects a current catalogue product, desired availability and reason; server reloads and row-locks the product, checks the exact updated_at proof, and changes only available. Undo is a separate human-confirmed command and refuses to overwrite any newer product edit.",
+    "retry": "Browser session journal preserves the exact operationId and proof after an ambiguous response; server command journal rejects changed intent and replays the stored result.",
+    "safetyBoundary": "No arbitrary SQL, price, payment, order, provider, campaign or social write. Central aiEnabled pause blocks new apply commands while conflict-safe undo remains available.",
+    "freePolicy": "No new provider/service, no paid fallback, no credits and no model call. Provider settings remain company-only.",
     "companyOnlyConfiguration": true,
     "productionDatabaseWritesPerformed": false,
     "catalogueWritesPerformed": false,
     "realInferenceCalls": 0,
     "localValidation": {
-      "costLedgerUnitTests": 7,
-      "typescriptSyntax": "passed",
-      "pglite": "covered_by_green_github_ci",
-      "nativePostgres": "covered_by_green_github_ci",
-      "fullNextBuild": "covered_by_green_github_ci"
+      "javascriptSyntax": "passed_for_new_mjs_tests",
+      "typescriptSyntax": "pending_ci_full_project",
+      "pglite": "pending_ci",
+      "nativePostgres": "pending_ci",
+      "fullNextBuild": "pending_ci",
+      "browserRegression": "pending_ci"
     },
-    "migration": "20260921003200_ops_cost_ledger.sql"
+    "migration": "20260921003300_ops_assistant_commands.sql"
   },
   "acceptance": {
-    "r31Production": {
-      "commit": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
+    "r32Production": {
+      "commit": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
       "vercel": "READY",
+      "deployment": "dpl_GJYcQNjZLZNsZcuVSve7S2PznPAL",
       "domains": [
         "www.menugo.app",
         "menugo.app",
         "sariyerborekcisi.menugo.app"
       ],
+      "costLedgerMigration": "applied",
       "realProvider": "not_run_zero_connections"
     },
-    "r32Candidate": {
-      "baseCommit": "e61164b70b5ca1d5349ac893b38a649a69a18fc0",
-      "acceptedSourceCommit": "9be41120e4f8e857ca438f6bfd1579dec313e21a",
-      "unitCostLedger": {
-        "passed": 7,
-        "failed": 0
-      },
-      "typescriptSyntax": "passed",
-      "fullCi": "all_six_required_workflows_success",
-      "workflowRuns": {
-        "menuGoChecks": 35564300244,
-        "merchantRelease": 35564300260,
-        "studioPublication": 35564300241,
-        "localPdf": 35564300220,
-        "campaignExport": 35564300238,
-        "multiBranch": 35564300232
-      },
-      "nativePostgres17": "passed_in_required_ci",
-      "browserRegression": "passed_in_required_ci",
-      "previewDeployment": "dpl_7zJvyHwaDzrEvdtGZEMgq5trMnjS_READY",
+    "r33Candidate": {
+      "baseCommit": "2dd61528dbb4d0b5e2af4eb85632296cdc7f6f24",
+      "sourceCommit": "pending",
+      "fullCi": "pending",
+      "nativePostgres17": "pending",
+      "browserRegression": "pending",
       "productionMigration": "not_applied",
       "productionDeployment": "not_deployed",
       "realProviderCalls": 0
     }
   },
   "nextRequired": [
-    "Re-run the required acceptance gates on the documentation-updated r32 head; only a green latest HEAD/tree is eligible for promotion.",
-    "If the latest r32 head remains fully green, apply additive cost-ledger migration and merge/deploy one Git-linked production release; verify both real domains and unauthenticated endpoint denial without writing synthetic production purchase/recipe rows.",
-    "Company-managed free provider credentials and real menu/photo/invoice inference acceptance, with no paid fallback.",
+    "Run exact-lockfile full CI on the complete r33 head, including PGlite assistant lifecycle, native PostgreSQL17 stale-proof concurrency, full Next/TypeScript build and browser recovery/undo acceptance.",
+    "Only if the latest r33 head is fully green, apply the additive assistant-command migration before application promotion, merge/deploy one Git-linked production release, and verify both real domains plus unauthenticated endpoint denial without changing a real product during acceptance.",
+    "Company-managed free provider credentials and real menu/photo/invoice/assistant inference acceptance, with no paid fallback.",
     "Authorized social publishing acceptance without sending content on the user’s behalf during tests.",
-    "Real second-branch acceptance and sufficient-history demand/waste acceptance when genuine data exists."
+    "Physical-device PDF/photo/voice acceptance, a real second branch, and sufficient genuine history for demand/waste acceptance."
   ],
   "completionRule": "Do not mark the AI suite complete from UI/build/mock tests. Require real provider output and business review/publication acceptance for each advertised capability."
 }

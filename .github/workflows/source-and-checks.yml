@@ -33,16 +33,16 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm run test:sql && node tests/studio.sql.integration.mjs && node tests/studio-photo-sql.integration.mjs && node tests/studio-cost-sql.integration.mjs
+      - run: npm run test:sql && node tests/studio.sql.integration.mjs && node tests/studio-photo-sql.integration.mjs && node tests/studio-cost-sql.integration.mjs && node tests/assistant-command-sql.integration.mjs
       - name: Real PostgreSQL 17 constraints and row locks
-        run: node tests/native-postgres.integration.mjs && node tests/studio-cost-native.integration.mjs
+        run: node tests/native-postgres.integration.mjs && node tests/studio-cost-native.integration.mjs && node tests/assistant-command-native.integration.mjs
         env:
           POSTGRES_TEST_URL: postgresql://postgres:disposable-ci-only@127.0.0.1:5432/menugo_ci
       - run: npm test
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-      - run: npm run test:ui && node tests/pilot-ui.integration.mjs && node tests/studio-ui.integration.mjs && node tests/customer-menu-assistant-ui.integration.mjs
+      - run: npm run test:ui && node tests/pilot-ui.integration.mjs && node tests/studio-ui.integration.mjs && node tests/customer-menu-assistant-ui.integration.mjs && node tests/assistant-commands-ui.integration.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
