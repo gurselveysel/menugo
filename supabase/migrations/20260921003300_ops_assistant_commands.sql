@@ -35,8 +35,8 @@ BEGIN
  IF p_action='list' THEN
   RETURN jsonb_build_object(
    'scopeKey',p_business_id::text||':'||p_branch_id::text||':'||auth.uid()::text,
-   'products',(SELECT coalesce(jsonb_agg(jsonb_build_object('id',m.id,'name',m.name,'available',m.available,'updatedAt',m.updated_at) ORDER BY m.sort_order,m.source_id),'[]') FROM public.menu_items m WHERE m.business_id=p_business_id AND m.branch_id=p_branch_id),
-   'history',(SELECT coalesce(jsonb_agg(row_value ORDER BY created_at DESC),'[]') FROM (SELECT jsonb_build_object('id',x.id,'action',x.action,'productId',x.product_id,'productName',m.name,'before',x.before_value,'after',x.after_value,'reason',x.reason,'createdAt',x.created_at,'reversesCommandId',x.reverses_command_id) AS row_value,x.created_at FROM ops.assistant_commands x JOIN public.menu_items m ON m.id=x.product_id AND m.business_id=x.business_id AND m.branch_id=x.branch_id WHERE x.business_id=p_business_id AND x.branch_id=p_branch_id ORDER BY x.created_at DESC LIMIT 40) recent)
+   'products',(SELECT coalesce(jsonb_agg(jsonb_build_object('id',mi.id,'name',mi.name,'available',mi.available,'updatedAt',mi.updated_at) ORDER BY mi.sort_order,mi.source_id),'[]') FROM public.menu_items mi WHERE mi.business_id=p_business_id AND mi.branch_id=p_branch_id),
+   'history',(SELECT coalesce(jsonb_agg(row_value ORDER BY created_at DESC),'[]') FROM (SELECT jsonb_build_object('id',x.id,'action',x.action,'productId',x.product_id,'productName',mi.name,'before',x.before_value,'after',x.after_value,'reason',x.reason,'createdAt',x.created_at,'reversesCommandId',x.reverses_command_id) AS row_value,x.created_at FROM ops.assistant_commands x JOIN public.menu_items mi ON mi.id=x.product_id AND mi.business_id=x.business_id AND mi.branch_id=x.branch_id WHERE x.business_id=p_business_id AND x.branch_id=p_branch_id ORDER BY x.created_at DESC LIMIT 40) recent)
   );
  END IF;
  IF p_action NOT IN('set-product-availability','undo-product-availability') THEN RAISE SQLSTATE 'PT400' USING MESSAGE='INVALID_ASSISTANT_COMMAND';END IF;
@@ -62,7 +62,7 @@ BEGIN
   result_v:=jsonb_build_object('commandId',gen_random_uuid(),'productId',m.id,'productName',m.name,'available',m.available,'updatedAt',m.updated_at,'priceChanged',false,'duplicate',false);
   INSERT INTO ops.assistant_commands(id,business_id,branch_id,actor_user_id,operation_id,action,product_id,request_hash,before_value,after_value,reason,result)
   VALUES((result_v->>'commandId')::uuid,p_business_id,p_branch_id,auth.uid(),op_id,p_action,m.id,h,before_v,after_v,reason_v,result_v);
-  INSERT INTO ops.operator_events(business_id,branch_id,actor_user_id,kind,subject_id,details) VALUES(p_business_id,p_branch_id,auth.uid(),'assistant-set-product-availability',m.id,jsonb_build_object('commandId',result_v->>'commandId','before',before_v,'after',after_v,'reason',reason_v));
+  INSERT INTO ops.operator_events(business_id,branch_id,actor_user_id,kind,subject_id,details) VALUES(p_business_id,p_branch_id,auth.uid(),'assistant-set-product-availability',m.id,jsonb_build_object('commandId',result_v->>'commandId','before',before_v,Iafter',after_v,'reason',reason_v));
   RETURN result_v;
  END IF;
 
@@ -71,7 +71,7 @@ BEGIN
  SELECT * INTO target FROM ops.assistant_commands WHERE id=command_v AND business_id=p_business_id AND branch_id=p_branch_id FOR UPDATE;
  IF NOT FOUND OR target.action<>'set-product-availability' THEN RAISE SQLSTATE 'PT404' USING MESSAGE='COMMAND_NOT_FOUND';END IF;
  IF EXISTS(SELECT 1 FROM ops.assistant_commands WHERE reverses_command_id=target.id) THEN RAISE SQLSTATE 'PT409' USING MESSAGE='COMMAND_ALREADY_UNDONE';END IF;
- SELECT * INTO m FROM public.menu_items WHERE id=target.product_id AND business_id=p_business_id AND branch_id=p_branch_id FOR UPDATE;
+ SELECT * INTO M FROM public.menu_items WHERE id=target.product_id AND business_id=p_business_id AND branch_id=p_branch_id FOR UPDATE;
  IF NOT FOUND THEN RAISE SQLSTATE 'PT404' USING MESSAGE='PRODUCT_NOT_FOUND';END IF;
  IF m.updated_at<>(target.after_value->>'updatedAt')::timestamptz OR m.available<>(target.after_value->>'available')::boolean THEN RAISE SQLSTATE 'PT409' USING MESSAGE='PRODUCT_CHANGED';END IF;
  before_v:=jsonb_build_object('available',m.available,'updatedAt',m.updated_at);
